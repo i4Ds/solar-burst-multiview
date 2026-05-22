@@ -11,6 +11,7 @@ dependencies:
   - astropy
   - sunpy
   - requests
+  - pyvo
   - pip
   - pip:
     - stixdcpy          # STIX data client
