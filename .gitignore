@@ -1,0 +1,28 @@
+# data (keep folder, ignore contents)
+data/*
+!data/.gitkeep
+*.fits
+*.uvfits
+*.ms/
+*.ms
+
+# jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+.venv/
+env/
+
+# conda
+*.conda
+
+# OS
+.DS_Store
