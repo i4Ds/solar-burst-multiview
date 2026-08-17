@@ -1,0 +1,98 @@
+# Sharma et al. 2022 (ApJ 937, 99) reproduction target.
+#
+# The MWA observation is a 2015-12-03 solar scan set. Note that these obsids are
+# NOT in the shared FHNW MWA archive; the only copy we have access to is the
+# original working tree under `remote.rohit_root` on calculon, which also holds
+# the published intermediate products we validate against.
+
+event:
+  name: sharma2022
+  date: 2015-12-03
+  target: Sun
+  reference: 10.3847/1538-4357/ac87fc
+
+# Solar scans, ~300 s apart. All seven exist as calibrated measurement sets, but
+# only the six flagged `imaged: true` have a complete 570-timestep FITS series in
+# every band; 1133149192 was processed separately and is partial.
+observations:
+  - obsid: 1133148288
+    start_utc: "2015-12-03T03:24:31"
+    imaged: true
+  - obsid: 1133148592
+    start_utc: "2015-12-03T03:29:35"
+    imaged: true
+  - obsid: 1133148888
+    start_utc: "2015-12-03T03:34:31"
+    imaged: true
+  - obsid: 1133149192
+    start_utc: "2015-12-03T03:39:35"
+    imaged: false
+  - obsid: 1133149488
+    start_utc: "2015-12-03T03:44:31"
+    imaged: true
+  - obsid: 1133149792
+    start_utc: "2015-12-03T03:49:35"
+    imaged: true
+  - obsid: 1133150088
+    start_utc: "2015-12-03T03:54:31"
+    imaged: true
+
+# Bandpass/gain solutions in `new_ms/cal_soln` all derive from this scan.
+calibrator:
+  obsid: 1133139776
+  start_utc: "2015-12-03T01:02:39"
+
+# MWA coarse channels are 1.28 MHz wide; each band is a pair, so the centre is
+# (lo + hi + 1) / 2 * 1.28 MHz. `label` matches the directory and filename stems
+# used throughout the original tree.
+bands:
+  - {channels: "084-085", label: 108MHz, freq_mhz: 108.16}
+  - {channels: "093-094", label: 120MHz, freq_mhz: 119.68}
+  - {channels: "103-104", label: 133MHz, freq_mhz: 132.48}
+  - {channels: "113-114", label: 145MHz, freq_mhz: 145.28}
+  - {channels: "125-126", label: 161MHz, freq_mhz: 160.64}
+  - {channels: "139-140", label: 179MHz, freq_mhz: 178.56}
+  - {channels: "153-154", label: 197MHz, freq_mhz: 196.48}
+  - {channels: "169-170", label: 217MHz, freq_mhz: 216.96}
+  - {channels: "187-188", label: 239MHz, freq_mhz: 240.00}
+
+# Geometry of the published CASA images, read from a FITS header on calculon.
+imaging:
+  npix: 1024
+  cell_arcsec: 50.0
+  projection: SIN
+  bunit: Jy/beam
+  stokes: I
+  cadence_s: 0.5
+  timesteps_per_obsid: 570
+
+remote:
+  host: calculon.informatik.fhnw.ch
+  user: andre_csillaghy
+  # Rohit Sharma's working tree - read-only for us, and the only source of the
+  # 2015-12-03 data.
+  rohit_root: /mnt/nas05/data02/rohit
+  paths:
+    fits: 20151203_MWA/new_ms/fits
+    fits_residual: 20151203_MWA/new_ms/fits_residual
+    cal_soln: 20151203_MWA/new_ms/cal_soln
+    ms_by_band: 20151203_MWA/new_ms          # <label>/<obsid>_<channels>.ms
+    subtraction: 20151203_sub                # <label>/<obsid>_<channels>_chan*.ms
+    brightness_temp: 20151203_MWA/Tb_new
+    dynamic_spectra: 20151203_MWA/new_vis
+    forward: 20151203_forward
+    euv: 20151203_EUV
+    lasco: 20151203_LASCO
+  # Converted measurement sets for the 2022-2025 solar programme, including 347
+  # obsids in calendar 2024. Not used for this reproduction.
+  shared_archive: /mnt/nas05/data02/MWA_data/data/mwa_data
+
+# The subtraction ground truth: `input` is what Sharma fed to the subtraction and
+# `expected` is what came out, so our implementation can be diffed against it.
+validation:
+  subtraction:
+    band: 161MHz
+    obsid: 1133148288
+    channels: "125-126"
+    input: 20151203_sub/161MHz/1133148288_125-126_chan.ms
+    expected: 20151203_sub/161MHz/1133148288_125-126_chan_sub.ms
