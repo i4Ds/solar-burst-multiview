@@ -23,6 +23,16 @@ conda activate solar-burst-multiview
 jupyter lab
 ```
 
+For a machine that has none of the prerequisites yet, and for the calculon and
+Zotero details that a clone cannot carry, see
+[docs/new-machine-setup.md](docs/new-machine-setup.md).
+
+## Plan
+
+[docs/reproduction-plan.md](docs/reproduction-plan.md) lays out the reproduction
+of Sharma et al. 2022 and the route from there to a reusable tool for the 2024
+MWA solar observations.
+
 ## References
 
 `references/core_references.bib` holds the papers the pipeline implementation
