@@ -1,7 +1,9 @@
 name: solar-burst-multiview
+# conda-forge only, deliberately. Anaconda's `defaults` channel requires a paid
+# licence for organisations of FHNW's size, and every dependency here is on
+# conda-forge anyway. Install with Miniforge or micromamba, not Miniconda.
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.10
   - jupyterlab

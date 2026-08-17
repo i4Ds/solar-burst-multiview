@@ -13,11 +13,11 @@ between machines — every input is staged on demand from calculon.
 # 1. Toolchain
 xcode-select --install
 
-# 2. Miniconda for Apple silicon
-curl -fsSLo /tmp/miniconda.sh \
-  https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
-bash /tmp/miniconda.sh -b -p "$HOME/miniconda3"
-"$HOME/miniconda3/bin/conda" init zsh && exec zsh
+# 2. Miniforge for Apple silicon — NOT Miniconda, see below
+curl -fsSLo /tmp/miniforge.sh \
+  https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+bash /tmp/miniforge.sh -b -p "$HOME/miniforge3"
+"$HOME/miniforge3/bin/conda" init zsh && exec zsh
 
 # 3. Clone
 mkdir -p ~/Documents/GitHub && cd ~/Documents/GitHub
@@ -40,7 +40,35 @@ is not enabled on the old machine.
 
 Apple's Migration Assistant is the alternative to steps 1–5 and brings across the
 conda install, the SSH key and the Zotero data directory in one move. Prefer a
-clean setup when the old disk is close to full.
+clean setup when the old disk is close to full — and note that it would carry
+over a Miniconda install, which is what the next section is about.
+
+## Why Miniforge and not Miniconda
+
+Miniforge is the conda-forge community's installer. It is BSD-licensed, ships
+`conda` and `mamba`, and points at conda-forge exclusively.
+
+Miniconda and Anaconda are Anaconda Inc. distributions aimed at the `defaults`
+channel, which their terms of service place under a paid licence for
+organisations above roughly 200 employees. FHNW is well past that threshold, so
+`defaults` is best avoided entirely; `environment.yml` pins conda-forge only for
+this reason.
+
+Nothing is lost by the switch. Every dependency in this project, including
+`python-casacore`, is on conda-forge, and the commands are identical.
+
+If a machine already has Miniconda, either replace it with Miniforge or at
+minimum confirm that no environment resolves against `defaults`:
+
+```bash
+conda config --show channels
+conda config --set channel_priority strict
+```
+
+A conda-family tool is genuinely required here rather than a matter of taste:
+`python-casacore` publishes only Linux x86_64 wheels on PyPI and `casacore` is
+not in Homebrew, so pip or uv alone would mean compiling the casacore C++
+library from source on macOS.
 
 ## Verifying the install
 
@@ -74,8 +102,9 @@ nor any container runtime. See §2 and Phase 3 of
 [`reproduction-plan.md`](reproduction-plan.md) for what has to be built and the
 preference for Apptainer over compiling from source.
 
-Conda is also absent on calculon, so a user-space micromamba is the starting
-point:
+No conda-family tool is present on calculon either, so a user-space micromamba is
+the starting point — a single static binary, no base environment, conda-forge by
+default:
 
 ```bash
 curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
