@@ -1,0 +1,278 @@
+[
+  {
+    "key": "sharma2022",
+    "citation": "Sharma, 2022, Detection of Ubiquitous Weak and Impulsive Nonthermal Emissions from the Solar Corona, The Astrophysical Journal",
+    "role": "The paper being reproduced.",
+    "tags": [
+      "target-paper"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/ac87fc",
+    "title": "Detection of Ubiquitous Weak and Impulsive Nonthermal Emissions from the Solar Corona",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "oberoi2017",
+    "citation": "Oberoi, 2017, Estimating Solar Flux Density at Low Radio Frequencies Using a Sky Brightness Model, Solar Physics",
+    "role": "Absolute solar flux density calibration prescription (Section 3.1).",
+    "tags": [
+      "flux-calibration"
+    ],
+    "status": "verified",
+    "doi": "10.1007/s11207-017-1096-1",
+    "title": "Estimating Solar Flux Density at Low Radio Frequencies Using a Sky Brightness Model",
+    "container": "Solar Physics",
+    "note": "ok"
+  },
+  {
+    "key": "mohan2017",
+    "citation": "Mohan, 2017, 4D Data Cubes from Radio-Interferometric Spectroscopic Snapshot Imaging, Solar Physics",
+    "role": "Conversion from Jy/beam to brightness temperature (Sections 3.2, 4.2).",
+    "tags": [
+      "brightness-temperature"
+    ],
+    "status": "verified",
+    "doi": "10.1007/s11207-017-1193-1",
+    "title": "4D Data Cubes from Radio-Interferometric Spectroscopic Snapshot Imaging",
+    "container": "Solar Physics",
+    "note": "ok"
+  },
+  {
+    "key": "mondal2019",
+    "citation": "Mondal, 2019, Unsupervised Generation of High Dynamic Range Solar Images: A Novel Algorithm for Self-calibration of Interferometry Data, The Astrophysical Journal",
+    "role": "AIRCARS: high-dynamic-range solar self-calibration and snapshot imaging pipeline.",
+    "tags": [
+      "calibration",
+      "imaging"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/ab0a01",
+    "title": "Unsupervised Generation of High Dynamic Range Solar Images: A Novel Algorithm for Self-calibration of Interferometry Data",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "mondal2020a",
+    "citation": "Mondal, 2020, First Radio Evidence for Impulsive Heating Contribution to the Quiet Solar Corona, The Astrophysical Journal Letters",
+    "role": "The weak quiet-Sun impulsive emissions this paper independently confirms.",
+    "tags": [
+      "science-target"
+    ],
+    "status": "verified",
+    "doi": "10.3847/2041-8213/ab8817",
+    "title": "First Radio Evidence for Impulsive Heating Contribution to the Quiet Solar Corona",
+    "container": "The Astrophysical Journal Letters",
+    "note": "ok"
+  },
+  {
+    "key": "kansabanik2022",
+    "citation": "Kansabanik, 2022, Tackling the Unique Challenges of Low-frequency Solar Polarimetry with the Square Kilometre Array Low Precursor: The Algorithm, The Astrophysical Journal",
+    "role": "P-AIRCARS, the successor solar imaging pipeline; reference for calibration strategy.",
+    "tags": [
+      "calibration",
+      "imaging"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/ac6758",
+    "title": "Tackling the Unique Challenges of Low-frequency Solar Polarimetry with the Square Kilometre Array Low Precursor: The Algorithm",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "suresh2017",
+    "citation": "Suresh, 2017, Wavelet-based Characterization of Small-scale Solar Emission Features at Low Radio Frequencies, The Astrophysical Journal",
+    "role": "Weak burst durations and the ~5 MHz bandwidth assumed for burst energetics.",
+    "tags": [
+      "burst-statistics"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/aa774a",
+    "title": "Wavelet-based Characterization of Small-scale Solar Emission Features at Low Radio Frequencies",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "sharma2018",
+    "citation": "Sharma, 2018, Quantifying Weak Nonthermal Solar Radio Emission at Low Radio Frequencies, The Astrophysical Journal",
+    "role": "Decomposition into slowly varying and impulsive components; basis of the subtraction model.",
+    "tags": [
+      "visibility-subtraction"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/aa9d96",
+    "title": "Quantifying Weak Nonthermal Solar Radio Emission at Low Radio Frequencies",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "sharma2020",
+    "citation": "Sharma, 2020, Propagation Effects in Quiet Sun Observations at Meter Wavelengths, The Astrophysical Journal",
+    "role": "Coronal scattering and refraction; explains burst/EUV positional offsets and size dilution.",
+    "tags": [
+      "interpretation"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/abb949",
+    "title": "Propagation Effects in Quiet Sun Observations at Meter Wavelengths",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "newkirk1961",
+    "citation": "Newkirk, 1961, The Solar Corona in Active Regions and the Thermal Origin of the Slowly Varying Component of Solar Radio Radiation, The Astrophysical Journal",
+    "role": "Coronal density model mapping observing frequency to coronal height (15-150 Mm).",
+    "tags": [
+      "coronal-model"
+    ],
+    "status": "verified",
+    "doi": "10.1086/147104",
+    "title": "The Solar Corona in Active Regions and the Thermal Origin of the Slowly Varying Component of Solar Radio Radiation.",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "kulkarni1989",
+    "citation": "Kulkarni, 1989, Self-noise in interferometers: radio and infrared, The Astronomical Journal",
+    "role": "Self-noise formalism; sets the noise floor for weak burst detection.",
+    "tags": [
+      "noise"
+    ],
+    "status": "verified",
+    "doi": "10.1086/115202",
+    "title": "Self-noise in interferometers - Radio and infrared",
+    "container": "The Astronomical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "morgan2021",
+    "citation": "Morgan, 2021, A measurement of source noise at low frequency: Implications for modern low frequency arrays, Publications of the Astronomical Society of Australia",
+    "role": "Self-noise for large-N interferometers; correlated across baselines.",
+    "tags": [
+      "noise"
+    ],
+    "status": "verified",
+    "doi": "10.1017/pasa.2021.3",
+    "title": "A measurement of source noise at low frequency: Implications for modern interferometers",
+    "container": "Publications of the Astronomical Society of Australia",
+    "note": "ok"
+  },
+  {
+    "key": "tingay2013",
+    "citation": "Tingay, 2013, The Murchison Widefield Array: The Square Kilometre Array Precursor at Low Radio Frequencies, Publications of the Astronomical Society of Australia",
+    "role": "MWA Phase-I instrument description.",
+    "tags": [
+      "instrument"
+    ],
+    "status": "verified",
+    "doi": "10.1017/pasa.2012.007",
+    "title": "The Murchison Widefield Array: The Square Kilometre Array Precursor at Low Radio Frequencies",
+    "container": "Publications of the Astronomical Society of Australia",
+    "note": "ok (title search)"
+  },
+  {
+    "key": "lonsdale2009",
+    "citation": "Lonsdale, 2009, The Murchison Widefield Array: Design Overview, Proceedings of the IEEE",
+    "role": "MWA design and array configuration.",
+    "tags": [
+      "instrument"
+    ],
+    "status": "verified",
+    "doi": "10.1109/jproc.2009.2017564",
+    "title": "The Murchison Widefield Array: Design Overview",
+    "container": "Proceedings of the IEEE",
+    "note": "ok"
+  },
+  {
+    "key": "garton2018",
+    "citation": "Garton, 2018, Automated coronal hole identification via multi-thermal intensity segmentation, Journal of Space Weather and Space Climate",
+    "role": "CHIMERA coronal hole detection, needed for the Figure 1 boundary contours.",
+    "tags": [
+      "figure-1"
+    ],
+    "status": "verified",
+    "doi": "10.1051/swsc/2017039",
+    "title": "Automated coronal hole identification via multi-thermal intensity segmentation",
+    "container": "Journal of Space Weather and Space Climate",
+    "note": "ok"
+  },
+  {
+    "key": "pesnell2012",
+    "citation": "Pesnell, 2012, The Solar Dynamics Observatory (SDO), Solar Physics",
+    "role": "SDO/AIA and HMI, the EUV and magnetogram source for Figures 1, 9, 11, 12.",
+    "tags": [
+      "figure-1",
+      "instrument"
+    ],
+    "status": "verified",
+    "doi": "10.1007/s11207-011-9841-3",
+    "title": "The Solar Dynamics Observatory (SDO)",
+    "container": "Solar Physics",
+    "note": "ok"
+  },
+  {
+    "key": "gibson2016",
+    "citation": "Gibson, 2016, FORWARD: A Toolset for Multiwavelength Coronal Magnetometry, Frontiers in Astronomy and Space Sciences",
+    "role": "FORWARD coronal model used for the density/temperature/field profiles.",
+    "tags": [
+      "coronal-model"
+    ],
+    "status": "verified",
+    "doi": "10.3389/fspas.2016.00008",
+    "title": "FORWARD: A Toolset for Multiwavelength Coronal Magnetometry",
+    "container": "Frontiers in Astronomy and Space Sciences",
+    "note": "ok"
+  },
+  {
+    "key": "reid2018",
+    "citation": "Reid, 2018, Spatial Expansion and Speeds of Type III Electron Beam Sources in the Solar Corona, The Astrophysical Journal",
+    "role": "Type-III electron beam energy estimate used as an independent energetics cross-check.",
+    "tags": [
+      "energetics"
+    ],
+    "status": "verified",
+    "doi": "10.3847/1538-4357/aae5d4",
+    "title": "Spatial Expansion and Speeds of Type III Electron Beam Sources in the Solar Corona",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "hudson1991",
+    "citation": "Hudson, 1991, Solar flares, microflares, nanoflares, and coronal heating, Solar Physics",
+    "role": "The slope < -2 criterion for flare distributions to sustain coronal heating.",
+    "tags": [
+      "energetics"
+    ],
+    "status": "verified",
+    "doi": "10.1007/bf00149894",
+    "title": "Solar flares, microflares, nanoflares, and coronal heating",
+    "container": "Solar Physics",
+    "note": "ok"
+  },
+  {
+    "key": "parker1988",
+    "citation": "Parker, 1988, Nanoflares and the solar X-ray corona, The Astrophysical Journal",
+    "role": "The nanoflare hypothesis that frames the whole result.",
+    "tags": [
+      "framing"
+    ],
+    "status": "verified",
+    "doi": "10.1086/166485",
+    "title": "Nanoflares and the solar X-ray corona",
+    "container": "The Astrophysical Journal",
+    "note": "ok"
+  },
+  {
+    "key": "mcmullin2007",
+    "citation": "McMullin, 2007, CASA Architecture and Applications, ASP Conference Series 376",
+    "role": "CASA, the imaging package used by the original paper.",
+    "tags": [
+      "software"
+    ],
+    "status": "manual",
+    "doi": null,
+    "title": null,
+    "container": null,
+    "note": "No Crossref record (conference proceedings)"
+  }
+]

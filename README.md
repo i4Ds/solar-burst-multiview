@@ -23,6 +23,22 @@ conda activate solar-burst-multiview
 jupyter lab
 ```
 
+## References
+
+`references/core_references.bib` holds the papers the pipeline implementation
+depends on, resolved from Crossref and verified against author, title, volume
+and page. Regenerate or extend it with:
+
+```bash
+python scripts/resolve_references.py           # -> references/core_references.bib
+python scripts/import_to_zotero.py --list-collections
+python scripts/import_to_zotero.py --target C13
+```
+
+`references/resolution_report.json` records what matched and what did not.
+McMullin et al. (2007), the CASA paper, has no Crossref record and must be added
+by hand.
+
 ## Related repos
 
 - [i4Ds/STIX-MWA](https://github.com/i4Ds/STIX-MWA) — earlier scripts for STIX/MWA overlap finding
