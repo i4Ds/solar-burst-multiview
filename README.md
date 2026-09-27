@@ -1,5 +1,10 @@
 # Solar Burst Multiview
 
+MWA solar imaging workhorse for the
+[solar-radio-imaging-spectroscopy](https://github.com/i4Ds/solar-radio-imaging-spectroscopy)
+sabbatical (Sharma 2022 → 2024 campaign). e-Callisto, Karabo, and STIX stay in
+their own i4Ds repos; this tree is not the umbrella.
+
 Multi-instrument analysis of solar radio bursts combining:
 
 - **MWA** — Murchison Widefield Array radio imaging
