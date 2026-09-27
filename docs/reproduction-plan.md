@@ -1,16 +1,19 @@
 # Plan: reproduce Sharma et al. 2022, then generalise
 
-Status: **Phase 2 in progress.** Phases 0–1 are done. `python -m solarburst.figures`
-rebuilds paper Figures 3, 5, 7, 9, 11 and 12. Figure 3 peaks match the caption
-to 15%. Figures 7–12 use a 6σ MAD detector on the `Tb_*_sub.p` cubes; they
-match the paper's layout and IDs, not Table 2 counts pixel-for-pixel.
+Status: **27 September 2026.** Phases 0–1 are done. Phase 2 is in progress.
+`python -m solarburst.figures` rebuilds paper Figures 3, 5, 7, 9, 11 and 12.
+Figure 3 peaks match the caption to 15%. Figures 7–12 use a 6σ MAD detector on
+the `Tb_*_sub.p` cubes; they match the paper's layout and IDs, not Table 2
+counts pixel-for-pixel.
+
+This repo is MWA solar imaging only. STIX and e-Callisto are out of scope.
 
 Goal, in two steps:
 
 1. Reproduce the solar maps of Sharma et al. 2022 (ApJ 937, 99) as a validation
    exercise — do we understand the method well enough to regenerate its outputs?
 2. Turn the visibility-subtraction imaging method into a reusable, config-driven
-   tool and point it at the 2024 MWA solar observations. No STIX.
+   tool and point it at the 2024 MWA solar observations.
 
 ---
 
@@ -123,47 +126,34 @@ and SIF files of those images.
 Each phase ends at a gate that is checkable against Sharma's own products, so we
 find out quickly if our understanding is wrong.
 
-### Phase 0 — Foundations (new laptop, ~half a day)
+### Phase 0 — Foundations — **done**
 
-- conda env from `environment.yml`, adding `python-casacore`, `reproject`,
-  `scipy`, `pyyaml`, `tqdm`.
-- Package skeleton `src/solarburst/`, installed editable, replacing the
-  notebooks-first layout for anything reusable. Notebooks become thin drivers.
-- `configs/sharma2022.yaml` — already drafted, contains the obsids, band/coarse-
-  channel mapping, calibrator, image geometry, and every calculon path.
-- A staging module that rsyncs named slices from calculon into `data/sharma2022/`,
-  so no path is ever hardcoded in a notebook.
+conda env from `environment.yml` (`python-casacore`, `reproject`, `scipy`,
+`pyyaml`, `tqdm`). Package `src/solarburst/`, installed editable.
+`configs/sharma2022.yaml` pins obsids, bands, calibrator, image geometry, and
+calculon paths. `solarburst.stage` rsyncs named slices into `data/sharma2022/`.
 
-**Gate:** `rsync` the 1.2 GB validation pair and open both with `python-casacore`.
+**Gate, passed:** validation MS pair opens with `python-casacore`.
 
-### Phase 1 — Validate the visibility subtraction
+### Phase 1 — Validate the visibility subtraction — **done**
 
-The scientific crux, and cheap. Read `1133148288_125-126_chan.ms`, implement the
-running-median background subtraction, and diff the result against
-`1133148288_125-126_chan_sub.ms`.
+Read `1133148288_125-126_chan.ms` and diff against
+`1133148288_125-126_chan_sub.ms`. The paper's §4.1 describes a 15 s running
+median. The CASA logs (`casa-20200523-045753.log`) show `subvs` with
+`mode="linear"` over the whole scan, including flagged samples. `scan_mean`
+matches the MS bit-exactly (`|Δ| = 0` on 4.8 M visibilities).
+`--method running_median` is the published algorithm, not this ground truth.
 
-The paper's §2 gives the method but we should expect to recover some parameters
-empirically: the median window length, whether it acts on complex visibilities or
-amplitudes, whether it is per-baseline/channel/polarisation, and how flagged data
-is handled. The ground-truth pair makes this a search over a small parameter
-space with an unambiguous success criterion instead of guesswork.
+**Gate, passed:** subtracted visibilities agree with Sharma's to numerical
+precision.
 
-**Gate:** our subtracted visibilities agree with Sharma's to numerical precision.
-Reaching this means the core method is genuinely understood — the single most
-important checkpoint in the whole plan.
+### Phase 2 — Rebuild the figures from the existing images — **in progress**
 
-### Phase 2 — Rebuild the figures from the existing images
-
-Stage a targeted subset of `new_ms/fits` (one obsid × one band × 570 timesteps is
-2.4 GB; the full set is ~150 GB, which we do not want). Then build the map
-pipeline: Jy/beam → brightness temperature using the beam in the header,
-RA/Dec → helioprojective via `sunpy`/`reproject`, solar limb overlay, and the
-paper's colour scales.
-
-First task here is a careful pass through the PDF to pin down which obsid, band
-and timestep back each of Figures 3, 5, 7, 9, 11 and 12 — 570 timesteps per band
-is far too many to search blindly. Those get recorded in the config as a
-`figures:` block.
+The map pipeline is in `src/solarburst/` (`maps`, `bursts`, `figures`). Figure
+IDs are in the config `figures:` block. The time-average uses the **median**
+of Sharma's Tb pickles (a mean is wrecked by a few hundred-MK frames at 197
+and 240 MHz). 161 MHz and partial obsid `1133149192` are omitted, as in the
+paper.
 
 Pinned:
 
@@ -184,9 +174,9 @@ Two conversion facts that are not in the paper:
   published scale; the pickles already include it. DATE-OBS on every snapshot
   FITS is the scan start, so frame time comes from the filename index / pickle.
 
-**Gate:** side-by-side visual match with the published figures, plus agreement in
-peak brightness temperature and source position. Figure 3 peaks from the time
-median sit within ~15% of the caption (0.26…0.47 MK).
+**Gate, partly met:** Figure 3 peaks from the time median sit within ~15% of the
+caption (0.26…0.47 MK). Figures 7–12 match layout and IDs; Table 2 region counts
+are still approximate.
 
 Phases 1 and 2 are independent, both laptop-native, and together are the whole of
 "do we understand this paper".
@@ -253,14 +243,9 @@ The 2 TB laptop is comfortable as long as we stage selectively and never mirror
   jobs have to be `sbatch`/`srun`, not login-node processes.
 - **Rohit's directory is a personal working tree.** Files date from 2019–2022
   with no guarantee of internal consistency, and some subdirectories are
-  world-writable. We should treat it as strictly read-only and stage copies. He
-  could also map figures to obsid/band/timestep directly, which would collapse
-  most of the Phase 2 search — worth a conversation before that phase rather
-  than before Phase 1.
-- **Subtraction parameters may not be fully recoverable** from the paper text. If
-  Phase 1 fails to converge, the fallback is asking Rohit for the script, which
-  likely still exists alongside the CASA logs in `20151203_sub/161MHz`.
+  world-writable. Treat it as strictly read-only and stage copies. Figure 7–12
+  region centres and Table 2 counts are still approximate without his mapping.
 - **Scope of "reproduce".** Phases 1 and 2 answer the validation question at low
-  cost. Phase 3 is the more rigorous claim and considerably more work. Worth
-  deciding explicitly whether Phase 3 is required before Phase 5 starts, or
-  whether a validated subtraction plus matching figures is enough to move on.
+  cost. Phase 3 is the more rigorous claim and considerably more work. Decide
+  explicitly whether Phase 3 is required before Phase 5 starts, or whether a
+  validated subtraction plus matching figures is enough to move on.

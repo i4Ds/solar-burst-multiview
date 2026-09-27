@@ -20,8 +20,7 @@ bash /tmp/miniforge.sh -b -p "$HOME/miniforge3"
 "$HOME/miniforge3/bin/conda" init zsh && exec zsh
 
 # 3. Clone
-mkdir -p ~/Documents/GitHub && cd ~/Documents/GitHub
-git clone https://github.com/i4Ds/solar-burst-multiview.git
+git clone git@github.com:i4Ds/solar-burst-multiview.git
 cd solar-burst-multiview
 
 # 4. Environment
@@ -76,12 +75,19 @@ library from source on macOS.
 ```bash
 python -c "import astropy, sunpy, numpy; print('core OK')"
 python -c "import casacore.tables; print('casacore OK')"
+python -c "import solarburst; print('solarburst OK')"
 ssh -i ~/.ssh/id_ed25519 andre_csillaghy@calculon.informatik.fhnw.ch \
   'ls /mnt/nas05/data02/rohit | head'
 ```
 
 Calculon is on the FHNW internal network. From off-campus, connect the FHNW VPN
-before `ssh` or `python -m solarburst.stage`.
+before `ssh` or `python -m solarburst.stage`. After staging:
+
+```bash
+python -m solarburst.stage --check
+python -m solarburst.subtract
+python -m solarburst.figures
+```
 
 ## Zotero
 
@@ -94,11 +100,11 @@ final sync.
 
 ## Remote hosts
 
-Calculon and CSCS need the radio-astronomy tools the laptop does not run.
-Those tools are containers, not a login-node install. Calculon CPU nodes have
-Apptainer and GPU nodes have Singularity-CE; the login node has neither. The
-images, the pull job and the `hyperdrive vis-sim` smoke test are in
-[`calculon-mwa.md`](calculon-mwa.md).
+Calculon and CSCS run the radio-astronomy tools the laptop does not. Those
+tools are containers, not a login-node install. On CSCS (Besso) the stack is
+installed and working via Podman. On calculon, CPU nodes have Apptainer and GPU
+nodes have Singularity-CE; the login node has neither. Images, the pull job and
+the `hyperdrive vis-sim` smoke test are in [`calculon-mwa.md`](calculon-mwa.md).
 
 No conda-family tool is required for that path. A user-space micromamba is only
 for Python work on the login node — a single static binary, no base

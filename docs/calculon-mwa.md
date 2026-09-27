@@ -70,6 +70,6 @@ request stays under the partition's per-CPU cap (`MaxMemPerCPU` is 3200 MB on
 ## What is not this setup
 
 Besso's `podman pull` / `podman save` / `podman run --gpus=all` sequence is the
-CSCS form of the same images. Calculon has no Podman binary on the nodes we
-can schedule. Batch integration on Daint and Besso is still the question for
-Colin McMurtrie.
+CSCS form of the same images, and that stack is installed and working. Calculon
+has no Podman binary on the nodes we can schedule; it uses SIF files and
+`singularity exec --nv` instead.

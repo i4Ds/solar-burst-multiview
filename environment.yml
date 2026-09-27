@@ -22,6 +22,4 @@ dependencies:
   - setuptools
   - pip
   - pip:
-    - stixdcpy          # STIX data client
-    - ecallisto-ng      # e-Callisto data access
     - mwalib            # MWA metadata

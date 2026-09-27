@@ -12,62 +12,46 @@ pip install -e .
 
 The conda env is named `solar-burst-multiview` and tracks the latest CPython on conda-forge (`python` is unpinned in `environment.yml`).
 
-Reusable science code lives in `src/solarburst/`, installed editable. Notebooks are thin drivers. Stage data from calculon with `python -m solarburst.stage --check` (needs FHNW VPN).
+This repo is MWA solar imaging only. STIX and e-Callisto are out of scope.
 
-External binaries needed for the MWA pipeline (notebook 03) — not in conda:
-- `giant-squid` — MWA ASVO download client
-- `birli` — MWA preprocessor (flagging, averaging)
-- `hyperdrive` — MWA direction-independent calibrator
-- `wsclean` — interferometric imager
-- `$MWA_ASVO_API_KEY` must be set for downloads
-- `$MWA_BEAM_FILE` must point to `mwa_full_embedded_element_pattern.h5`
+Reusable science code lives in `src/solarburst/`, installed editable. Stage data from calculon with `python -m solarburst.stage --check` (needs FHNW VPN).
 
-On calculon those binaries come from Singularity images under `~/mwa/images`,
-not from the login-node `PATH`. See `docs/calculon-mwa.md`.
+MWA binaries (hyperdrive, birli, wsclean, giant-squid) are **not** in conda. On calculon they come from Singularity images under `~/mwa/images`, not from the login-node `PATH`. See `docs/calculon-mwa.md`. CSCS (Besso) runs the same images with Podman. `$MWA_ASVO_API_KEY` and `$MWA_BEAM_FILE` are only needed if downloading raw 2015 visibilities (Phase 4, optional).
 
 ## Architecture
 
-Reusable logic lives in `src/solarburst/` (`config`, `stage`, `subtract`, `maps`, `figures`). The STIX / e-Callisto / MWA notebooks remain as the original multi-instrument path.
-
-`python -m solarburst.subtract` is the Phase 1 gate: it subtracts the scan-mean background from the validation MS and diffs against Sharma's `_sub.ms`.
-
-`python -m solarburst.figures` is the Phase 2 gate: it rebuilds Sharma et al. 2022 Figures 3, 5, 7, 9, 11 and 12 from `data/sharma2022/`.
-
-Config is YAML under `configs/`. Remote paths are relative to Rohit Sharma's tree on calculon; `solarburst.stage` rsyncs named slices into `data/<event>/` so notebooks never hardcode a host prefix.
-
-### Notebook flow
+Reusable logic lives in `src/solarburst/` (`config`, `stage`, `subtract`, `maps`, `bursts`, `figures`). Config is YAML under `configs/`. Remote paths are relative to Rohit Sharma's tree on calculon; `solarburst.stage` rsyncs named slices into `data/<event>/`.
 
 ```
-01_find_events       → identifies coincident STIX + MWA observations, saves data/coincident_events.csv
-02_ecallisto_spectra → downloads e-Callisto dynamic spectra for the event window
-03_mwa_imaging       → downloads MWA visibilities and runs the full calibration/imaging pipeline
-04_multiview         → combines all three instruments into a single figure
+python -m solarburst.stage --check   # 1.2 GB validation MS pair
+python -m solarburst.subtract        # Phase 1 gate vs Sharma _sub.ms
+python -m solarburst.figures         # Phase 2 gate: paper Figs 3, 5, 7, 9, 11, 12
 ```
+
+`subtract` uses a scan-mean background (`scan_mean`). That matches Sharma's `_sub.ms` bit-exactly. `--method running_median` is the paper's §4.1 algorithm, not this ground truth.
+
+`imaging.tb_scale: 9.48` recovers the pickled T_B scale; Rayleigh–Jeans from FITS `BMAJ`/`BMIN` is ~9.5× too low.
+
+Notebooks under `notebooks/` are leftover drivers, not the current path.
 
 ### Key external libraries
 
 | Library | Role |
 |---------|------|
-| `ecallisto-ng` (`ecallisto_ng`) | e-Callisto FITS download and spectrogram plotting. Entry points: `ecallisto_ng.data_download.downloader.get_ecallisto_data`, `get_instrument_with_available_data`; plotting via `ecallisto_ng.plotting.plotting.plot_spectogram_mpl` |
-| `stixdcpy` | STIX flare catalog and light curve access from the STIX data center (`datacenter.stix.i4ds.net`) |
-| `pyvo` | VO TAP queries against the MWA observation database (`vo.mwatelescope.org/mwa_asvo/tap`) |
-| `mwalib` | Read MWA metafits for antenna/channel/timestep metadata |
-| `astropy` | Time conversions (GPS ↔ UTC), FITS I/O, coordinate handling |
-| `sunpy` | Solar coordinate frames if overlaying images on solar disk |
 | `python-casacore` | Read/write CASA measurement sets (`casacore.tables`) |
+| `sunpy` | Helioprojective frames and AIA overlay |
+| `astropy` | Time conversions, FITS I/O, WCS |
+| `reproject` | Map resampling |
+| `pyyaml` | `configs/sharma2022.yaml` |
+| `mwalib` | MWA metafits (antenna/channel/timestep metadata) |
+| `pyvo` | VO TAP queries against `vo.mwatelescope.org/mwa_asvo/tap` (2024 archive) |
 
 ### Data directory
 
-`data/` is gitignored (except `.gitkeep`). Sharma 2022 slices land under `data/sharma2022/`, preserving the relative layout of `remote.rohit_root`. The older MWA notebook pipeline uses per-obsid trees:
-```
-data/<obsid>/raw/    ← gpubox files + metafits
-data/<obsid>/prep/   ← birli uvfits output
-data/<obsid>/cal/    ← hyperdrive solutions + calibrated MS
-data/<obsid>/img/    ← wsclean FITS images
-```
+`data/` is gitignored (except `.gitkeep`). Sharma 2022 slices land under `data/sharma2022/`, preserving the relative layout of `remote.rohit_root`. Rebuilt figures go to `figures/sharma2022/`.
 
 ### Related repos
 
-- [`i4Ds/STIX-MWA`](https://github.com/i4Ds/STIX-MWA) — earlier scripts for STIX/MWA event matching; reference for `find_flares_in_mwa.py` logic used in notebook 01
-- [`i4Ds/mwa-demo`](https://github.com/i4Ds/mwa-demo) — the MWA shell-script pipeline that notebook 03 is based on; consult it for full birli/hyperdrive/wsclean flag options
-- [`i4Ds/ecallisto_ng`](https://github.com/i4Ds/ecallisto_ng) — the ecallisto-ng source; `example/` notebooks show additional usage patterns
+- [`i4Ds/solar-radio-imaging-spectroscopy`](https://github.com/i4Ds/solar-radio-imaging-spectroscopy) — sabbatical umbrella and org Project
+- [`i4Ds/mwa-demo`](https://github.com/i4Ds/mwa-demo) — non-solar MWA shell pipeline (birli/hyperdrive/wsclean flags)
+- [`i4Ds/Karabo-Pipeline`](https://github.com/i4Ds/Karabo-Pipeline) — SKA / Karabo experiments
