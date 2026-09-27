@@ -65,6 +65,64 @@ imaging:
   stokes: I
   cadence_s: 0.5
   timesteps_per_obsid: 570
+  # Rayleigh–Jeans with the FITS beam undershoots Sharma's pickled T_B by this
+  # factor (measured 9.48 at 108 MHz on frame 0010). Use 1.0 for the literal
+  # Mohan & Oberoi (2017) conversion.
+  tb_scale: 9.48
+
+# Paper figures rebuilt from staged products. `python -m solarburst.figures`
+figures:
+  output_dir: figures/sharma2022
+  limb_arcmin: 16.0
+  fov_arcsec: 2000
+  fov_fig5_arcsec: 2500
+  cmap: jet
+  fig3:
+    # Time-median of Tb_new/Tb_*.p over the six fully-imaged scans. Mean is
+    # unusable at 197 and 240 MHz (a few hundred-MK frames). Omit 161 MHz
+    # (channels 125-126), which the paper left out of Figure 3.
+    reduce: median
+    omit_channels: ["125-126"]
+    skip_obsids: [1133149192]
+    vmin_mk: 0.0
+    vmax_mk: 0.40
+    paper_peak_mk: [0.26, 0.30, 0.32, 0.34, 0.37, 0.40, 0.44, 0.47]
+    paper_mhz: [108, 120, 133, 145, 179, 197, 217, 240]
+  fig5:
+    # Pickle frame 0 = 1133148288_*.0008 = 03:24:36.5–03:24:37.0 UT.
+    obsid: 1133148288
+    frame: 0
+    fits_index: "0008"
+    time_utc: "2015-12-03T03:24:36.75"
+    channels: ["084-085", "139-140", "187-188"]
+    labels: ["108 MHz", "179 MHz", "240 MHz"]
+    colors: ["#d62728", "#2ca02c", "#1f77b4"]
+    contour_k: 2.0e4
+    residual_threshold_k: 4500.0
+    mask_outside_radio_sun: true
+  fig7:
+    npix: 200
+    cell_arcsec: 25.0
+    nsigma_time: 6.0
+    nsigma_map: 5.0
+    min_pix: 3
+  fig9:
+    aia: aia.lev1.193A_2015-12-03T03_40_29.84Z.image_lev1.fits
+    aia_npix: 800
+    fov_arcsec: 1800
+    region_radius_arcsec: 90
+    # PSF-sized boxes from Figure 9 (Solar X, Y in arcsec). Region 1 is the
+    # brightest compact source at 240 MHz; 2/3 the limbs; 4 emerging AR;
+    # 5 quiet Sun; 6 off-limb but inside the radio disk.
+    regions:
+      - {id: 1, x: 650, y: -250}
+      - {id: 2, x: 850, y: 450}
+      - {id: 3, x: -900, y: 150}
+      - {id: 4, x: -150, y: 350}
+      - {id: 5, x: -200, y: -450}
+      - {id: 6, x: -1150, y: -750}
+  fig11: {}
+  fig12: {}
 
 remote:
   host: calculon.informatik.fhnw.ch
@@ -87,8 +145,26 @@ remote:
   # obsids in calendar 2024. Not used for this reproduction.
   shared_archive: /mnt/nas05/data02/MWA_data/data/mwa_data
 
-# The subtraction ground truth: `input` is what Sharma fed to the subtraction and
-# `expected` is what came out, so our implementation can be diffed against it.
+# Trees to stage for Phases 1–4, in priority order. Together ~1.02 TiB; omit
+# `new_vis` (2.0 TB) and the full-resolution `new_ms/<band>/` measurement sets.
+# `python -m solarburst.stage --bulk`
+stage:
+  - 20151203_sub                         # 396G  subtraction workspace
+  - 20151203_MWA/new_ms/fits             # 265G  published images
+  - 20151203_MWA/Tb_new                  #  47G  brightness-temperature pickles
+  - 20151203_MWA/new_ms/cal_soln         # 3.4M  bandpass/gain solutions
+  - 20151203_forward                     # 1.9G  PSIMAS/FORWARD models
+  - 20151203_EUV                         #  10G  AIA 193 Å
+  - 20151203_LASCO                       #  65M  coronagraph
+  - 20151203_MWA/new_ms/fits_residual    # 143G  residual images
+  - 20151203_selfcal                     # 159G  self-cal products
+
+# The subtraction ground truth: `input` is what Sharma fed to CASA `subvs` and
+# `expected` is what came out. The logs (casa-20200523-045753.log) show
+#   subvs(..., mode="linear", subtime1="03:24:33~03:29:29", ...)
+# i.e. a scan-long complex mean including flagged samples, not the 15 s running
+# median described in the paper. `method: scan_mean` matches the MS; use
+# `running_median` for the published algorithm.
 validation:
   subtraction:
     band: 161MHz
@@ -96,3 +172,7 @@ validation:
     channels: "125-126"
     input: 20151203_sub/161MHz/1133148288_125-126_chan.ms
     expected: 20151203_sub/161MHz/1133148288_125-126_chan_sub.ms
+    method: scan_mean
+    include_flagged: true
+    window_s: 15.0
+    clip_sigma: 5.0

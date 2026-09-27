@@ -5,7 +5,7 @@ name: solar-burst-multiview
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python
   - jupyterlab
   - numpy
   - pandas
@@ -14,6 +14,12 @@ dependencies:
   - sunpy
   - requests
   - pyvo
+  - python-casacore
+  - reproject
+  - scipy
+  - pyyaml
+  - tqdm
+  - setuptools
   - pip
   - pip:
     - stixdcpy          # STIX data client
