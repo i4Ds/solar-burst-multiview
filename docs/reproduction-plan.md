@@ -1,7 +1,9 @@
 # Plan: reproduce Sharma et al. 2022, then generalise
 
-Status: **draft for review**. Nothing here is implemented yet; building starts on
-the new laptop.
+Status: **Phase 2 in progress.** Phases 0–1 are done. `python -m solarburst.figures`
+rebuilds paper Figures 3, 5, 7, 9, 11 and 12. Figure 3 peaks match the caption
+to 15%. Figures 7–12 use a 6σ MAD detector on the `Tb_*_sub.p` cubes; they
+match the paper's layout and IDs, not Table 2 counts pixel-for-pixel.
 
 Goal, in two steps:
 
@@ -67,12 +69,31 @@ Inside `20151203_sub/161MHz` the subtraction step survives as a matched pair:
 1.2 GB gives a direct unit test of the core algorithm, runnable entirely on the
 laptop.
 
-### Software gaps
+### Software on calculon
 
-The calculon login node is bare Ubuntu with system Python 3.12 and gcc. No
-conda, cmake, Docker, Apptainer, Singularity, CASA, WSClean, hyperdrive, birli
-or giant-squid. Storage is not a constraint: 272 TB free on `/data`, 113 TB on
-`/scratch`.
+The login node (`calc-m-001`, Ubuntu 24.04) still has no container runtime and
+no GPU, and AppArmor blocks unprivileged user namespaces, so a rootless
+runtime cannot be installed in `$HOME`. The compute nodes are different.
+Surveyed 2026-09-27:
+
+| where | runtime |
+|---|---|
+| CPU cluster `calc-cpu` | Apptainer 1.5.2 as `singularity`. Partitions `cpu-debug` (1 h) and `cpu-daily` (1 day). Images are pulled here. |
+| GPU cluster `cluster` | Singularity-CE 4.3.1 with `--nv`, NVIDIA driver 610.57. Partitions `debug` / `performance` (RTX 2080 Ti, 3080, A4500) and `h200`. |
+
+A SIF built by Apptainer on a CPU node runs under Singularity-CE on a GPU node.
+`$HOME` (NFS, ~19 TB free), `/scratch` (BeeGFS, ~93 TB) and `/data` (~272 TB)
+are mounted on both. There is no sudo. The account has a subuid/subgid range.
+
+The images are the ones André runs on CSCS. On Besso that is Podman inside
+`srun --partition=a100`; on calculon it is Singularity/Apptainer. See
+[`calculon-mwa.md`](calculon-mwa.md).
+
+| image | role |
+|---|---|
+| `mwatelescope/mwa-demo:cuda12.5.1` | the MWA stack: hyperdrive plus birli, giant-squid, wsclean, EveryBeam, IDG, CHIPS, AOFlagger, SSINS |
+| `mwatelescope/hyperdrive:0.6.1-autos-cuda12.5.1-ubuntu24.04` | the image in the interactive `hyperdrive vis-sim` notes |
+| `ghcr.io/d3v-null/sp5505:sha-967aa66-pass` | Swiss Karabo/Spack build (hyperdrive, wsclean, aoflagger, DP3), meant for Daint and Besso |
 
 ---
 
@@ -87,10 +108,13 @@ end to end.
 
 **Calculon** — anything needing WSClean, hyperdrive, birli or CASA proper:
 re-imaging from visibilities, recalibration, and bulk processing of the 2024
-archive. Requires a software stack that does not exist yet.
+archive. GPU nodes already run those tools from the MWA containers; the login
+node does not. Operational steps are in [`calculon-mwa.md`](calculon-mwa.md).
 
-**CSCS** — full-scale deployment later, once the pipeline is proven and
-containerised. Calculon is the staging rehearsal for it.
+**CSCS (Besso / Daint)** — the same images, via Podman rather than
+Singularity. André's interactive form is `srun --partition=a100
+--gpus-per-task=1` then `podman run --gpus=all`. Batch integration on CSCS is
+still an open question for Colin McMurtrie; calculon uses Slurm `sbatch`.
 
 ---
 
@@ -141,8 +165,28 @@ and timestep back each of Figures 3, 5, 7, 9, 11 and 12 — 570 timesteps per ba
 is far too many to search blindly. Those get recorded in the config as a
 `figures:` block.
 
+Pinned:
+
+| Fig | What | IDs |
+|---|---|---|
+| 3 | Time-averaged total T_B, 8 bands, 0–0.40 MK, limb 16′ | median of `Tb_new/Tb_*.p` over the six `imaged: true` scans; no 161 MHz |
+| 5 | Residual overlay, 108/179/240 MHz, contours 2×10⁴ K | pickle frame 0 = `1133148288_*.0008`, 03:24:36.5–37.0 UT |
+| 7 | Burst-count maps + 1σ temporal variation | 6σ detection on residual cubes |
+| 9 | AIA 193 + 240 MHz, six regions | `20151203_EUV/` |
+| 11 | Time-averaged residual T_B after dropping 6σ timestamps | residual FITS / `_sub` pickles |
+| 12 | Time-average of 6σ bursts + AIA overlay | same |
+
+Two conversion facts that are not in the paper:
+
+- Sharma's `_sub.ms` is a scan-mean, not the 15 s running median (Phase 1).
+- Rayleigh–Jeans with the FITS `BMAJ`/`BMIN` is a factor ~9.5 below the pickled
+  T_B (and the Figure 3 caption peaks). `imaging.tb_scale: 9.48` recovers the
+  published scale; the pickles already include it. DATE-OBS on every snapshot
+  FITS is the scan start, so frame time comes from the filename index / pickle.
+
 **Gate:** side-by-side visual match with the published figures, plus agreement in
-peak brightness temperature and source position.
+peak brightness temperature and source position. Figure 3 peaks from the time
+median sit within ~15% of the caption (0.26…0.47 MK).
 
 Phases 1 and 2 are independent, both laptop-native, and together are the whole of
 "do we understand this paper".
@@ -153,13 +197,11 @@ This is where reproduction becomes more than re-plotting. Take the calibrated MS
 from `new_ms/<band>/`, apply our own subtraction, image it, and compare against
 `new_ms/fits`.
 
-Needs an imaging stack on calculon. Two options, in preference order:
-
-1. Ask FHNW IT for Apptainer, then run the standard MWA containers. Cleanest, and
-   it is the same artefact we would later ship to CSCS.
-2. Failing that, micromamba in user space gets CASA and `python-casacore`
-   straightforwardly; WSClean and hyperdrive would need building from source
-   against casacore, which is a real but bounded piece of work.
+The imaging stack is the Singularity images in [`calculon-mwa.md`](calculon-mwa.md).
+Pull on `calc-cpu`, run on a GPU node with `singularity exec --nv`. The
+`mwa-demo:cuda12.5.1` image is the one that contains wsclean and birli as well
+as hyperdrive. A from-source build is only worth it if a tool is missing from
+both that image and the Swiss Karabo image.
 
 **Gate:** per-pixel agreement with `new_ms/fits` for a chosen obsid and band.
 
@@ -206,8 +248,12 @@ The 2 TB laptop is comfortable as long as we stage selectively and never mirror
 
 ## 5. Open questions and risks
 
-- **Apptainer on calculon.** Worth asking IT early, since it gates Phase 3 and is
-  also the path to CSCS. Everything before Phase 3 is unblocked regardless.
+- **Containers on the calculon login node.** Compute nodes already run
+  Apptainer (CPU) and Singularity-CE (GPU). The login node cannot. Phase 3
+  jobs have to be `sbatch`/`srun`, not login-node processes.
+- **CSCS batch.** The Besso notes are an interactive Podman session. How that
+  becomes a batch workflow on Daint/Besso is still Colin McMurtrie's call. The
+  calculon SIF files are the rehearsal, not a Podman translation.
 - **Rohit's directory is a personal working tree.** Files date from 2019–2022
   with no guarantee of internal consistency, and some subdirectories are
   world-writable. We should treat it as strictly read-only and stage copies. He

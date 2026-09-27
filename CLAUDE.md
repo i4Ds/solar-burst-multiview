@@ -7,10 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 conda env create -f environment.yml
 conda activate solar-burst-multiview
-jupyter lab
+pip install -e .
 ```
 
-Python 3.10 is required (CASA/mwalib compatibility). The conda env is named `solar-burst-multiview`.
+The conda env is named `solar-burst-multiview` and tracks the latest CPython on conda-forge (`python` is unpinned in `environment.yml`).
+
+Reusable science code lives in `src/solarburst/`, installed editable. Notebooks are thin drivers. Stage data from calculon with `python -m solarburst.stage --check` (needs FHNW VPN).
 
 External binaries needed for the MWA pipeline (notebook 03) — not in conda:
 - `giant-squid` — MWA ASVO download client
@@ -20,9 +22,18 @@ External binaries needed for the MWA pipeline (notebook 03) — not in conda:
 - `$MWA_ASVO_API_KEY` must be set for downloads
 - `$MWA_BEAM_FILE` must point to `mwa_full_embedded_element_pattern.h5`
 
+On calculon those binaries come from Singularity images under `~/mwa/images`,
+not from the login-node `PATH`. See `docs/calculon-mwa.md`.
+
 ## Architecture
 
-This is a **notebooks-first exploration project** — there is no importable Python package yet. All science logic lives in `notebooks/`, run sequentially for a given event.
+Reusable logic lives in `src/solarburst/` (`config`, `stage`, `subtract`, `maps`, `figures`). The STIX / e-Callisto / MWA notebooks remain as the original multi-instrument path.
+
+`python -m solarburst.subtract` is the Phase 1 gate: it subtracts the scan-mean background from the validation MS and diffs against Sharma's `_sub.ms`.
+
+`python -m solarburst.figures` is the Phase 2 gate: it rebuilds Sharma et al. 2022 Figures 3, 5, 7, 9, 11 and 12 from `data/sharma2022/`.
+
+Config is YAML under `configs/`. Remote paths are relative to Rohit Sharma's tree on calculon; `solarburst.stage` rsyncs named slices into `data/<event>/` so notebooks never hardcode a host prefix.
 
 ### Notebook flow
 
@@ -43,10 +54,11 @@ This is a **notebooks-first exploration project** — there is no importable Pyt
 | `mwalib` | Read MWA metafits for antenna/channel/timestep metadata |
 | `astropy` | Time conversions (GPS ↔ UTC), FITS I/O, coordinate handling |
 | `sunpy` | Solar coordinate frames if overlaying images on solar disk |
+| `python-casacore` | Read/write CASA measurement sets (`casacore.tables`) |
 
 ### Data directory
 
-`data/` is gitignored (except `.gitkeep`). The MWA pipeline creates subdirectories per obsid:
+`data/` is gitignored (except `.gitkeep`). Sharma 2022 slices land under `data/sharma2022/`, preserving the relative layout of `remote.rohit_root`. The older MWA notebook pipeline uses per-obsid trees:
 ```
 data/<obsid>/raw/    ← gpubox files + metafits
 data/<obsid>/prep/   ← birli uvfits output

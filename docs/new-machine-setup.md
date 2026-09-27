@@ -27,6 +27,7 @@ cd solar-burst-multiview
 # 4. Environment
 conda env create -f environment.yml
 conda activate solar-burst-multiview
+pip install -e .
 
 # 5. Calculon access, then verify it works
 scp <olduser>@<oldhost>.local:~/.ssh/id_ed25519 ~/.ssh/
@@ -74,16 +75,13 @@ library from source on macOS.
 
 ```bash
 python -c "import astropy, sunpy, numpy; print('core OK')"
-python -c "import casacore.tables; print('casacore OK')"   # see caveat below
+python -c "import casacore.tables; print('casacore OK')"
 ssh -i ~/.ssh/id_ed25519 andre_csillaghy@calculon.informatik.fhnw.ch \
   'ls /mnt/nas05/data02/rohit | head'
 ```
 
-**Caveat:** `environment.yml` does not yet declare `python-casacore`,
-`reproject`, `scipy`, `pyyaml` or `tqdm`, so the casacore check fails on a fresh
-environment. Adding them is the first task of Phase 0 in
-[`reproduction-plan.md`](reproduction-plan.md); `python-casacore` 3.8.1 is
-available on conda-forge for osx-arm64 and needs no compilation.
+Calculon is on the FHNW internal network. From off-campus, connect the FHNW VPN
+before `ssh` or `python -m solarburst.stage`.
 
 ## Zotero
 
@@ -96,19 +94,19 @@ final sync.
 
 ## Remote hosts
 
-Calculon, and later CSCS, follow the same shape with one difference: the heavy
-radio-astronomy tools are needed there, and calculon currently has none of them,
-nor any container runtime. See §2 and Phase 3 of
-[`reproduction-plan.md`](reproduction-plan.md) for what has to be built and the
-preference for Apptainer over compiling from source.
+Calculon and CSCS need the radio-astronomy tools the laptop does not run.
+Those tools are containers, not a login-node install. Calculon CPU nodes have
+Apptainer and GPU nodes have Singularity-CE; the login node has neither. The
+images, the pull job and the `hyperdrive vis-sim` smoke test are in
+[`calculon-mwa.md`](calculon-mwa.md).
 
-No conda-family tool is present on calculon either, so a user-space micromamba is
-the starting point — a single static binary, no base environment, conda-forge by
-default:
+No conda-family tool is required for that path. A user-space micromamba is only
+for Python work on the login node — a single static binary, no base
+environment, conda-forge by default:
 
 ```bash
 curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
-./bin/micromamba create -n solarburst -c conda-forge python=3.10 python-casacore numpy astropy
+./bin/micromamba create -n solarburst -c conda-forge python python-casacore numpy astropy
 ```
 
 Stage work under `/scratch` or `/data`, both of which have ample free space, and

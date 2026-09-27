@@ -20,7 +20,7 @@ Multi-instrument analysis of solar radio bursts combining:
 ```bash
 conda env create -f environment.yml
 conda activate solar-burst-multiview
-jupyter lab
+pip install -e .
 ```
 
 For a machine that has none of the prerequisites yet, and for the calculon and
@@ -31,7 +31,14 @@ Zotero details that a clone cannot carry, see
 
 [docs/reproduction-plan.md](docs/reproduction-plan.md) lays out the reproduction
 of Sharma et al. 2022 and the route from there to a reusable tool for the 2024
-MWA solar observations.
+MWA solar observations. The calculon container setup (MWA demo image,
+hyperdrive, Slurm) is [docs/calculon-mwa.md](docs/calculon-mwa.md).
+
+```bash
+python -m solarburst.stage --check     # validation MS pair from calculon
+python -m solarburst.subtract          # Phase 1 gate
+python -m solarburst.figures           # Phase 2: paper Figures 3, 5, 7, 9, 11, 12
+```
 
 ## References
 
