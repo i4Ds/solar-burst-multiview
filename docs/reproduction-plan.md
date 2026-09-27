@@ -112,9 +112,9 @@ archive. GPU nodes already run those tools from the MWA containers; the login
 node does not. Operational steps are in [`calculon-mwa.md`](calculon-mwa.md).
 
 **CSCS (Besso / Daint)** — the same images, via Podman rather than
-Singularity. André's interactive form is `srun --partition=a100
---gpus-per-task=1` then `podman run --gpus=all`. Batch integration on CSCS is
-still an open question for Colin McMurtrie; calculon uses Slurm `sbatch`.
+Singularity. Installed and working: `srun --partition=a100
+--gpus-per-task=1` then `podman run --gpus=all`. Calculon uses Slurm `sbatch`
+and SIF files of those images.
 
 ---
 
@@ -251,9 +251,6 @@ The 2 TB laptop is comfortable as long as we stage selectively and never mirror
 - **Containers on the calculon login node.** Compute nodes already run
   Apptainer (CPU) and Singularity-CE (GPU). The login node cannot. Phase 3
   jobs have to be `sbatch`/`srun`, not login-node processes.
-- **CSCS batch.** The Besso notes are an interactive Podman session. How that
-  becomes a batch workflow on Daint/Besso is still Colin McMurtrie's call. The
-  calculon SIF files are the rehearsal, not a Podman translation.
 - **Rohit's directory is a personal working tree.** Files date from 2019–2022
   with no guarantee of internal consistency, and some subdirectories are
   world-writable. We should treat it as strictly read-only and stage copies. He
