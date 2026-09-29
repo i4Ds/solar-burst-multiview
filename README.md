@@ -28,6 +28,10 @@ The non-solar demo is how the stack is installed: Docker on the laptop,
 Singularity on calculon GPU nodes, Podman on CSCS. Operational notes:
 [docs/calculon-mwa.md](docs/calculon-mwa.md).
 
+P-AIRCARS (Kansabanik) on an Apple Silicon Mac is a separate install. It runs
+in a Colima linux/amd64 container. Instructions:
+[docs/paircars-mac.md](docs/paircars-mac.md).
+
 ## Package
 
 Reusable code is `src/solarburst/` (`config`, `stage`, `subtract`, `maps`,
