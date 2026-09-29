@@ -1,6 +1,8 @@
 # Plan: reproduce Sharma et al. 2022, then generalise
 
-Status: **27 September 2026.** Phases 0–1 are done. Phase 2 is in progress.
+Status: **29 September 2026.** Phases 0–1 are done. Phase 2 is in progress.
+A separate laptop trial imaged one 2025 solar snapshot from the shared archive
+(section 6). The container stack runs; that scan does not make a solar disk.
 `python -m solarburst.figures` rebuilds paper Figures 3, 5, 7, 9, 11 and 12.
 Figure 3 peaks match the caption to 15%. Figures 7–12 use a 6σ MAD detector on
 the `Tb_*_sub.p` cubes; they match the paper's layout and IDs, not Table 2
@@ -102,12 +104,16 @@ The images are the ones André runs on CSCS. On Besso that is Podman inside
 
 ## 2. Where each piece of work runs
 
-**New MacBook (M5 Pro, 2 TB, 64 GB)** — everything Python-only: reading
-measurement sets through `python-casacore`, the subtraction itself, source
-detection, Jy/beam → brightness-temperature conversion, helioprojective
-reprojection, and all figures. `python-casacore` 3.8.1 is on conda-forge for
-osx-arm64, so this needs no compilation. This is where Phases 1 and 2 live
-end to end.
+**New MacBook (M5 Pro, 2 TB, 64 GB)** — the Python work, and a Linux container
+for the radio tools. Phases 1 and 2 (casacore, subtraction, figures) stay in
+the conda env. `birli`, `hyperdrive`, and `wsclean` run in the Docker
+container `mwa` (Ubuntu 26.04 under Colima), with the repo mounted at `/work`.
+Homebrew builds of those tools are broken (`libboost_system.dylib` missing
+from aoflagger) and are not used. WSClean 3.7 in that container has no IDG,
+so imaging uses `-gridder wgridder`. The notebooks are
+`notebooks/03_mwa_download.ipynb` (archive) and
+`notebooks/03_mwa_imaging.ipynb` (local files only: set an obsid, paths come
+from `data/<obsid>/`).
 
 **Calculon** — anything needing WSClean, hyperdrive, birli or CASA proper:
 re-imaging from visibilities, recalibration, and bulk processing of the 2024
@@ -213,7 +219,9 @@ already sitting converted in the shared archive.
 - Handle the legacy vs MWAX correlator difference; 2024 data is MWAX, 2015 is
   legacy, and they differ in channelisation and metadata conventions.
 - Calibration strategy for the 2024 epoch: identify bracketing calibrator scans
-  and decide whether self-calibration on the Sun is needed.
+  and decide whether self-calibration on the Sun is needed. The 2025 trial in
+  section 6 shows that transferring solutions from a calibrator scan works,
+  and that a picket-fence snapshot still images as grating lobes.
 - Then burst detection and the science.
 
 ---
@@ -249,3 +257,64 @@ The 2 TB laptop is comfortable as long as we stage selectively and never mirror
   cost. Phase 3 is the more rigorous claim and considerably more work. Decide
   explicitly whether Phase 3 is required before Phase 5 starts, or whether a
   validated subtraction plus matching figures is enough to move on.
+- **Picket-fence snapshots.** ASVO conversion products for later solar scans
+  are narrow coarse channels with gaps, not a filled band. Short exposures of
+  those cannot be turned into a solar disk by imaging settings. See section 6.
+
+---
+
+## 6. Laptop trial — one archive solar scan
+
+Done 27–29 September 2026, on the Mac, in container `mwa`. This is not a
+Sharma reproduction. It checks that download, calibration transfer, and
+WSClean work on a scan taken from the shared calculon archive.
+
+The scan was not chosen from a science search. The observation originally
+wanted was not available. Local disk held the Sharma 2015 tree
+(`data/sharma2022/`, about 1 TB) and one 2017 uvfits (`1184702048`). On
+calculon, `/mnt/nas05/data02/MWA_data/data/mwa_data` holds the converted
+archive. From a listing there, `1424757616_929853_vis_meta.tar` (Andrea
+Zanelli) was copied across, together with the 7.2 GB visibility tar
+`1424757616_922328_ms.tar`, and unpacked under `data/1424757616/`.
+
+| | solar scan | calibrator |
+|---|---|---|
+| obsid | 1424757616 | 1424775768 |
+| name | Oberoi2024B_Sun, project G0002 | Cal_solar_PicA, project D0006 |
+| start | 2025-02-28 05:59:58 UTC | 2025-02-28 11:02:30 UTC |
+| length | 176 s | 296 s |
+| band | 24 picket coarse channels, centre 144 MHz | same channel list |
+
+ASVO had already run birli 0.18.0 (digital gains, PFB gains, default
+AOFlagger). There are no raw gpubox files, and hyperdrive had not been run.
+The notebook therefore skips birli and solves on Pictor A.
+
+What ran, and worked:
+
+1. Fee beam file `data/mwa_full_embedded_element_pattern.h5`, exported inside
+   the container as `MWA_BEAM_FILE`. Hyperdrive will not start without it.
+2. Sky model `data/srclist_pica.yaml` (Pictor A nucleus, Jacobs et al. 2013:
+   382 Jy at 150 MHz, spectral index −0.76).
+3. `hyperdrive di-calibrate` on the calibrator measurement set.
+4. `hyperdrive solutions-apply` onto the solar measurement set. Solving on
+   the solar scan itself fails: the Sun dominates and is not in that sky model.
+5. WSClean, 20″ pixels, `wgridder`. One channel, then channels 107, 113, and
+   120 together in a 2° field. `show_images()` draws the optical solar limb.
+
+What the images show:
+
+- Before solutions, channel 113 is speckles at about 4 Jy/beam.
+- After solutions the peak is about 2×10⁵ Jy/beam, so the calibration moved
+  real flux. The brightest pixel sits about 1.8° from the Sun, one grating
+  lobe of the regular tile grid. The synthesised beam is only about 2′. The
+  optical disk (radius 16′) is at the phase centre and is not the bright ridge.
+- Channels 107, 113, and 120 are 1.28 MHz spikes separated by about 8 MHz
+  (roughly 137–154 MHz). A lobe at 1.6° shifts by only about 0.1° between
+  them, so the three channels stack into the same stripe. A filled band would
+  smear it. This picket fence has no filled band, and three minutes of Earth
+  rotation do not fill the uv plane.
+
+Nothing in the imaging settings removes that ridge. Self-calibration on the
+Sun was not tried; it can tighten the core and cannot fill the missing
+samples. This scan can still give a light curve or one image per channel.
+A solar disk needs a continuous band or a much longer track.

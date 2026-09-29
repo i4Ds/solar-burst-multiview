@@ -1,9 +1,14 @@
 # solar-burst-multiview
 
-MWA solar imaging for the
+MWA imaging for the
 [solar-radio-imaging-spectroscopy](https://github.com/i4Ds/solar-radio-imaging-spectroscopy)
-sabbatical. Reproduce Sharma et al. 2022 (ApJ 937, 99), then point the same
-visibility-subtraction method at the 2024 MWA solar campaign.
+sabbatical. Two pieces live in this tree:
+
+1. **Sharma et al. 2022** (ApJ 937, 99) — reproduce the solar maps, then point
+   the same visibility-subtraction method at the 2024 MWA solar campaign.
+2. **MWA demo on non-solar data** — stand up the birli / hyperdrive / wsclean
+   pipeline on the laptop, on calculon, and on CSCS, using the same containers
+   everywhere.
 
 This is not a multi-instrument project. STIX and e-Callisto live elsewhere.
 
@@ -21,8 +26,9 @@ The paper’s 15 s running median is implemented as `--method running_median` bu
 was **not** what produced the validation `_sub.ms`. CASA logs show a scan-long
 complex mean (`scan_mean`).
 
-MWA containers (hyperdrive, birli, wsclean) run on calculon GPU nodes
-(Singularity) and on CSCS (Podman).
+The non-solar demo is how the stack is installed: Docker on the laptop,
+Singularity on calculon GPU nodes, Podman on CSCS. Operational notes:
+[docs/calculon-mwa.md](docs/calculon-mwa.md).
 
 ## Package
 
@@ -45,10 +51,7 @@ python -m solarburst.figures           # Phase 2 figures
 Machine setup (Miniforge, SSH to calculon, Zotero):
 [docs/new-machine-setup.md](docs/new-machine-setup.md).
 
-Calculon containers and Slurm:
-[docs/calculon-mwa.md](docs/calculon-mwa.md).
-
-Full reproduction mechanics:
+Full Sharma reproduction mechanics:
 [docs/reproduction-plan.md](docs/reproduction-plan.md).
 
 ## References
@@ -60,5 +63,5 @@ other papers the conversion and imaging rest on. Rebuild with
 ## Related
 
 - [i4Ds/solar-radio-imaging-spectroscopy](https://github.com/i4Ds/solar-radio-imaging-spectroscopy) — sabbatical umbrella and [project board](https://github.com/orgs/i4Ds/projects/18)
-- [i4Ds/mwa-demo](https://github.com/i4Ds/mwa-demo) — non-solar MWA shell pipeline
 - [i4Ds/Karabo-Pipeline](https://github.com/i4Ds/Karabo-Pipeline) — SKA / Karabo experiments
+- [MWATelescope/mwa-demo](https://github.com/MWATelescope/mwa-demo) — upstream Docker image this demo runs; not a separate i4Ds repo

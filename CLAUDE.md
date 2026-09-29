@@ -12,7 +12,9 @@ pip install -e .
 
 The conda env is named `solar-burst-multiview` and tracks the latest CPython on conda-forge (`python` is unpinned in `environment.yml`).
 
-This repo is MWA solar imaging only. STIX and e-Callisto are out of scope.
+This repo is MWA imaging: Sharma 2022 solar reproduction, plus the non-solar
+MWA demo used to install birli / hyperdrive / wsclean on the laptop, calculon,
+and CSCS. STIX and e-Callisto are out of scope.
 
 Reusable science code lives in `src/solarburst/`, installed editable. Stage data from calculon with `python -m solarburst.stage --check` (needs FHNW VPN).
 
@@ -53,5 +55,5 @@ Notebooks under `notebooks/` are leftover drivers, not the current path.
 ### Related repos
 
 - [`i4Ds/solar-radio-imaging-spectroscopy`](https://github.com/i4Ds/solar-radio-imaging-spectroscopy) — sabbatical umbrella and org Project
-- [`i4Ds/mwa-demo`](https://github.com/i4Ds/mwa-demo) — non-solar MWA shell pipeline (birli/hyperdrive/wsclean flags)
 - [`i4Ds/Karabo-Pipeline`](https://github.com/i4Ds/Karabo-Pipeline) — SKA / Karabo experiments
+- [`MWATelescope/mwa-demo`](https://github.com/MWATelescope/mwa-demo) — upstream Docker image; the demo itself lives in this tree
