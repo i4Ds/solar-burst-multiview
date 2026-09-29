@@ -4,11 +4,10 @@ MWA imaging for the
 [solar-radio-imaging-spectroscopy](https://github.com/i4Ds/solar-radio-imaging-spectroscopy)
 sabbatical. Two pieces live in this tree:
 
-1. **Sharma et al. 2022** (ApJ 937, 99) — reproduce the solar maps, then point
-   the same visibility-subtraction method at the 2024 MWA solar campaign.
-2. **MWA demo on non-solar data** — stand up the birli / hyperdrive / wsclean
-   pipeline on the laptop, on calculon, and on CSCS, using the same containers
-   everywhere.
+1. **Sharma et al. 2022** (ApJ 937, 99) — reproduce the solar maps. Mechanics:
+   [docs/reproduction-plan.md](docs/reproduction-plan.md).
+2. **Imaging pipeline** — birli / hyperdrive / wsclean on the laptop, on
+   calculon, and on CSCS. Notes: [docs/calculon-mwa.md](docs/calculon-mwa.md).
 
 This is not a multi-instrument project. STIX and e-Callisto live elsewhere.
 
@@ -20,7 +19,6 @@ This is not a multi-instrument project. STIX and e-Callisto live elsewhere.
 | 1 Subtraction | `python -m solarburst.subtract` vs Sharma `_sub.ms` | done (scan-mean, bit-exact) |
 | 2 Figures | `python -m solarburst.figures` vs paper Figs 3, 5, 7, 9, 11, 12 | in progress (Fig 3 peaks within 15%) |
 | 3 Re-image from visibilities | WSClean on calculon vs `new_ms/fits` | not started |
-| 5 2024 campaign | config-driven run on archived `_ms.tar` | not started |
 
 The paper’s 15 s running median is implemented as `--method running_median` but
 was **not** what produced the validation `_sub.ms`. CASA logs show a scan-long
