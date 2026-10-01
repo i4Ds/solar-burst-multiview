@@ -16,6 +16,9 @@ This repo is MWA imaging: Sharma 2022 solar reproduction, plus the non-solar
 MWA demo used to install birli / hyperdrive / wsclean on the laptop, calculon,
 and CSCS. STIX and e-Callisto are out of scope.
 
+Session notes for agents: `../solar-radio-imaging-spectroscopy/docs/agent-log.md`
+(umbrella rules: `../solar-radio-imaging-spectroscopy/AGENTS.md`).
+
 Reusable science code lives in `src/solarburst/`, installed editable. Stage data from calculon with `python -m solarburst.stage --check` (needs FHNW VPN).
 
 MWA binaries (hyperdrive, birli, wsclean, giant-squid) are **not** in conda. On calculon they come from Singularity images under `~/mwa/images`, not from the login-node `PATH`. See `docs/calculon-mwa.md`. CSCS (Besso) runs the same images with Podman. `$MWA_ASVO_API_KEY` and `$MWA_BEAM_FILE` are only needed if downloading raw 2015 visibilities (Phase 4, optional).
