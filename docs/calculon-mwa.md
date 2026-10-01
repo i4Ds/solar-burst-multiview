@@ -56,11 +56,13 @@ actually contains).
 
 ```bash
 ssh calculon
-srun --cluster=cluster --partition=debug --gres=gpu:1 \
-  --ntasks=1 --cpus-per-task=8 --mem=16G --time=00:30:00 --pty bash
+srun --partition=debug --gres=gpu:rtx2080:1 \
+  --cpus-per-task=4 --mem=12G --time=00:30:00 --pty bash
 
 singularity exec --nv ~/mwa/images/mwa-demo_cuda12.5.1.sif bash -l
 ```
+
+The GPU cluster is the default. CPU jobs need `sbatch -M calc-cpu` or `squeue -M calc-cpu`. Request a GPU by type (`gpu:rtx3080:1`, `gpu:rtx2080:1`, `gpu:rtxA4500:1`, `gpu:h200:1`). `debug` is one GPU and 30 minutes. See the [Calculon job guide](https://fhnw-hpc.pages.fhnw.ch/docs/runjobs/).
 
 `debug` allows 30 minutes. Longer imaging belongs on `performance` (1 day) or
 `h200` (`--gres=gpu:h200:1`). Ask Slurm for enough CPUs that the memory
@@ -99,24 +101,18 @@ uvfits (`1184702048`).
 | name | Oberoi2024B_Sun, project G0002 | Cal_solar_PicA, project D0006 |
 | start | 2025-02-28 05:59:58 UTC | 2025-02-28 11:02:30 UTC |
 | length | 176 s | 296 s |
-| band | 24 picket coarse channels, centre 144 MHz | same channel list |
+| band | 24 coarse channels, centre 144 MHz | same channel list |
 
 ASVO had already run birli 0.18.0. There are no raw gpubox files. Hyperdrive
-had not been run. The notebook skips birli, solves on Pictor A
-(`data/srclist_pica.yaml`, Jacobs et al. 2013), and applies those solutions
-to the solar measurement set. Solving on the solar scan itself fails: the Sun
-dominates and is not in that sky model.
+had not been run. The notebook skips birli, solves the Pictor A scan
+against `data/GGSM_updated.fits`, and applies those solutions to the solar
+measurement set. Each coarse channel is about 1.28 MHz, and that is a normal
+bandwidth to image.
 
-What the images show, 29 September 2026:
+What was imaged on 29 September 2026, before the sky model was corrected to
+`GGSM_updated.fits`:
 
-- Before solutions, channel 113 is speckles at about 4 Jy/beam.
-- After solutions the peak is about 2×10⁵ Jy/beam. The brightest pixel sits
-  about 1.8° from the Sun, one grating lobe of the regular tile grid. The
-  synthesised beam is about 2′. The optical disk (radius 16′) is at the phase
-  centre and is not that ridge.
-- Channels 107, 113, and 120 are 1.28 MHz spikes separated by about 8 MHz.
-  A lobe at 1.6° shifts by only about 0.1° between them, so they stack.
-  Three minutes of Earth rotation do not fill the uv plane.
-
-The tools run. This snapshot does not become a solar disk. Self-calibration
-on the Sun was not tried.
+- Before solutions, channel 113 peaked at about 4 Jy/beam.
+- After solutions, channel 113 peaked at about 2×10⁵ Jy/beam. The synthesised
+  beam was about 2′.
+- Channels 107, 113, and 120 were also imaged together in a 2° field.
