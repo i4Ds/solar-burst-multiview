@@ -69,6 +69,9 @@ The GPU cluster is the default. CPU jobs need `sbatch -M calc-cpu` or `squeue -M
 request stays under the partition's per-CPU cap (`MaxMemPerCPU` is 3200 MB on
 `debug`).
 
+P-AIRCARS is a separate install. It does not use these SIF files. See
+`docs/calculon-paircars.md`.
+
 ## What is not this setup
 
 Besso's `podman pull` / `podman save` / `podman run --gpus=all` sequence is the

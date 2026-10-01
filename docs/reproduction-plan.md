@@ -1,6 +1,6 @@
 # Plan: reproduce Sharma et al. 2022
 
-Status: **29 September 2026.** Phases 0–1 are done. Phase 2 is in progress.
+Status: **1 October 2026.** Phases 0–2 are done. Phase 3 is not started.
 `python -m solarburst.figures` rebuilds paper Figures 3, 5, 7, 9, 11 and 12.
 Figure 3 peaks match the caption to 15%. Figures 7–12 use a 6σ MAD detector on
 the `Tb_*_sub.p` cubes; they match the paper's layout and IDs, not Table 2
@@ -8,9 +8,9 @@ counts pixel-for-pixel.
 
 This document is only the Sharma reproduction. Standing up birli, hyperdrive,
 and WSClean, including any later solar scan used to test that stack, is the
-imaging-pipeline setup in [`calculon-mwa.md`](calculon-mwa.md). The 2024
-campaign is item 7 of the sabbatical work plan, not a phase of this
-reproduction.
+imaging-pipeline setup in [`calculon-mwa.md`](calculon-mwa.md). Understanding
+MWA calibration is sabbatical plan item 3. The 2024 campaign is item 7 of that
+plan, not a phase of this reproduction.
 
 Goal: regenerate the solar maps of Sharma et al. 2022 (ApJ 937, 99) from his
 own products, and find out whether we understand the method.
@@ -125,9 +125,9 @@ Two conversion facts that are not in the paper:
   published scale; the pickles already include it. DATE-OBS on every snapshot
   FITS is the scan start, so frame time comes from the filename index / pickle.
 
-**Gate, partly met:** Figure 3 peaks from the time median sit within ~15% of the
-caption (0.26…0.47 MK). Figures 7–12 match layout and IDs; Table 2 region counts
-are still approximate.
+**Gate, met for this reproduction:** Figure 3 peaks from the time median sit
+within ~15% of the caption (0.26…0.47 MK). Figures 7–12 match layout and IDs;
+Table 2 region counts are still approximate.
 
 Phases 1 and 2 are independent, both laptop-native, and together are the whole of
 "do we understand this paper".

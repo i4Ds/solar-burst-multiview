@@ -101,7 +101,10 @@ def main() -> None:
     for i, time in enumerate(times):
         for j, freq in enumerate(freqs):
             ax = axes[i, j]
-            item = lookup[(time, freq)]
+            item = lookup.get((time, freq))
+            if item is None:
+                ax.axis("off")
+                continue
             artist = panel(ax, np.clip(item["I"], 0, None), item["header"], 0, vmax, "inferno")
             ax.set_xticks([])
             ax.set_yticks([])

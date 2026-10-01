@@ -11,13 +11,13 @@ sabbatical. Two pieces live in this tree:
 
 This is not a multi-instrument project. STIX and e-Callisto live elsewhere.
 
-## Status (27 September 2026)
+## Status (1 October 2026)
 
 | Phase | Gate | State |
 |-------|------|--------|
 | 0 Foundations | conda env, `src/solarburst/`, stage from calculon | done |
 | 1 Subtraction | `python -m solarburst.subtract` vs Sharma `_sub.ms` | done (scan-mean, bit-exact) |
-| 2 Figures | `python -m solarburst.figures` vs paper Figs 3, 5, 7, 9, 11, 12 | in progress (Fig 3 peaks within 15%) |
+| 2 Figures | `python -m solarburst.figures` vs paper Figs 3, 5, 7, 9, 11, 12 | done (Table 2 counts still approximate) |
 | 3 Re-image from visibilities | WSClean on calculon vs `new_ms/fits` | not started |
 
 The paper’s 15 s running median is implemented as `--method running_median` but
@@ -26,11 +26,13 @@ complex mean (`scan_mean`).
 
 The non-solar demo is how the stack is installed: Docker on the laptop,
 Singularity on calculon GPU nodes, Podman on CSCS. Operational notes:
-[docs/calculon-mwa.md](docs/calculon-mwa.md).
+[docs/calculon-mwa.md](docs/calculon-mwa.md). Hyperdrive DI-calibrate can run
+locally or on calculon (`scripts/calculon/di-calibrate.sbatch`).
 
-P-AIRCARS (Kansabanik) on an Apple Silicon Mac is a separate install. It runs
-in a Colima linux/amd64 container. Instructions:
-[docs/paircars-mac.md](docs/paircars-mac.md).
+P-AIRCARS is a separate path: Apple Silicon
+([docs/paircars-mac.md](docs/paircars-mac.md)) and calculon CPU cluster
+([docs/calculon-paircars.md](docs/calculon-paircars.md)), not the Singularity
+images.
 
 ## Package
 

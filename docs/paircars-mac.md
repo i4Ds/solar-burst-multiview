@@ -125,7 +125,7 @@ That writes `png/stokes_I_montage.png`, one `I_*.png` per cube, and
 - Polarisation self-calibration. Q, U, and V in the cubes are not a leakage
   solution.
 - Dynamic spectra and EUV overlays.
-- Calculon. Nothing here is installed on the cluster.
+- Calculon. That install is `docs/calculon-paircars.md`, not this Colima setup.
 
 The fakechroot and PostgreSQL changes live in
 `scripts/paircars-mac/macos_fixes.py`. They edit the installed

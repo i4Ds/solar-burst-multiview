@@ -23,6 +23,8 @@ Reusable science code lives in `src/solarburst/`, installed editable. Stage data
 
 MWA binaries (hyperdrive, birli, wsclean, giant-squid) are **not** in conda. On calculon they come from Singularity images under `~/mwa/images`, not from the login-node `PATH`. See `docs/calculon-mwa.md`. CSCS (Besso) runs the same images with Podman. `$MWA_ASVO_API_KEY` and `$MWA_BEAM_FILE` are only needed if downloading raw 2015 visibilities (Phase 4, optional).
 
+P-AIRCARS is not those images. Mac: `docs/paircars-mac.md`. Calculon CPU: `docs/calculon-paircars.md`.
+
 ## Architecture
 
 Reusable logic lives in `src/solarburst/` (`config`, `stage`, `subtract`, `maps`, `bursts`, `figures`). Config is YAML under `configs/`. Remote paths are relative to Rohit Sharma's tree on calculon; `solarburst.stage` rsyncs named slices into `data/<event>/`.
