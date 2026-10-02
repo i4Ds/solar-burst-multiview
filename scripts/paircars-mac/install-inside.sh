@@ -8,7 +8,7 @@ FIXES="${PAIRCARS_FIXES:-/tmp/macos_fixes.py}"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
-  build-essential ca-certificates curl git pkg-config \
+  build-essential ca-certificates curl git pkg-config lsof \
   libssl-dev libgl1 libglib2.0-0 libxkbcommon0 libdbus-1-3 \
   libxcb-xinerama0 libcurl4 wget bzip2 libgfortran5 gfortran cmake
 
