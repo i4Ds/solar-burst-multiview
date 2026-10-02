@@ -29,9 +29,44 @@ brew install colima docker
 - A clone of this repository, for the scripts. P-AIRCARS itself is cloned
   beside it on first setup.
 
-The Colima profile is named `paircars` (8 CPUs, 16 GB RAM, Rosetta). It does
-not replace a `colima` default profile you already use. Commands below pass
-`--context colima-paircars` so they do not switch your current Docker context.
+The Colima profile is named `paircars`. On this Mac it is 16 vCPUs and 40 GiB,
+with Rosetta translating the `linux/amd64` container. A fresh `setup.sh`
+creates that size. It does not replace a `colima` default profile you already
+use. Commands below pass `--context colima-paircars` so they do not switch
+your current Docker context.
+
+## This Mac
+
+The machine is an M5 Pro: 18 cores, 64 GB unified memory, 20-core GPU. The
+GPU speaks Metal. P-AIRCARS images with WSClean inside the x86_64 guest, and
+the command it runs is `-gridder wgridder` (CPU) with `-j` and `-abs-mem`
+taken from the local worker. WSClean's GPU gridder is IDG, and IDG's GPU
+modes are CUDA (`CUDA.Generic` and `HybridCUDA.GenericOptimized`). The guest
+cannot see Metal, so the 20 GPU cores stay idle during imaging.
+
+Two virtual machines are running. `paircars` has 16 vCPUs and 40 GiB.
+`default` has 4 vCPUs and 8 GiB (the MWA demo). That leaves 2 cores and about
+16 GB with macOS. While both were up, the compressor held about 19.5 GiB and
+swap was idle. Giving `paircars` more than 40 GiB while `default` is running
+would take that memory from macOS.
+
+Upstream refuses more than 80% of the guest. On 16 vCPUs and 40 GiB the guest
+reports 39.09 GiB, and 80% is 12 CPUs and 31.27 GiB for the one worker. The
+channel 127 job (`1424757616`, restarted 2 Oct 2026) logged exactly that.
+
+`scripts/paircars-mac/mac_resources.py` raises that ceiling for this install
+only. `/etc/paircars-mac-cap` keeps 1 vCPU and 4 GiB for PostgreSQL and
+Prefect. A request of 0.8, which is what `--cpu_frac 0.8 --mem_frac 0.8`
+already is, then becomes 15 vCPUs and 35.09 GiB. Measured in the guest on
+2 Oct 2026 after `tune.sh`. A lower request, such as `run-sample.sh` at 0.5
+and 0.6, is unchanged. `PAIRCARS_RESOURCE_CAP` (a single fraction, at most 1)
+overrides the reserve. Without the marker file the upstream 80% clamp stays.
+
+Apply it inside the running container:
+
+```bash
+scripts/paircars-mac/tune.sh
+```
 
 ## Install
 
