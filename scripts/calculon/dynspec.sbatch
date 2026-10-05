@@ -1,0 +1,41 @@
+#!/bin/bash
+# MWA dynamic spectrum over several observations, on the CPU cluster.
+# Each obs tarball is extracted inside the job (never on the login node), reduced
+# to short-baseline amplitudes by solarburst.dynspec, then deleted.
+# Submit from ~/mwa:
+#   sbatch -M calc-cpu --export=ALL,OBSIDS="1348544016 1348544312 ...",TAG=flare20220930 \
+#     ~/mwa/flare/dynspec.sbatch
+#SBATCH --job-name=mwa-dynspec
+#SBATCH --partition=cpu-daily
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=12G
+#SBATCH --time=06:00:00
+#SBATCH --output=logs/%x_%j.log
+
+set -euo pipefail
+source "$HOME/mwa/mwa-env.sh"
+
+: "${OBSIDS:?set OBSIDS}"
+TAG="${TAG:-dynspec}"
+archive="${ARCHIVE:-/mnt/nas05/data02/MWA_data/data/mwa_data}"
+dynspec="${DYNSPEC_PY:-$HOME/mwa/flare/dynspec.py}"   # copy of src/solarburst/dynspec.py
+root="/scratch/${USER}/mwa/${TAG}"
+out="$root/dynspec_${TAG}.npz"
+mkdir -p "$root/tmp"
+
+for obs in $OBSIDS; do
+  tars=( "$archive"/${obs}_*_ms.tar )
+  if [[ ! -e ${tars[0]} ]]; then
+    echo "MISSING ${obs}"
+    continue
+  fi
+  work="$root/tmp/$obs"
+  rm -rf "$work"; mkdir -p "$work"
+  tar -xf "${tars[0]}" -C "$work"
+  singularity exec "$MWA_DEMO_SIF" python3 "$dynspec" "$out" "$work"/${obs}_ch*.ms
+  rm -rf "$work"
+  echo "DONE ${obs}"
+done
+ls -lh "$out"
+echo DYNSPEC_DONE
