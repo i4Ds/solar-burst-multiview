@@ -6,6 +6,8 @@ have Apptainer and GPU nodes have Singularity-CE, so the same Docker images
 are stored as SIF files and launched with `singularity exec --nv`.
 
 The login node cannot run containers. Pulls and the smoke test are Slurm jobs.
+Listing or extracting ASVO tarballs (`tar -t`, `tar -x`) reads gigabytes from
+the NAS; run it inside a job or an `srun`, not on the login node.
 
 ## Images
 
@@ -119,3 +121,20 @@ What was imaged on 29 September 2026, before the sky model was corrected to
 - After solutions, channel 113 peaked at about 2×10⁵ Jy/beam. The synthesised
   beam was about 2′.
 - Channels 107, 113, and 120 were also imaged together in a 2° field.
+
+## 2022-09-30 M1.1 flare, first image
+
+`scripts/calculon/flare-image.sbatch` images solar obs 1348545200 at the STIX
+peak (03:57:23 UTC) with solutions from PKS0408-65 (1348522216, 6.4 h earlier).
+Both tarballs sit in `/mnt/nas05/data02/MWA_data/data/mwa_data`. Each holds one
+MS per coarse channel and the metafits. ASVO averaged them to 4 s and 160 kHz,
+so one 4 s timestep is the shortest image. There is no coarse channel at
+150 MHz; ch113 (144.6 MHz) matches the laptop test above.
+
+The MS phase centre is already the Sun. If you compute the Sun's RA/Dec, keep
+it in GCRS: `get_body(...).icrs` is barycentric and lands about 11° away.
+
+`scripts/flare_overlay.py` resamples the wsclean image onto helioprojective
+coordinates (`solarburst.maps.radec_to_hpc`, solar north up) and contours it on
+AIA. At the peak the 144.6 MHz source sits on AR 13110 (+215″, +95″), not on the
+M1.1 flare at the north-east limb (−867″, +397″).
