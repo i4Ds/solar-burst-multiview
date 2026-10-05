@@ -84,31 +84,50 @@ def main() -> None:
         overlays.append((np.asarray(m.data, dtype=float), _map_extent(m), label or Path(path).stem, colour))
 
     aia = [_aia(path, args.fov) for path in args.aia]
-    npanel = 1 + len(aia) + bool(args.zoom and aia)
-    fig, axs = plt.subplots(1, npanel, figsize=(5.6 * npanel, 5.6), squeeze=False)
-    axs = axs[0]
-    im = axs[0].imshow(hpc, origin="lower", extent=ext, cmap="inferno", vmin=0, vmax=peak)
-    fig.colorbar(im, ax=axs[0], fraction=0.046, label="Jy/beam (not flux-calibrated)")
-    axs[0].set_title(f"MWA {mhz:.1f} MHz  {t.isot[:19]} +4 s")
+    ncol, nrow = 1 + len(aia), 2 if args.zoom else 1
+    fig, grid = plt.subplots(nrow, ncol, figsize=(5.6 * ncol, 5.4 * nrow), squeeze=False)
+    full = (-args.fov, args.fov, -args.fov, args.fov)
+    panels = []  # (axes, limits)
 
-    limits = [(-args.fov, args.fov, -args.fov, args.fov)] * npanel
-    for ax, (img, aext, wav, when) in zip(axs[1:], aia):
+    im = grid[0, 0].imshow(hpc, origin="lower", extent=ext, cmap="inferno", vmin=0, vmax=peak)
+    fig.colorbar(im, ax=grid[0, 0], fraction=0.046, label="Jy/beam (not flux-calibrated)")
+    grid[0, 0].set_title(f"MWA {mhz:.1f} MHz  {t.isot[:19]} +4 s")
+    panels.append((grid[0, 0], full))
+    for ax, (img, aext, wav, when) in zip(grid[0, 1:], aia):
         _show_aia(ax, img, aext, wav)
         ax.set_title(f"AIA {wav} Å {when}")
-    if npanel > 1 + len(aia):
+        panels.append((ax, full))
+
+    if args.zoom:
         x, y, half = args.zoom
         window = (x - half, x + half, y - half, y + half)
-        img, aext, wav, when = aia[-1]
-        _show_aia(axs[-1], img, aext, wav, window)
-        axs[-1].set_title(f"AIA {wav} Å {when}, zoom")
-        limits[-1] = window
+        ax = grid[1, 0]
+        if overlays:
+            odata, oext, label, _ = overlays[0]
+            im = ax.imshow(odata, origin="lower", extent=oext, cmap="hot", vmin=0)
+            fig.colorbar(im, ax=ax, fraction=0.046, label="arbitrary")
+            ax.set_facecolor("black")
+            ax.set_title(f"{label} (Earth view), zoom")
+        else:
+            ax.imshow(hpc, origin="lower", extent=ext, cmap="inferno", vmin=0, vmax=peak)
+            ax.set_title(f"MWA {mhz:.1f} MHz, zoom")
+        panels.append((ax, window))
+        for ax, (img, aext, wav, when) in zip(grid[1, 1:], aia):
+            _show_aia(ax, img, aext, wav, window)
+            ax.set_title(f"AIA {wav} Å {when}, zoom")
+            panels.append((ax, window))
+        ix = int((x - ext[0]) / cell)
+        iy = int((y - ext[2]) / cell)
+        print(f"MWA at zoom centre: {hpc[iy, ix]:.4g} Jy/beam ({hpc[iy, ix] / peak:.1%} of peak)")
 
     bmaj, bmin = header["BMAJ"] * 3600, header["BMIN"] * 3600
-    for ax, (x0, x1, y0, y1) in zip(axs, limits):
-        if ax is not axs[0]:
+    for ax, (x0, x1, y0, y1) in panels:
+        if ax is not grid[0, 0]:
             ax.contour(hpc, levels=[f * peak for f in LEVELS], extent=ext, origin="lower",
                        colors="cyan", linewidths=0.9)
-        for odata, oext, _, colour in overlays:
+        for k, (odata, oext, _, colour) in enumerate(overlays):
+            if k == 0 and ax is grid[min(1, nrow - 1), 0] and nrow == 2:
+                continue  # shown as the image in this panel
             ax.contour(odata, levels=[f * np.nanmax(odata) for f in OVERLAY_LEVELS], extent=oext,
                        origin="lower", colors=colour, linewidths=1.0)
         ax.add_patch(Circle((0, 0), rsun, fill=False, color="white", lw=0.7, ls="--"))
@@ -126,9 +145,9 @@ def main() -> None:
     handles = [Line2D([], [], color="cyan", label=f"MWA {mhz:.1f} MHz, {', '.join(f'{int(f*100)}' for f in LEVELS)} %")]
     handles += [Line2D([], [], color=colour, label=f"{label}, {', '.join(f'{int(f*100)}' for f in OVERLAY_LEVELS)} %")
                 for _, _, label, colour in overlays]
-    axs[-1].legend(handles=handles, loc="lower right", fontsize=8, framealpha=0.7)
+    grid[-1, -1].legend(handles=handles, loc="lower right", fontsize=8, framealpha=0.7)
     # wsclean BPA is east of north in the sky; rotate into solar coordinates.
-    axs[0].add_patch(Ellipse((-args.fov + 1.2 * bmaj, -args.fov + 1.2 * bmaj), bmin, bmaj,
+    grid[0, 0].add_patch(Ellipse((-args.fov + 1.2 * bmaj, -args.fov + 1.2 * bmaj), bmin, bmaj,
                              angle=header["BPA"] - sun.P(t).deg, color="white"))
     fig.suptitle("2022-09-30 M1.1 flare (STIX 2209300352), contours in % of each peak")
     fig.tight_layout()
