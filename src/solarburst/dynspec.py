@@ -31,8 +31,12 @@ def shortest_baselines(ms: str, n: int) -> list[tuple[int, int]]:
     return [pairs[i] for i in np.argsort(length)[:n]]
 
 
-def ms_dynspec(ms: str, nbaselines: int = 100) -> tuple[NDArray, NDArray, NDArray]:
-    """Return (unix_time [s], freq [MHz], amplitude[nfreq, ntime]) for one MS."""
+def ms_dynspec(ms: str, nbaselines: int = 100, use_flags: bool = False) -> tuple[NDArray, NDArray, NDArray]:
+    """Return (unix_time [s], freq [MHz], amplitude[nfreq, ntime]) for one MS.
+
+    AOFlagger flags in ASVO products often cut out solar bursts as RFI, so by
+    default only exact zeros (missing data) are dropped, not flagged samples.
+    """
     from casacore.tables import table, taql
 
     pairs = shortest_baselines(ms, nbaselines)
@@ -43,7 +47,7 @@ def ms_dynspec(ms: str, nbaselines: int = 100) -> tuple[NDArray, NDArray, NDArra
     data = sel.getcol("DATA")  # (row, chan, corr) with corr XX, XY, YX, YY
     flag = sel.getcol("FLAG")
     amp = 0.5 * (np.abs(data[..., 0]) + np.abs(data[..., 3]))
-    amp[flag[..., 0] | flag[..., 3]] = np.nan
+    amp[(amp == 0) | (flag[..., 0] | flag[..., 3] if use_flags else False)] = np.nan
     times, inverse = np.unique(time, return_inverse=True)
     out = np.full((amp.shape[1], times.size), np.nan)
     for k in range(times.size):
@@ -78,13 +82,14 @@ def main() -> None:
     p.add_argument("out", type=Path)
     p.add_argument("ms", nargs="+")
     p.add_argument("--nbaselines", type=int, default=100)
+    p.add_argument("--use-flags", action="store_true", help="drop flagged samples (cuts bursts)")
     args = p.parse_args()
     parts = []
     if args.out.exists():  # accumulate across observations
         old = np.load(args.out)
         parts.append((old["unix"], old["freq_mhz"], old["amp"]))
     for ms in args.ms:
-        parts.append(ms_dynspec(ms, args.nbaselines))
+        parts.append(ms_dynspec(ms, args.nbaselines, args.use_flags))
         print(f"{ms}: {parts[-1][2].shape}", flush=True)
     unix, freq, amp = merge(parts)
     np.savez_compressed(args.out, unix=unix, freq_mhz=freq, amp=amp)

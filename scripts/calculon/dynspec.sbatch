@@ -33,7 +33,7 @@ for obs in $OBSIDS; do
   work="$root/tmp/$obs"
   rm -rf "$work"; mkdir -p "$work"
   tar -xf "${tars[0]}" -C "$work"
-  singularity exec "$MWA_DEMO_SIF" python3 "$dynspec" "$out" "$work"/${obs}_ch*.ms
+  singularity exec --bind /scratch "$MWA_DEMO_SIF" python3 "$dynspec" "$out" "$work"/${obs}_ch*.ms
   rm -rf "$work"
   echo "DONE ${obs}"
 done
