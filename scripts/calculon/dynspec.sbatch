@@ -5,13 +5,15 @@
 # Submit from ~/mwa:
 #   sbatch -M calc-cpu --export=ALL,OBSIDS="1348544016 1348544312 ...",TAG=flare20220930 \
 #     ~/mwa/flare/dynspec.sbatch
+# As an array, one obs per task and one npz each (merge with dynspec.py OUT.npz *.npz):
+#   sbatch -M calc-cpu --array=0-16%6 --export=ALL,OBSIDS="...",TAG=... ~/mwa/flare/dynspec.sbatch
 #SBATCH --job-name=mwa-dynspec
 #SBATCH --partition=cpu-daily
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=12G
 #SBATCH --time=06:00:00
-#SBATCH --output=logs/%x_%j.log
+#SBATCH --output=logs/%x_%A_%a.log
 
 set -euo pipefail
 source "$HOME/mwa/mwa-env.sh"
@@ -22,9 +24,14 @@ archive="${ARCHIVE:-/mnt/nas05/data02/MWA_data/data/mwa_data}"
 dynspec="${DYNSPEC_PY:-$HOME/mwa/flare/dynspec.py}"   # copy of src/solarburst/dynspec.py
 root="/scratch/${USER}/mwa/${TAG}"
 out="$root/dynspec_${TAG}.npz"
+read -ra obslist <<< "$OBSIDS"
+if [[ -n ${SLURM_ARRAY_TASK_ID:-} ]]; then
+  obslist=( "${obslist[$SLURM_ARRAY_TASK_ID]}" )
+  out="$root/dynspec_${TAG}_${obslist[0]}.npz"
+fi
 mkdir -p "$root/tmp"
 
-for obs in $OBSIDS; do
+for obs in "${obslist[@]}"; do
   tars=( "$archive"/${obs}_*_ms.tar )
   if [[ ! -e ${tars[0]} ]]; then
     echo "MISSING ${obs}"

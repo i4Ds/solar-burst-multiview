@@ -7,6 +7,7 @@ Uncalibrated amplitudes are fine for a dynamic spectrum once each channel is
 normalised by its own median over time, which ``normalised`` does.
 
     python -m solarburst.dynspec OUT.npz MS [MS ...] [--nbaselines 100]
+    python -m solarburst.dynspec OUT.npz PART.npz [PART.npz ...]   # merge
 
 Inside the calculon container (python-casacore is not in the conda env).
 """
@@ -89,7 +90,11 @@ def main() -> None:
         old = np.load(args.out)
         parts.append((old["unix"], old["freq_mhz"], old["amp"]))
     for ms in args.ms:
-        parts.append(ms_dynspec(ms, args.nbaselines, args.use_flags))
+        if ms.endswith(".npz"):
+            d = np.load(ms)
+            parts.append((d["unix"], d["freq_mhz"], d["amp"]))
+        else:
+            parts.append(ms_dynspec(ms, args.nbaselines, args.use_flags))
         print(f"{ms}: {parts[-1][2].shape}", flush=True)
     unix, freq, amp = merge(parts)
     np.savez_compressed(args.out, unix=unix, freq_mhz=freq, amp=amp)
