@@ -105,6 +105,18 @@ Two calculon specifics:
   307 CPUs and 586 GB per worker. Use `--cpu_frac 0.05 --mem_frac 0.05`
   (19 CPUs, 37 GB) for one coarse channel.
 
+* **Patched clone.** In `fa4aa91`, `submit_slurm_master_flow`
+  (`paircars/clusterutils/slurm_cluster.py`) reads `prefect.config.npy` from
+  `~/.paircarspipe/prefect_slurm`, while the server writes it to
+  `<datadir>/<user>/prefect_slurm`. The stale 1 Oct config there sent the
+  master job to `calc-c-001:4260` ("Could not reach prefect server … from
+  compute node"). The clone carries a local commit `aec76b6` on branch
+  `calculon-fixes` that reads `<datadir>/<user>`; check the batch script with
+  `grep PREFECT_API_URL work/<obsid>/paircars_slurm_<id>.sh` (must say
+  `calc-m-001`). Not yet reported upstream.
+* Compute nodes cannot reach the remote logger ("Internet connection is not
+  available for remote logging"), so progress emails may not arrive.
+
 Useful for burst work: `--timerange`, `--freqrange`, `--image_timeres`, and
 `--do_forcereset_weightflag`. ASVO/AOFlagger flags and zero weights cut out
 solar bursts (see `src/solarburst/reflag.py`).
