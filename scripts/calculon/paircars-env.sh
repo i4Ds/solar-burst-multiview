@@ -20,4 +20,6 @@ export TEMP="$TMPDIR"
 
 # shellcheck disable=SC1091
 source "$PAIRCARS_PREFIX/etc/profile.d/conda.sh"
-conda activate paircars
+# paircars_env: developer-mode install from ~/paircars/P-AIRCARS (paircars-dev-install.sbatch).
+# PAIRCARS_ENV=paircars selects the older PyPI 3.0.6 env.
+conda activate "${PAIRCARS_ENV:-paircars_env}"

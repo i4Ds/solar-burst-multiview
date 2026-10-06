@@ -3,10 +3,19 @@
 Self-calibration runs on the CPU cluster (`calc-cpu`, partition `cpu-daily`).
 This is not the Apptainer/Singularity stack in `docs/calculon-mwa.md`.
 
-P-AIRCARS 3.0.6 (PyPI) is installed in a Miniforge env at
-`~/paircars/miniforge3/envs/paircars` (Python 3.10, conda-forge compilers, as
-in the upstream quickstart). Beam files and udocker images go to
-`/scratch/$USER/paircars` (`--datadir` in the PyPI 3.0.6 package; the git tree calls the same flag `--configdir`). The login node is Ubuntu 24.04.
+P-AIRCARS is installed in developer mode
+([upstream instructions](https://p-aircars.readthedocs.io/en/latest/install_paircars.html#install-p-aircars-in-developer-mode)):
+a clone at `~/paircars/P-AIRCARS` (commit `fa4aa91`, 1 Oct 2026, version
+3.0.7), installed editable (`pip install -e ".[dev]"`) into
+`~/paircars/miniforge3/envs/paircars_env`. That env was created with the
+documented command (Python 3.10, GCC 14 compilers, cmake, pkg-config) by
+`scripts/calculon/paircars-dev-install.sbatch` on `calc-cpu` (16 min,
+6 Oct 2026). `env.sh` activates it; `PAIRCARS_ENV=paircars` selects the older
+PyPI 3.0.6 env, which is kept. With `-e`, a `git pull` in the clone takes
+effect without reinstalling.
+
+Beam files and udocker images go to `/scratch/$USER/paircars`
+(`--datadir`). The login node is Ubuntu 24.04.
 CPU nodes are Rocky Linux 9.8. Upstream tests Ubuntu 22/24 and CentOS 7 only.
 The init job is the check that `casatools` and udocker actually run on Rocky.
 
