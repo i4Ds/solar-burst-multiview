@@ -1,8 +1,11 @@
 #!/bin/bash
-# First MWA image of the 2022-09-30 M1.1 flare (STIX 2209300352) at the STIX peak.
-# Solar obs 1348545200, calibrator 1348522216 (PKS0408-65), one coarse channel.
+# One 4 s MWA image of the Sun nearest PEAK_UTC, for the 2022-09-30 flares.
+# Defaults: solar obs 1348545200, calibrator 1348522216 (PKS0408-65), ch113.
+# From 1348547272 on the series uses ch101-187; calibrate those with 3C444 (1348574416).
 # Submit from ~/mwa:
 #   sbatch --export=ALL,CHANNEL=113 ~/mwa/flare/flare-image.sbatch
+#   sbatch --export=ALL,SUN_OBSID=1348547272,CAL_OBSID=1348574416,CHANNEL=112,PEAK_UTC=2022-09-30T04:28:36 \
+#     ~/mwa/flare/flare-image.sbatch
 # Inputs are extracted from the archive tarballs into $root (never written in place).
 # The ASVO MSs are averaged to 4 s and 160 kHz, so one timestep is the shortest image.
 #SBATCH --job-name=mwa-flare
@@ -18,22 +21,23 @@ source "$HOME/mwa/mwa-env.sh"
 
 CHANNEL="${CHANNEL:-113}"
 PEAK_UTC="${PEAK_UTC:-2022-09-30T03:57:23}"
-SUN_OBSID=1348545200
-CAL_OBSID=1348522216
+SUN_OBSID="${SUN_OBSID:-1348545200}"
+CAL_OBSID="${CAL_OBSID:-1348522216}"
 archive=/mnt/nas05/data02/MWA_data/data/mwa_data
 root="/scratch/${USER}/mwa/flare20220930"
 src="$HOME/mwa/cal/GGSM_updated.fits"
 beam="$HOME/mwa/smoke/mwa_full_embedded_element_pattern.h5"
 
 cd "$root"
-for obs in "$SUN_OBSID:867314" "$CAL_OBSID:929907"; do
-  id=${obs%%:*}; job=${obs##*:}
-  [[ -d ${id}_ch${CHANNEL}.ms ]] || tar -xf "$archive/${id}_${job}_ms.tar" "./${id}.metafits" "./${id}_ch${CHANNEL}.ms"
+for id in "$SUN_OBSID" "$CAL_OBSID"; do
+  tars=( "$archive"/${id}_*_ms.tar )
+  [[ -d ${id}_ch${CHANNEL}.ms ]] || tar -xf "${tars[0]}" "./${id}.metafits" "./${id}_ch${CHANNEL}.ms"
 done
 
 sol="cal/hyp_soln_${CAL_OBSID}_ch${CHANNEL}.fits"
 cms="${SUN_OBSID}_ch${CHANNEL}_cal.ms"
-img="img/${SUN_OBSID}_ch${CHANNEL}_peak"
+tag="${PEAK_UTC:11:8}"
+img="img/${SUN_OBSID}_ch${CHANNEL}_${tag//:/}"
 mkdir -p cal img
 
 echo "node=$(hostname) channel=${CHANNEL} peak=${PEAK_UTC}"
