@@ -4,7 +4,7 @@
 # From 1348547272 on the series uses ch101-187; calibrate those with 3C444 (1348574416).
 # Submit from ~/mwa:
 #   sbatch --export=ALL,CHANNEL=113 ~/mwa/flare/flare-image.sbatch
-#   sbatch --export=ALL,SUN_OBSID=1348547272,CAL_OBSID=1348574416,CHANNEL=112,PEAK_UTC=2022-09-30T04:28:36 \
+#   sbatch --export=ALL,SUN_OBSID=1348547272,CAL_OBSID=1348574416,CHANNEL=112,PEAK_UTC=2022-09-30T04:28:44,RESET_FLAGS=1 \
 #     ~/mwa/flare/flare-image.sbatch
 # Inputs are extracted from the archive tarballs into $root (never written in place).
 # The ASVO MSs are averaged to 4 s and 160 kHz, so one timestep is the shortest image.
@@ -34,10 +34,15 @@ for id in "$SUN_OBSID" "$CAL_OBSID"; do
   [[ -d ${id}_ch${CHANNEL}.ms ]] || tar -xf "${tars[0]}" "./${id}.metafits" "./${id}_ch${CHANNEL}.ms"
 done
 
+# RESET_FLAGS=1 drops the AOFlagger flags of the solar MS (they cut out bursts) and
+# keeps only dead tiles and missing data; see src/solarburst/reflag.py.
+RESET_FLAGS="${RESET_FLAGS:-0}"
+suffix=""; [[ $RESET_FLAGS == 1 ]] && suffix="_noaof"
 sol="cal/hyp_soln_${CAL_OBSID}_ch${CHANNEL}.fits"
-cms="${SUN_OBSID}_ch${CHANNEL}_cal.ms"
+sun_ms="${SUN_OBSID}_ch${CHANNEL}${suffix}.ms"
+cms="${SUN_OBSID}_ch${CHANNEL}${suffix}_cal.ms"
 tag="${PEAK_UTC:11:8}"
-img="img/${SUN_OBSID}_ch${CHANNEL}_${tag//:/}"
+img="img/${SUN_OBSID}_ch${CHANNEL}_${tag//:/}${suffix}"
 mkdir -p cal img
 
 echo "node=$(hostname) channel=${CHANNEL} peak=${PEAK_UTC}"
@@ -53,9 +58,13 @@ if [[ ! -s $sol ]]; then
   mv "$sol.partial.fits" "$sol"
 fi
 
+if [[ $RESET_FLAGS == 1 && ! -d $sun_ms ]]; then
+  run python3 "$HOME/mwa/flare/reflag.py" "${SUN_OBSID}_ch${CHANNEL}.ms" "$sun_ms"
+fi
+
 if [[ ! -d $cms ]]; then
   run hyperdrive solutions-apply \
-    --data "${SUN_OBSID}_ch${CHANNEL}.ms" "${SUN_OBSID}.metafits" \
+    --data "$sun_ms" "${SUN_OBSID}.metafits" \
     --solutions "$sol" \
     --outputs "$cms"
 fi
