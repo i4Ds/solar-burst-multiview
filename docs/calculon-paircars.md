@@ -93,6 +93,18 @@ run-mwa-paircars /full/path/to/target_ms_dir \
   --cluster --partition cpu-daily --max_worker 4 --walltime 12:00:00
 ```
 
+Two calculon specifics:
+
+* `/usr/local/bin/sinfo` is a site wrapper that adds `--clusters=all` and a
+  fixed `-O` format; P-AIRCARS's `sinfo -h -p <part> -o "%c %m"` then fails
+  ("Invalid job format specification"). `env.sh` puts `~/paircars/bin`
+  first on `PATH`, where `sinfo` just runs `/usr/bin/sinfo`
+  (`scripts/calculon/paircars-bin/sinfo`).
+* Each worker job asks for `--cpu_frac` × `--mem_frac` of a node, 0.8 by
+  default. A `cpu-daily` node has 384 CPUs and 750 GB, so the default is
+  307 CPUs and 586 GB per worker. Use `--cpu_frac 0.05 --mem_frac 0.05`
+  (19 CPUs, 37 GB) for one coarse channel.
+
 Useful for burst work: `--timerange`, `--freqrange`, `--image_timeres`, and
 `--do_forcereset_weightflag`. ASVO/AOFlagger flags and zero weights cut out
 solar bursts (see `src/solarburst/reflag.py`).

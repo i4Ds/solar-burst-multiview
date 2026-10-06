@@ -23,3 +23,7 @@ source "$PAIRCARS_PREFIX/etc/profile.d/conda.sh"
 # paircars_env: developer-mode install from ~/paircars/P-AIRCARS (paircars-dev-install.sbatch).
 # PAIRCARS_ENV=paircars selects the older PyPI 3.0.6 env.
 conda activate "${PAIRCARS_ENV:-paircars_env}"
+
+# Pass-through sinfo (see paircars-bin/sinfo): the site wrapper in /usr/local/bin
+# adds --clusters=all and a fixed -O format that P-AIRCARS cannot parse.
+export PATH="$PAIRCARS_ROOT/bin:$PATH"
