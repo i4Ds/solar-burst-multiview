@@ -114,6 +114,14 @@ Two calculon specifics:
   `calculon-fixes` that reads `<datadir>/<user>`; check the batch script with
   `grep PREFECT_API_URL work/<obsid>/paircars_slurm_<id>.sh` (must say
   `calc-m-001`). Not yet reported upstream.
+* **Second patch,** `2714d8e` on the same branch. Every task calls
+  `get_worker_cpu_time` on the dask workers, but `CPUAccountingPlugin`, which
+  sets `cpu_accounting_monitor`, was only registered for local clusters. On
+  Slurm every subflow (basiccal, selfcal, applysol) failed at its first
+  task with `AttributeError: 'Worker' object has no attribute
+  'cpu_accounting_monitor'`, reported as "Error in spliting …" (7 Oct run
+  `20261006075631629`). The patch registers the plugin on both Slurm clients and
+  makes `get_worker_cpu_time` return 0 if it is missing.
 * Compute nodes cannot reach the remote logger ("Internet connection is not
   available for remote logging"), so progress emails may not arrive.
 
