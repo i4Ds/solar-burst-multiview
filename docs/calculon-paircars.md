@@ -127,6 +127,17 @@ Two calculon specifics:
   self-calibration then ended in `UnboundLocalError`, and the pipeline
   imaged with the calibrator solutions only (run `20261007043048979`). The
   patch sets it to `[]` at the start of the subflow.
+* **Fourth patch,** `86bb02a`. On a rerun, `basic_cal_subflow` only reused
+  existing calibrator tables if a crossphase (`.kcrosscal`) table existed for
+  every channel, but those are only made with polarisation calibration. With
+  `--no_polcal` it then found nothing to do, reported failure, and the master
+  flow went on "solely using self-calibration": self-cal tables solved on
+  3C444-calibrated data applied to uncalibrated data. The patch requires
+  crossphase tables only with polcal, and counts a channel as done only when
+  all required tables exist.
+
+All four patches are on branch `calculon-fixes` of `~/paircars/P-AIRCARS`
+(`git log fa4aa91..calculon-fixes`).
 * Compute nodes cannot reach the remote logger ("Internet connection is not
   available for remote logging"), so progress emails may not arrive.
 
