@@ -122,6 +122,11 @@ Two calculon specifics:
   'cpu_accounting_monitor'`, reported as "Error in spliting …" (7 Oct run
   `20261006075631629`). The patch registers the plugin on both Slurm clients and
   makes `get_worker_cpu_time` return 0 if it is missing.
+* **Third patch,** `f210b08`. With `--no_polcal`, `selfcal_subflow`
+  (`paircars/pipeline/flows.py`) never set `selfcal_leakage`. A successful
+  self-calibration then ended in `UnboundLocalError`, and the pipeline
+  imaged with the calibrator solutions only (run `20261007043048979`). The
+  patch sets it to `[]` at the start of the subflow.
 * Compute nodes cannot reach the remote logger ("Internet connection is not
   available for remote logging"), so progress emails may not arrive.
 
