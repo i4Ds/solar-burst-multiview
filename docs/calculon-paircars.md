@@ -105,44 +105,53 @@ Two calculon specifics:
   307 CPUs and 586 GB per worker. Use `--cpu_frac 0.05 --mem_frac 0.05`
   (19 CPUs, 37 GB) for one coarse channel.
 
-* **Patched clone.** In `fa4aa91`, `submit_slurm_master_flow`
+### Local patches to P-AIRCARS (`fa4aa91`)
+
+The clone `~/paircars/P-AIRCARS` carries four commits on branch
+`calculon-fixes` (`git log fa4aa91..calculon-fixes`; mirrored in the Mac clone
+`~/Projects/P-AIRCARS`). They are not upstream; André decides what to send.
+
+General Slurm problems (any cluster, polarisation calibration on or off):
+
+* **`1dd4535` Prefect config path.** `submit_slurm_master_flow`
   (`paircars/clusterutils/slurm_cluster.py`) reads `prefect.config.npy` from
-  `~/.paircarspipe/prefect_slurm`, while the server writes it to
-  `<datadir>/<user>/prefect_slurm`. The stale 1 Oct config there sent the
-  master job to `calc-c-001:4260` ("Could not reach prefect server … from
-  compute node"). The clone carries a local commit `aec76b6` on branch
-  `calculon-fixes` that reads `<datadir>/<user>`; check the batch script with
-  `grep PREFECT_API_URL work/<obsid>/paircars_slurm_<id>.sh` (must say
-  `calc-m-001`). Not yet reported upstream.
-* **Second patch,** `2714d8e` on the same branch. Every task calls
+  `~/.paircarspipe/prefect_slurm`. Every writer of that file uses
+  `<datadir>/<user>/prefect_slurm`. Test on 8 Oct, unpatched code and the old
+  directory moved aside: submission fails with `FileNotFoundError: …
+  /.paircarspipe/prefect_slurm/prefect.config.npy`. On our install the stale
+  file from the 1 Oct init (PyPI 3.0.6, run inside a job on `calc-c-001`) was
+  still there, so instead of failing the master job was sent to
+  `calc-c-001:4260`. The old directory is kept as
+  `~/.paircarspipe/prefect_slurm.from-20261001-init`.
+* **`9cb1f67` CPU accounting on Slurm workers.** Every task calls
   `get_worker_cpu_time` on the dask workers, but `CPUAccountingPlugin`, which
-  sets `cpu_accounting_monitor`, was only registered for local clusters. On
-  Slurm every subflow (basiccal, selfcal, applysol) failed at its first
-  task with `AttributeError: 'Worker' object has no attribute
-  'cpu_accounting_monitor'`, reported as "Error in spliting …" (7 Oct run
+  sets `cpu_accounting_monitor`, is only registered for local clusters. On
+  Slurm every subflow (basiccal, selfcal, applysol) failed at its first task
+  with `AttributeError: 'Worker' object has no attribute
+  'cpu_accounting_monitor'`, logged as "Error in spliting …" (run
   `20261006075631629`). The patch registers the plugin on both Slurm clients and
   makes `get_worker_cpu_time` return 0 if it is missing.
-* **Third patch,** `f210b08`. With `--no_polcal`, `selfcal_subflow`
-  (`paircars/pipeline/flows.py`) never set `selfcal_leakage`. A successful
-  self-calibration then ended in `UnboundLocalError`, and the pipeline
-  imaged with the calibrator solutions only (run `20261007043048979`). The
-  patch sets it to `[]` at the start of the subflow.
-* **Fourth patch,** `86bb02a`. On a rerun, `basic_cal_subflow` only reused
-  existing calibrator tables if a crossphase (`.kcrosscal`) table existed for
-  every channel, but those are only made with polarisation calibration. With
-  `--no_polcal` it then found nothing to do, reported failure, and the master
-  flow went on "solely using self-calibration": self-cal tables solved on
-  3C444-calibrated data applied to uncalibrated data. The patch requires
-  crossphase tables only with polcal, and counts a channel as done only when
-  all required tables exist.
 
-* Not patched: the GIF step at the end of primary-beam correction fails
-  ("all input arrays must have the same shape", PNGs of different sizes) and
-  the task then reports "Primary beam correction is failed" although the
-  corrected FITS, HPC FITS and PNGs are all written.
+Only without polarisation calibration (`--no_polcal`; we plan to turn polcal on):
 
-All four patches are on branch `calculon-fixes` of `~/paircars/P-AIRCARS`
-(`git log fa4aa91..calculon-fixes`).
+* **`6877129`** `selfcal_subflow` (`paircars/pipeline/flows.py`) never set
+  `selfcal_leakage`. A successful self-calibration then ended in
+  `UnboundLocalError`, and the pipeline imaged with the calibrator solutions
+  only (run `20261007043048979`). The patch sets it to `[]`.
+* **`395cdff`** On a rerun, `basic_cal_subflow` reused existing calibrator
+  tables only if a crossphase (`.kcrosscal`) table existed for every channel;
+  those are only made with polcal. It then found nothing to do, reported
+  failure, and the master flow went on "solely using self-calibration". The
+  patch requires crossphase tables only with polcal, and counts a channel as
+  done only when all required tables exist.
+
+Not patched: the GIF step at the end of primary-beam correction fails ("all
+input arrays must have the same shape", PNGs of different sizes) and the task
+then reports "Primary beam correction is failed" although the corrected FITS,
+HPC FITS and PNGs are written.
+
+Upstream write-up for André: `docs/paircars-upstream.md`.
+
 * Compute nodes cannot reach the remote logger ("Internet connection is not
   available for remote logging"), so progress emails may not arrive.
 
