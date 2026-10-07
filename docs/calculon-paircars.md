@@ -136,6 +136,11 @@ Two calculon specifics:
   crossphase tables only with polcal, and counts a channel as done only when
   all required tables exist.
 
+* Not patched: the GIF step at the end of primary-beam correction fails
+  ("all input arrays must have the same shape", PNGs of different sizes) and
+  the task then reports "Primary beam correction is failed" although the
+  corrected FITS, HPC FITS and PNGs are all written.
+
 All four patches are on branch `calculon-fixes` of `~/paircars/P-AIRCARS`
 (`git log fa4aa91..calculon-fixes`).
 * Compute nodes cannot reach the remote logger ("Internet connection is not
@@ -148,3 +153,23 @@ solar bursts (see `src/solarburst/reflag.py`).
 Workers are separate `cpu-daily` jobs; the master asks Slurm for at most
 8 CPUs and 16 GB. Do not start a second run of the same observation while
 one is in the queue.
+
+## First working run: 2022-09-30 burst, 7 Oct 2026
+
+Target 1348547272 ch112 (143.4 MHz), calibrator 3C444 (1348574416) ch112,
+`--do_forcereset_weightflag --timerange 2022/09/30/04:28:30~2022/09/30/04:29:02
+--image_timeres 4 --pol I --no_polcal --keep_calibrated_ms --cpu_frac 0.05
+--mem_frac 0.05 --max_worker 1`. Calibration on 3C444 took 16 min,
+self-calibration 8 min, applying and imaging about 15 min.
+
+At 04:28:44, primary-beam corrected Stokes I, beam 2.5′ × 1.3′:
+
+| | peak (Jy/beam) | off-Sun rms | peak/rms | peak position |
+|---|---|---|---|---|
+| 3C444 only (run `20261007043048979`) | 4.9e5 | 7.0e3 | 70 | (+331″, +101″) |
+| 3C444 + self-cal (run `20261007142908205`) | 1.13e6 | 3.6e3 | 312 | (+306″, +101″) |
+
+Products: `/scratch/$USER/paircars/out/1348547272/20220930/1348547272_target/`
+(`imagedir_…_basiccal_only` and `calibrated_ms_basiccal_only` are the 3C444-only
+run). Comparison with hyperdrive + wsclean:
+`figures/flare20220930/paircars_vs_hyperdrive_042844.png`.
