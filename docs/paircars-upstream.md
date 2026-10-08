@@ -7,7 +7,7 @@ upstream `fa4aa91` (master, 1 Oct 2026), not pushed anywhere:
 |---|---|---|
 | `upstream/slurm-fixes` | `7f0b575`, `2a137eb` | any Slurm run |
 | `upstream/calibration-fixes` | `1cfb717`, `c17da8e` | self-cal without polcal; reusing calibrator tables on a rerun |
-| `upstream/docs-slurm` | `cbc3d24` | docs: CLI names and options, worker size |
+| `upstream/cli-docs` | `fa072ad`, `c22e50d`, `97d3d42` | code follows the documented CLI; one doc fix |
 
 To publish: fork `devojyoti96/P-AIRCARS`, push a branch, open a PR. Each
 commit message explains the change; commits are authored by André with
@@ -91,14 +91,18 @@ and return 0 from `get_worker_cpu_time` if the monitor is missing.
 * Worker size defaults to 80 % of a node (`--cpu_frac/--mem_frac 0.8`). On a
   shared 384-core, 750 GB node that is 307 CPUs and 586 GB per worker. A note
   in the Slurm docs, or a per-worker default, would help.
-* Docs vs code (branch `upstream/docs-slurm`, `cbc3d24`): `slurm.rst` and
-  `initial_setup.rst` show `init-paircars-setup --datadir`, the code has
-  `--configdir` (`init_data.py`), but `tests/pipeline/test_init_data.py` still
-  passes `--datadir` — the developers should say which name is meant (keeping
-  both as aliases would be friendliest). `slurm.rst` passes the target metafits
-  as a second positional argument; the code wants `--target_metafits`.
-  `slurm.rst` and `logger.rst` refer to `init-paircars-prefect status`; the
-  command is `setup-paircars-prefect status`.
+* Docs vs code (branch `upstream/cli-docs`). Where the docs agree, the code
+  is changed to match them:
+  * `init-paircars-setup --datadir` (initial_setup.rst, slurm.rst, and
+    `tests/pipeline/test_init_data.py`) had become `--configdir` in `a53635e`
+    ("fixes in selfcal code polnorm"), while `main()` still takes `datadir`.
+    `fa072ad` restores `--datadir` and keeps `--configdir` as an alias.
+  * `init-paircars-prefect status` (slurm.rst, logger.rst) did not exist;
+    `c22e50d` installs that name too, next to `setup-paircars-prefect`.
+  * Where the docs disagree with each other, the doc is fixed: slurm.rst gave
+    the target metafits as a second positional argument, runpipeline.rst and
+    the code use `--target_metafits` (`97d3d42`, with a note on worker size and
+    a typo).
 * Site specific, not P-AIRCARS: calculon's `/usr/local/bin/sinfo` wrapper adds
   `--clusters=all -O …`, which breaks `sinfo -o "%c %m"`. Worked around locally.
 

@@ -32,7 +32,7 @@ setsid nohup init-paircars-setup --init --configdir /scratch/$USER/paircars/meta
   --emails andre.csillaghy@fhnw.ch > /scratch/$USER/paircars/logs/init-login-<date>.out 2>&1 &
 ```
 
-The git version names the data flag `--configdir` (the docs say `--datadir`).
+`fa4aa91` names the data flag `--configdir`; the docs and P-AIRCARS's own test say `--datadir`, which `upstream/cli-docs` restores (with `--configdir` as alias).
 `--init` only downloads files missing from
 `/scratch/$USER/paircars/meta/paircarspipe_data`. `setsid nohup` keeps the
 servers alive after the ssh session closes.
