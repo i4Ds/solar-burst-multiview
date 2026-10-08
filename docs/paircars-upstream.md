@@ -6,7 +6,8 @@ upstream `fa4aa91` (master, 1 Oct 2026), not pushed anywhere:
 | branch | commits | scope |
 |---|---|---|
 | `upstream/slurm-fixes` | `7f0b575`, `2a137eb` | any Slurm run |
-| `upstream/no-polcal-fixes` | `1cfb717`, `c17da8e` | only with `--no_polcal` |
+| `upstream/calibration-fixes` | `1cfb717`, `c17da8e` | self-cal without polcal; reusing calibrator tables on a rerun |
+| `upstream/docs-slurm` | `cbc3d24` | docs: CLI names and options, worker size |
 
 To publish: fork `devojyoti96/P-AIRCARS`, push a branch, open a PR. Each
 commit message explains the change; commits are authored by André with
@@ -58,22 +59,28 @@ which the log shows as "Error in spliting calibrator measurement sets" etc.
 Fix (`2a137eb`): register the plugin after both `Client(cluster, …)` calls,
 and return 0 from `get_worker_cpu_time` if the monitor is missing.
 
-## 3. Without polarisation calibration (`--no_polcal`)
+## 3. Calibration subflows
 
-* `selfcal_subflow` (`flows.py`) returns `selfcal_leakage`, which is only
-  assigned under `if do_polcal:`. A successful self-calibration then raises
-  `UnboundLocalError: local variable 'selfcal_leakage' referenced before
-  assignment`; the master flow treats self-cal as failed and images with the
-  calibrator solutions only. Fix (`1cfb717`): initialise it to `[]`.
-* `basic_cal_subflow` reuses existing calibrator tables only if there is a
-  crossphase (`.kcrosscal`) table for every channel, but those are made only
-  with polcal. A second run therefore finds "Calibrator solutions remains for
-  coarse channels: []", then "No calibrator measurement set present", returns
-  failure, and the master flow continues "solely using self-calibration",
-  applying self-cal tables that were solved on calibrator-corrected data to
-  uncorrected data. Fix (`c17da8e`): require crossphase tables only with
-  polcal, and treat a channel as done only when all required tables exist (the
-  old set difference removed a channel if either table existed).
+* **Self-calibration without polcal.** `selfcal_subflow` (`flows.py`) returns
+  `selfcal_leakage`, which is only assigned under `if do_polcal:`. With
+  `--no_polcal` a successful self-calibration then raises `UnboundLocalError:
+  local variable 'selfcal_leakage' referenced before assignment`; the master
+  flow treats self-cal as failed and images with the calibrator solutions only.
+  Fix (`1cfb717`): initialise it to `[]`.
+* **Reusing calibrator tables on a rerun.** `basic_cal_subflow` reuses existing
+  calibrator tables only if there is a crossphase (`.kcrosscal`) table for
+  every channel. When those are missing — always with `--no_polcal`, and
+  probably also with polcal when no calibrator gives a crossphase solution
+  ("No crosshand phase solutions obtained from any calibrators", which the
+  master flow anticipates; untested) — the old set difference
+  `coarse_chans - (bandpass_chans | crossphase_chans)` is empty. The subflow
+  then logs "Calibrator solutions remains for coarse channels: []" and "No
+  calibrator measurement set present", returns failure, and the master flow
+  continues "solely using self-calibration", applying self-cal tables solved on
+  calibrator-corrected data to uncorrected data. The same set difference also
+  skipped channels that had only one of the two tables. Fix (`c17da8e`): a
+  channel is done only when all required tables exist; crossphase tables are
+  required only with polcal.
 
 ## 4. Smaller observations (no patch)
 
@@ -84,9 +91,14 @@ and return 0 from `get_worker_cpu_time` if the monitor is missing.
 * Worker size defaults to 80 % of a node (`--cpu_frac/--mem_frac 0.8`). On a
   shared 384-core, 750 GB node that is 307 CPUs and 586 GB per worker. A note
   in the Slurm docs, or a per-worker default, would help.
-* Docs vs code: the Slurm page shows `init-paircars-setup --datadir` and
-  `run-mwa-paircars <ms> <metafits>`; master has `--configdir` and
-  `run-mwa-paircars <target_datadir> --target_metafits …`.
+* Docs vs code (branch `upstream/docs-slurm`, `cbc3d24`): `slurm.rst` and
+  `initial_setup.rst` show `init-paircars-setup --datadir`, the code has
+  `--configdir` (`init_data.py`), but `tests/pipeline/test_init_data.py` still
+  passes `--datadir` — the developers should say which name is meant (keeping
+  both as aliases would be friendliest). `slurm.rst` passes the target metafits
+  as a second positional argument; the code wants `--target_metafits`.
+  `slurm.rst` and `logger.rst` refer to `init-paircars-prefect status`; the
+  command is `setup-paircars-prefect status`.
 * Site specific, not P-AIRCARS: calculon's `/usr/local/bin/sinfo` wrapper adds
   `--clusters=all -O …`, which breaks `sinfo -o "%c %m"`. Worked around locally.
 
