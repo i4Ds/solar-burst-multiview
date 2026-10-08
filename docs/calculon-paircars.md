@@ -132,7 +132,7 @@ General Slurm problems (any cluster, polarisation calibration on or off):
   `20261006075631629`). The patch registers the plugin on both Slurm clients and
   makes `get_worker_cpu_time` return 0 if it is missing.
 
-Only without polarisation calibration (`--no_polcal`; we plan to turn polcal on):
+Calibration subflows (first only with `--no_polcal`; second on any rerun with missing crossphase tables):
 
 * **`6877129`** `selfcal_subflow` (`paircars/pipeline/flows.py`) never set
   `selfcal_leakage`. A successful self-calibration then ended in
@@ -140,7 +140,8 @@ Only without polarisation calibration (`--no_polcal`; we plan to turn polcal on)
   only (run `20261007043048979`). The patch sets it to `[]`.
 * **`395cdff`** On a rerun, `basic_cal_subflow` reused existing calibrator
   tables only if a crossphase (`.kcrosscal`) table existed for every channel;
-  those are only made with polcal. It then found nothing to do, reported
+  those are only made with polcal (and probably missing with polcal too when
+  no calibrator gives a crossphase solution; untested). It then found nothing to do, reported
   failure, and the master flow went on "solely using self-calibration". The
   patch requires crossphase tables only with polcal, and counts a channel as
   done only when all required tables exist.
