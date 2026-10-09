@@ -1,4 +1,8 @@
-# ASVO request: 0.25 s visibilities of obs 1348547272 (prepared, not submitted)
+# ASVO request: 0.25 s visibilities of obs 1348547272
+
+**Submitted 9 Oct 2026, 15:18 (Mac, giant-squid 2.5.1): ASVO job 1109734, conversion,
+state "Staging".** Parameters: `output=ms,avg_freq_res=160,flag_edge_width=80,no_rfi=true`
+(no `avg_time_res` → 0.25 s), delivery acacia. Download to calculon once "Ready".
 
 Goal: an image of the 2022-09-30 type III burst at its peak (04:28:44 UTC) at the
 finest time resolution the data has. Our archive copy
