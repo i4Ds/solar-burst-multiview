@@ -53,3 +53,18 @@ dry run or ASVO's job page gives the exact number.
 3. Reflag (dead tiles only), apply the existing 3C444 solutions, image
    0.25 s steps around 04:28:44 with wsclean, or run P-AIRCARS with
    `--image_timeres 0.25` reusing the 3C444 and self-cal tables.
+
+## Commands (from the Mac; the key stays in `~/.config/mwa_asvo/api_key` on calculon)
+
+Dry run, then submit (each a one-minute job on `calc-cpu`, giant-squid from the
+mwa-demo image), then download to `/mnt/nas05/data02/MWA_data/data/mwa_data2`:
+
+```bash
+ssh calculon 'cd ~/mwa && sbatch -M calc-cpu -p cpu-daily --time=00:10:00 -n1 -c1 --mem=1G -J asvo-dryrun -o logs/%x_%j.log --wrap "source ~/mwa/mwa-env.sh; export MWA_ASVO_API_KEY=\$(<~/.config/mwa_asvo/api_key); singularity exec \$MWA_DEMO_SIF giant-squid submit-conv -n -p output=ms,avg_freq_res=160,flag_edge_width=80,no_rfi=true 1348547272"'
+ssh calculon 'cd ~/mwa && sbatch -M calc-cpu -p cpu-daily --time=00:10:00 -n1 -c1 --mem=1G -J asvo-submit -o logs/%x_%j.log --wrap "source ~/mwa/mwa-env.sh; export MWA_ASVO_API_KEY=\$(<~/.config/mwa_asvo/api_key); singularity exec \$MWA_DEMO_SIF giant-squid submit-conv -p output=ms,avg_freq_res=160,flag_edge_width=80,no_rfi=true 1348547272"'
+ssh calculon 'cd ~/mwa && sbatch -M calc-cpu --export=ALL,OBSIDS=1348547272 ~/mwa/asvo-download.sbatch'
+```
+
+The download job (`STIX-MWA/scripts/calculon_asvo_download.sbatch`, installed as
+`~/mwa/asvo-download.sbatch`) waits for the ASVO job, runs at most 12 h and
+resumes when started again. Log: `~/mwa/logs/asvo-dl-<jobid>.out`.
