@@ -27,3 +27,9 @@ conda activate "${PAIRCARS_ENV:-paircars_env}"
 # Pass-through sinfo (see paircars-bin/sinfo): the site wrapper in /usr/local/bin
 # adds --clusters=all and a fixed -O format that P-AIRCARS cannot parse.
 export PATH="$PAIRCARS_ROOT/bin:$PATH"
+
+# Postgres runs in udocker (proot) on the login node and is slow to accept
+# connections; with Prefect's defaults (5 s connect, 10 s query) the server
+# answered 500 (asyncpg TimeoutError) and P-AIRCARS runs aborted (9 Oct 2026).
+export PREFECT_SERVER_DATABASE_CONNECTION_TIMEOUT=60
+export PREFECT_SERVER_DATABASE_TIMEOUT=120

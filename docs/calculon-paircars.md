@@ -75,6 +75,15 @@ ssh calculon 'ss -ltn | grep -E ":(4260|5260)\b"; curl -s http://calc-m-001:4260
 Dashboard from the Mac: `ssh -N -L 4260:localhost:4260 calculon`, then
 <http://localhost:4260/dashboard>.
 
+**Database timeouts (9 Oct).** Postgres in udocker/proot is slow to accept
+connections. With Prefect's defaults (5 s connect, 10 s query) the server
+answered `500 Internal Server Error` (`asyncpg` `TimeoutError` in `server.log`,
+"canceling statement" in `postgres.log`), and two P-AIRCARS runs aborted at the
+first subflow. `env.sh` now sets `PREFECT_SERVER_DATABASE_CONNECTION_TIMEOUT=60`
+and `PREFECT_SERVER_DATABASE_TIMEOUT=120`; the server must be restarted for them
+to apply (`stop_prefect_server` then `start_prefect_server`, as above, after
+`source ~/paircars/env.sh`).
+
 After a login-node reboot both services are gone; rerun the `start_prefect_server`
 line above.
 
