@@ -44,6 +44,8 @@ def main() -> None:
     gmax = float(np.max(imgs))
     peaks = imgs.reshape(len(imgs), -1).max(axis=1)
     labels = [f"{t[8:10]}:{t[10:12]}:{t[12:14]}" for t in times]
+    secs = [int(t[8:10]) * 3600 + int(t[10:12]) * 60 + float(t[12:]) for t in times]
+    step = float(np.median(np.diff(secs))) if len(secs) > 1 else 0.0
     n = imgs.shape[-1]
     cell = (ext[1] - ext[0]) / n
     ip = int(np.argmax(peaks))
@@ -81,8 +83,9 @@ def main() -> None:
     cb = fig.colorbar(ims[1], ax=[ax_full, ax_zoom], fraction=0.025, pad=0.04)
     cb.set_label("Jy/beam (Stokes I, primary-beam corrected)")
     ax_lc.plot(range(len(times)), peaks / 1e5, "o-")
-    ax_lc.set_xticks(range(len(times))); ax_lc.set_xticklabels(labels, fontsize=8)
-    ax_lc.set_ylabel("peak [10⁵ Jy/beam]"); ax_lc.set_xlabel("UTC, 2022-09-30 (4 s steps)")
+    tick = list(range(0, len(times), max(1, len(times) // 12)))
+    ax_lc.set_xticks(tick); ax_lc.set_xticklabels([labels[i] for i in tick], fontsize=8)
+    ax_lc.set_ylabel("peak [10⁵ Jy/beam]"); ax_lc.set_xlabel(f"UTC, 2022-09-30 ({step:.0f} s steps)")
     marker = ax_lc.axvline(ip, color="red", lw=1.5)
     title = fig.suptitle("")
 
@@ -90,7 +93,7 @@ def main() -> None:
         for im in ims:
             im.set_data(imgs[i])
         marker.set_xdata([i, i])
-        title.set_text(f"MWA {freqs[k]:.1f} MHz, P-AIRCARS 4 s, {labels[i]} UTC; Stonyhurst grid {a.grid:g}°, cyan: optical limb")
+        title.set_text(f"MWA {freqs[k]:.1f} MHz, P-AIRCARS {step:.0f} s, {labels[i]} UTC; Stonyhurst grid {a.grid:g}°, cyan: optical limb")
         return ims
 
     draw(ip)

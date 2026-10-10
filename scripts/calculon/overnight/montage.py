@@ -26,6 +26,8 @@ def main():
     cube, freqs, times, ext = d["data"], d["freqs"], d["times"], d["extent"]
     k = 0 if a.freq is None else int(np.argmin(np.abs(freqs - a.freq)))
     imgs = cube[:, k]
+    secs = [int(t[8:10]) * 3600 + int(t[10:12]) * 60 + float(t[12:]) for t in times]
+    step = float(np.median(np.diff(secs))) if len(secs) > 1 else 0.0
     vmax = np.nanmax(imgs)
     n = len(times)
     ncol = 5
@@ -41,9 +43,10 @@ def main():
     ax = fig.add_subplot(nrow, 1, nrow)
     peaks = [np.nanmax(im) for im in imgs]
     ax.plot(range(n), peaks, "o-")
-    ax.set_xticks(range(n)); ax.set_xticklabels([f"{t[10:12]}:{t[12:14]}" for t in times], fontsize=8)
-    ax.set_ylabel("peak [Jy/beam]"); ax.set_xlabel("04:MM:SS (4 s steps)")
-    fig.suptitle(f"P-AIRCARS {freqs[k]:.2f} MHz, Stokes I, 4 s, common scale (max {vmax:.3g} Jy/beam); solar north up, arcsec")
+    tick = list(range(0, n, max(1, n // 12)))
+    ax.set_xticks(tick); ax.set_xticklabels([f"{times[i][10:12]}:{times[i][12:14]}" for i in tick], fontsize=8)
+    ax.set_ylabel("peak [Jy/beam]"); ax.set_xlabel(f"04:MM:SS ({step:.0f} s steps)")
+    fig.suptitle(f"P-AIRCARS {freqs[k]:.2f} MHz, Stokes I, {step:.0f} s, common scale (max {vmax:.3g} Jy/beam); solar north up, arcsec")
     fig.tight_layout()
     fig.savefig(a.out, dpi=100)
     print(f"wrote {a.out}")
