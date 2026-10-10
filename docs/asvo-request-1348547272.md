@@ -87,3 +87,9 @@ resumes when started again. Log: `~/mwa/logs/asvo-dl-<jobid>.out`.
   ready, then Birli on calculon for ch116 at 0.25 s without AOFlagger.
 * 2 s images of the burst: `scripts/calculon/overnight/burst_series.sh`
   (P-AIRCARS, ch116, 04:28:20–04:29:10, own calibration and self-cal).
+* Raw job 1111033 "Ready" (1014 GiB) on 10 Oct; download started 12:25 as Slurm
+  job 108698 on `calc-cpu` (`--time=23:59:00`, mail on end/fail), job ID passed
+  instead of the obsid so the 2 s conversion is not fetched again:
+  `sbatch -M calc-cpu --time=23:59:00 --export=ALL,OBSIDS=1111033 ~/mwa/asvo-download.sbatch`
+  → `/mnt/nas05/data02/MWA_data/data/mwa_data2/1348547272_1111033_vis.tar`.
+  Rerunning the same command resumes an interrupted download (`--keep-tar`).
