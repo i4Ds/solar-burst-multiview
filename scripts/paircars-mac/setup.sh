@@ -41,7 +41,7 @@ command -v docker >/dev/null || { echo "Install Docker first: brew install colim
 if ! colima status --profile "$PROFILE" >/dev/null 2>&1; then
   colima start --profile "$PROFILE" \
     --vm-type vz --vz-rosetta \
-    --cpu 8 --memory 16 --disk 100
+    --cpu 16 --memory 40 --disk 100
 fi
 
 CTX=(docker --context "colima-$PROFILE")
@@ -60,6 +60,7 @@ fi
 "${CTX[@]}" start "$CONTAINER" >/dev/null
 
 "${CTX[@]}" cp "$HERE/macos_fixes.py" "$CONTAINER:/tmp/macos_fixes.py"
+"${CTX[@]}" cp "$HERE/mac_resources.py" "$CONTAINER:/tmp/mac_resources.py"
 "${CTX[@]}" cp "$HERE/install-inside.sh" "$CONTAINER:/tmp/install-inside.sh"
 "${CTX[@]}" exec -e SKIP_INIT="$SKIP_INIT" -e PAIRCARS_FIXES=/tmp/macos_fixes.py \
   "$CONTAINER" bash /tmp/install-inside.sh

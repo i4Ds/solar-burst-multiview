@@ -1,0 +1,6 @@
+#!/bin/sh
+# Calculon's /usr/local/bin/sinfo wraps the real sinfo with --clusters=all and
+# its own -O format, which breaks P-AIRCARS's `sinfo -h -p <part> -o "%c %m"`.
+# env.sh puts this directory first on PATH so P-AIRCARS gets the real sinfo
+# (cluster chosen by SLURM_CLUSTERS).
+exec /usr/bin/sinfo "$@"

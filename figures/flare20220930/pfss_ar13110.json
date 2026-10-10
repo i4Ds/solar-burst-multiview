@@ -1,0 +1,13 @@
+{
+ "n_open": 36,
+ "n_closed": 133,
+ "mean_centroid": [
+  330.04076544134625,
+  103.46115953340043
+ ],
+ "open_lines_within_60arcsec": 2,
+ "r_at_closest_approach": [
+  1.1986291311860005,
+  1.0500137251879071
+ ]
+}

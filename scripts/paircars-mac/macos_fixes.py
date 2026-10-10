@@ -5,6 +5,10 @@ udocker's proot engine cannot exec under Rosetta, so imaging containers use
 fakechroot (F1). PostgreSQL's entrypoint expects a Unix socket, which
 fakechroot cannot bind, so the server is started on TCP instead.
 
+``patch-code`` also installs ``paircars_mac_resources`` and
+``/etc/paircars-mac-cap``. A local worker that asks for the upstream 80%
+maximum then keeps one vCPU and 4 GiB for PostgreSQL and Prefect.
+
 Run inside the container, after ``pip install`` and again after
 ``init-paircars-setup``:
 
@@ -19,10 +23,11 @@ import os
 import sys
 from pathlib import Path
 
-UDOCKER_UTILS = Path(
-    "/opt/miniforge3/envs/paircars/lib/python3.10/site-packages/"
-    "paircars/utils/udocker_utils.py"
-)
+SITE = Path("/opt/miniforge3/envs/paircars/lib/python3.10/site-packages")
+UDOCKER_UTILS = SITE / "paircars/utils/udocker_utils.py"
+PROC_UTILS = SITE / "paircars/utils/proc_manage_utils.py"
+MAC_RESOURCES_DEST = SITE / "paircars_mac_resources.py"
+MAC_CAP = Path("/etc/paircars-mac-cap")
 
 CODE_REPLACEMENTS = (
     (
@@ -49,6 +54,21 @@ CODE_REPLACEMENTS = (
         "unix_socket_directories=",
     ]''',
     ),
+)
+
+# Callers clamp to 0.8 before get_local_dask_cluster. paircars_mac_resources
+# treats that 0.8 as "the maximum" once /etc/paircars-mac-cap exists.
+PROC_REPLACEMENT = (
+    """    cpu_frac = min(abs(cpu_frac), 0.8)
+    mem_frac = min(abs(mem_frac), 0.8)
+""",
+    """    try:
+        import paircars_mac_resources as _mac_resources
+        cpu_frac, mem_frac = _mac_resources.clamp_fracs(cpu_frac, mem_frac)
+    except Exception:
+        cpu_frac = min(abs(cpu_frac), 0.8)
+        mem_frac = min(abs(mem_frac), 0.8)
+""",
 )
 
 ENTRYPOINT_REPLACEMENTS = (
@@ -79,6 +99,26 @@ def _replace_once(path: Path, old: str, new: str) -> str:
     return "patched"
 
 
+def _install_mac_cap() -> int:
+    src = Path(__file__).resolve().parent / "mac_resources.py"
+    if not src.is_file():
+        print(f"mac_resources.py is not beside this script: {src}", file=sys.stderr)
+        return 1
+    MAC_RESOURCES_DEST.write_text(src.read_text())
+    print(f"installed {MAC_RESOURCES_DEST}")
+    if not PROC_UTILS.is_file():
+        print(f"paircars is not installed at {PROC_UTILS}", file=sys.stderr)
+        return 1
+    state = _replace_once(PROC_UTILS, PROC_REPLACEMENT[0], PROC_REPLACEMENT[1])
+    print(f"proc_manage_utils.py {state}")
+    if state == "missing":
+        return 1
+    MAC_CAP.write_text("reserve_cpu=1\nreserve_gib=4\n")
+    MAC_CAP.chmod(0o644)
+    print(f"wrote {MAC_CAP}")
+    return 0
+
+
 def patch_code() -> int:
     if not UDOCKER_UTILS.is_file():
         print(f"paircars is not installed at {UDOCKER_UTILS}", file=sys.stderr)
@@ -88,7 +128,7 @@ def patch_code() -> int:
         print(f"udocker_utils.py {state}")
         if state == "missing":
             return 1
-    return 0
+    return _install_mac_cap()
 
 
 def _zero_file(path: Path) -> bool:

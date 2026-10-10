@@ -298,3 +298,36 @@ def aia_hpc_cutout(
         float(tr.Ty.to_value(u.arcsec)),
     ]
     return np.asarray(cut.data, dtype=np.float64), extent
+
+
+def radec_to_hpc(
+    data: NDArray,
+    header: fits.Header,
+    *,
+    fov_arcsec: float = 2400.0,
+    cell_arcsec: float | None = None,
+) -> tuple[NDArray, list[float]]:
+    """Resample an RA/Dec (SIN) image onto a helioprojective grid, solar north up.
+
+    Each HPC pixel is turned into a geocentric apparent RA/Dec (GCRS) and the
+    image is sampled there, bilinearly. Do not go through ICRS: that frame is
+    barycentric and moves the Sun by ~11° of parallax. The grid is centred on
+    disk centre, so the output is rotated by the solar P angle.
+    """
+    import astropy.units as u
+    from scipy.ndimage import map_coordinates
+    from sunpy.coordinates import Helioprojective, SphericalScreen, get_earth
+
+    t = Time(header["DATE-OBS"])
+    cell = float(cell_arcsec or header_cell_arcsec(header))
+    n = int(round(2 * fov_arcsec / cell))
+    axis = (np.arange(n) - (n - 1) / 2.0) * cell
+    tx, ty = np.meshgrid(axis, axis)
+    observer = get_earth(t)
+    frame = Helioprojective(observer=observer, obstime=t)
+    with SphericalScreen(observer, only_off_disk=False):
+        gcrs = SkyCoord(tx * u.arcsec, ty * u.arcsec, frame=frame).transform_to("gcrs")
+    px, py = WCS(header).celestial.wcs_world2pix(gcrs.ra.deg, gcrs.dec.deg, 0)
+    hpc = map_coordinates(np.asarray(data, dtype=np.float64), [py, px], order=1, cval=np.nan)
+    half = n / 2.0 * cell
+    return hpc, [-half, half, -half, half]

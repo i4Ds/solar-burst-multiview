@@ -6,6 +6,8 @@ have Apptainer and GPU nodes have Singularity-CE, so the same Docker images
 are stored as SIF files and launched with `singularity exec --nv`.
 
 The login node cannot run containers. Pulls and the smoke test are Slurm jobs.
+Listing or extracting ASVO tarballs (`tar -t`, `tar -x`) reads gigabytes from
+the NAS; run it inside a job or an `srun`, not on the login node.
 
 ## Images
 
@@ -119,3 +121,66 @@ What was imaged on 29 September 2026, before the sky model was corrected to
 - After solutions, channel 113 peaked at about 2×10⁵ Jy/beam. The synthesised
   beam was about 2′.
 - Channels 107, 113, and 120 were also imaged together in a 2° field.
+
+## 2022-09-30 M1.1 flare, first image
+
+`scripts/calculon/flare-image.sbatch` images solar obs 1348545200 at the STIX
+peak (03:57:23 UTC) with solutions from PKS0408-65 (1348522216, 6.4 h earlier).
+Both tarballs sit in `/mnt/nas05/data02/MWA_data/data/mwa_data`. Each holds one
+MS per coarse channel and the metafits. ASVO averaged them to 4 s and 160 kHz,
+so one 4 s timestep is the shortest image. There is no coarse channel at
+150 MHz; ch113 (144.6 MHz) matches the laptop test above.
+
+The MS phase centre is already the Sun. If you compute the Sun's RA/Dec, keep
+it in GCRS: `get_body(...).icrs` is barycentric and lands about 11° away.
+
+`scripts/flare_overlay.py` resamples the wsclean image onto helioprojective
+coordinates (`solarburst.maps.radec_to_hpc`, solar north up) and contours it on
+AIA. At the peak the 144.6 MHz source sits on AR 13110 (+215″, +95″), not on the
+M1.1 flare at the north-east limb (−867″, +397″).
+
+## Running jobs: what we learned (5–8 Oct 2026)
+
+* **Login node:** only light commands (`ls`, `squeue`, small `grep`/`tail`).
+  Listing or extracting ASVO tarballs and `du` over large trees go into jobs.
+* **CPU cluster:** `sbatch -M calc-cpu -p cpu-daily` (`cpu-debug` has 1 h).
+  Apptainer there does not bind `/scratch` by default: use
+  `singularity exec --bind /scratch …` (casacore then reports "Table … does not
+  exist" otherwise).
+* **`srun` vs `sbatch`:** several short `srun -M calc-cpu` checks on `cpu-debug`
+  failed after about 10 s or lost their output when the ssh session ended.
+  Use `sbatch … -o logs/%x_%j.log` for anything you want to read later.
+* **wsclean** refuses to run with multi-threaded OpenBLAS ("This software was
+  linked to a multi-threaded version of OpenBLAS"). Pass
+  `--env OPENBLAS_NUM_THREADS=1` to `singularity exec`. The same holds for
+  `wsclean -version`.
+* **AOFlagger flags solar bursts.** ASVO/Birli products flag and zero-weight
+  bright burst steps (95–98 % at 04:28 on 2022-09-30). `src/solarburst/reflag.py`
+  keeps only dead-tile and missing-data flags and restores the weights;
+  `flare-image.sbatch` uses it with `RESET_FLAGS=1`. `solarburst/dynspec.py`
+  ignores flags by default.
+* **Channel lists change within a series.** From 1348547272 (04:27:34) the
+  2022-09-30 solar series uses ch101–187 instead of ch58–226; calibrate those
+  with 3C444 (1348574416).
+* **Mail notifications:** Slurm sends mail (`MailProg=/bin/mail` on the
+  controller); the login node has no `mail` command. A 1-second job whose name
+  is the message works as a notifier:
+  `sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -J "<message>" -o /dev/null --mail-type=END --mail-user=<address> --wrap true`.
+
+| Job | Use |
+|---|---|
+| `flare-image.sbatch` | hyperdrive DI cal + solutions-apply + one 4 s wsclean image (`SUN_OBSID`, `CAL_OBSID`, `CHANNEL`, `PEAK_UTC`, `RESET_FLAGS`) |
+| `dynspec.sbatch` | MWA dynamic spectrum per obs, as an array (`--array=0-N%6`) |
+| `overnight/extract-all.sbatch` | all coarse-channel MSs of one obs into `/scratch/$USER/paircars/data/<obsid>_all` |
+| `overnight/wide-field.sbatch` | 35.6° wsclean image of a calibrated MS (optionally applying hyperdrive solutions) |
+| `overnight/gleam_check.py` | astrometry against GGSM; reports 3C273 and Virgo A separately |
+| `overnight/quiet_sun_flux.py` | P-AIRCARS flux and quiet-disk T_B per channel vs 0.5–1 MK |
+| `overnight/overnight.sh` | unattended driver on the login node (`setsid nohup`), progress in `~/overnight/PROGRESS.md`, report in `~/overnight/REPORT.md` |
+
+### Overnight run, 8 Oct 2026
+
+Started 01:56 (first start at 01:52 failed in wsclean, see above). P-AIRCARS on
+all 24 channels of 1348547272 with 3C444 (job `20261007235653125`),
+04:28:30–04:29:02 (burst) and 04:31:24–04:31:40 (quiet), 4 s images, Stokes I,
+no polcal; wide-field images of 3C444 and of 1348547272 ch112 (hyperdrive and
+P-AIRCARS calibration) for the GGSM position check; quiet-Sun flux check.
