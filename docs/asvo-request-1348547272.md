@@ -93,3 +93,10 @@ resumes when started again. Log: `~/mwa/logs/asvo-dl-<jobid>.out`.
   `sbatch -M calc-cpu --time=23:59:00 --export=ALL,OBSIDS=1111033 ~/mwa/asvo-download.sbatch`
   → `/mnt/nas05/data02/MWA_data/data/mwa_data2/1348547272_1111033_vis.tar`.
   Rerunning the same command resumes an interrupted download (`--keep-tar`).
+* That download (job 108698) stopped after 20 min at 26 GB with `[ERROR] request
+  or response body error`, yet giant-squid exited 0 and the job showed
+  COMPLETED. Restarted 11 Oct 00:24 as job 108715 with
+  `scripts/calculon/asvo-download-retry.sbatch` (installed as
+  `~/mwa/asvo-download-retry.sbatch`): resumes up to 30 times until the tar
+  reaches the data size (1,088,774,161,920 bytes). Expected ≈ 17–18 h at
+  ≈ 17 MB/s; rerun the same command if the 24 h limit is reached.
