@@ -72,3 +72,18 @@ ssh calculon 'cd ~/mwa && sbatch -M calc-cpu --export=ALL,OBSIDS=1348547272 ~/mw
 The download job (`STIX-MWA/scripts/calculon_asvo_download.sbatch`, installed as
 `~/mwa/asvo-download.sbatch`) waits for the ASVO job, runs at most 12 h and
 resumes when started again. Log: `~/mwa/logs/asvo-dl-<jobid>.out`.
+
+## Outcome (10 Oct 2026)
+
+* **Job 1109734 delivered 2 s, not 0.25 s.** Downloaded to
+  `/mnt/nas05/data02/MWA_data/data/mwa_data2/1348547272_1109734_ms.tar`
+  (20.8 GB, 15 min). The MS has 148 × 2 s steps (04:27:35–04:32:29), 8 × 160 kHz,
+  35 % flagged (dead tiles only: `no_rfi=true` worked). Leaving out
+  `avg_time_res` does **not** give the correlator resolution; ASVO conversion
+  jobs accept `avg_time_res` only from 0.5 s.
+* **0.25 s needs the raw files.** Raw-visibility job **1111033**
+  (`giant-squid submit-vis 1348547272`, whole observation, ≈ 1.09 TB) submitted
+  10 Oct 10:00 (Mac), state "Staging". Plan: download to calculon only when
+  ready, then Birli on calculon for ch116 at 0.25 s without AOFlagger.
+* 2 s images of the burst: `scripts/calculon/overnight/burst_series.sh`
+  (P-AIRCARS, ch116, 04:28:20–04:29:10, own calibration and self-cal).
