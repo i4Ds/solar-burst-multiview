@@ -26,3 +26,7 @@ env/
 
 # OS
 .DS_Store
+
+# local mirror of the umbrella repo; the git clone is ~/Projects/solar-radio-imaging-spectroscopy
+.umbrella-staging/
+Untitled
