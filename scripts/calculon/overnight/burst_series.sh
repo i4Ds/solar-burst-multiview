@@ -8,11 +8,13 @@
 #   METAFITS  metafits of that obs
 #   TAG       name for data/work/out dirs and outputs
 #   TRANGE    P-AIRCARS --timerange;  TRES  --image_timeres (s)
+#   SUN, CAL  solar and calibrator obsids (default 1348547272, 3C444 1348574416)
+#   CALDIR    calibrator MS directory (default /scratch/$USER/paircars/data/<CAL>_all)
 #   LABEL     name of this image series; the image folder is renamed imagedir_..._<LABEL>
 #             (an existing unlabelled image folder is renamed ..._prev_<date> first)
 # Status: ~/overnight/<TAG>_<LABEL>.md; PNG: /scratch/$USER/overnight/analysis/<TAG>_<LABEL>.png
 set -uo pipefail
-SUN=1348547272; CAL=1348574416
+SUN=${SUN:-1348547272}; CAL=${CAL:-1348574416}
 SRC_MS=${SRC_MS:-/scratch/$USER/mwa/flare20220930_025s/1348547272_ch116.ms}
 METAFITS=${METAFITS:-/scratch/$USER/mwa/flare20220930_025s/1348547272.metafits}
 TAG=${TAG:-1348547272_2s_ch116}
@@ -23,6 +25,7 @@ MAIL=andre.csillaghy@fhnw.ch
 BIN=$HOME/overnight/bin
 P=/scratch/$USER/paircars
 S=/scratch/$USER/overnight
+CALDIR=${CALDIR:-$P/data/${CAL}_all}
 ST=$HOME/overnight/${TAG}_$LABEL.md
 log() { echo "- $(date '+%Y-%m-%d %H:%M') $*" | tee -a "$ST"; }
 notify() { sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -n1 -c1 --mem=50M -J "${TAG}_$LABEL: ${*:0:90}" \
@@ -46,7 +49,7 @@ for d in "$T"/imagedir_*_w_briggs_0.0; do
 done
 source ~/paircars/env.sh >/dev/null 2>&1
 run-mwa-paircars $D --target_metafits $D/$(basename "$METAFITS") \
-  --cal_datadir $P/data/${CAL}_all --cal_metafits $P/data/${CAL}_all/${CAL}.metafits \
+  --cal_datadir $CALDIR --cal_metafits $CALDIR/${CAL}.metafits \
   --workdir $P/work/$TAG --outdir $P/out/$TAG \
   --do_forcereset_weightflag --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
   --cpu_frac 0.05 --mem_frac 0.05 --cluster --partition cpu-daily --max_worker 1 --walltime 06:00:00 \
