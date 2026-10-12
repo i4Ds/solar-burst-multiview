@@ -13,6 +13,7 @@ export SRC_MS=${SRC_MS:-/scratch/$USER/mwa/flare20220930_raw/1348547272_ch116_0.
 export METAFITS=${METAFITS:-/scratch/$USER/mwa/flare20220930_raw/1348547272.metafits}
 export TAG=${TAG:-1348547272_025s_ch116}
 export TRES=${TRES:-0.25}
+export MEMFRAC=${MEMFRAC:-0.10} WALL=${WALL:-12:00:00}
 CHUNKS=${CHUNKS:-"c2_burst=04:28:16~04:29:12 c1_pre=04:27:41~04:28:16 c3=04:29:12~04:30:08 c4=04:30:08~04:31:04 c5=04:31:04~04:32:23"}
 P=/scratch/$USER/paircars
 for c in $CHUNKS; do
