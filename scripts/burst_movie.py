@@ -50,7 +50,9 @@ def main() -> None:
     peaks = np.array([np.nanmax(im) for im in imgs])
     labels = [f"{t[8:10]}:{t[10:12]}:{t[12:14]}" for t in times]
     secs = [int(t[8:10]) * 3600 + int(t[10:12]) * 60 + float(t[12:]) for t in times]
-    step = float(np.median(np.diff(secs))) if len(secs) > 1 else 0.0
+    step = round((secs[-1] - secs[0]) / (len(secs) - 1), 3) if len(secs) > 1 else 0.0  # times are rounded to 0.1 s
+    if 0 < step < 1:  # sub-second frames: show tenths
+        labels = [f"{t[8:10]}:{t[10:12]}:{t[12:16]}" for t in times]
 
     smap = Map(str(a.aia))
     aia, aext = aia_hpc_cutout(a.aia, fov_arcsec=a.fov)
@@ -82,7 +84,7 @@ def main() -> None:
     ax_lc.plot(range(len(times)), peaks / 1e5, "o-", color="tab:blue")
     tick = list(range(0, len(times), max(1, len(times) // 12)))
     ax_lc.set_xticks(tick); ax_lc.set_xticklabels([labels[i] for i in tick], fontsize=8)
-    ax_lc.set_ylabel("MWA peak [10⁵ Jy/beam]"); ax_lc.set_xlabel(f"UTC, 2022-09-30 ({step:.0f} s steps)")
+    ax_lc.set_ylabel("MWA peak [10⁵ Jy/beam]"); ax_lc.set_xlabel(f"UTC, 2022-09-30 ({step:g} s steps)")
     marker = ax_lc.axvline(0, color="red", lw=1.5)
     contours = []
     title = fig.suptitle("")
@@ -94,7 +96,7 @@ def main() -> None:
         contours = [ax.contour(imgs[i], levels=[f * gmax for f in LEVELS], extent=ext, origin="lower",
                                colors="cyan", linewidths=1.0) for ax in (ax_full, ax_zoom)]
         marker.set_xdata([i, i])
-        title.set_text(f"MWA {freqs[k]:.1f} MHz (P-AIRCARS, {step:.0f} s) {labels[i]} UTC on AIA {wav} Å {smap.date.isot[11:19]};"
+        title.set_text(f"MWA {freqs[k]:.1f} MHz (P-AIRCARS, {step:g} s) {labels[i]} UTC on AIA {wav} Å {smap.date.isot[11:19]};"
                        f" contours {', '.join(f'{int(f*100)}' for f in LEVELS)} % of {gmax:.2g} Jy/beam")
         return contours
 
