@@ -8,7 +8,9 @@
 #   METAFITS  metafits of that obs
 #   TAG       name for data/work/out dirs and outputs
 #   TRANGE    P-AIRCARS --timerange;  TRES  --image_timeres (s)
-# Status: ~/overnight/<TAG>.md; PNG: /scratch/$USER/overnight/analysis/<TAG>.png
+#   LABEL     name of this image series; the image folder is renamed imagedir_..._<LABEL>
+#             (an existing unlabelled image folder is renamed ..._prev_<date> first)
+# Status: ~/overnight/<TAG>_<LABEL>.md; PNG: /scratch/$USER/overnight/analysis/<TAG>_<LABEL>.png
 set -uo pipefail
 SUN=1348547272; CAL=1348574416
 SRC_MS=${SRC_MS:-/scratch/$USER/mwa/flare20220930_025s/1348547272_ch116.ms}
@@ -16,18 +18,19 @@ METAFITS=${METAFITS:-/scratch/$USER/mwa/flare20220930_025s/1348547272.metafits}
 TAG=${TAG:-1348547272_2s_ch116}
 TRANGE=${TRANGE:-2022/09/30/04:28:20~2022/09/30/04:29:10}
 TRES=${TRES:-2}
+LABEL=${LABEL:-burst}
 MAIL=andre.csillaghy@fhnw.ch
 BIN=$HOME/overnight/bin
 P=/scratch/$USER/paircars
 S=/scratch/$USER/overnight
-ST=$HOME/overnight/$TAG.md
+ST=$HOME/overnight/${TAG}_$LABEL.md
 log() { echo "- $(date '+%Y-%m-%d %H:%M') $*" | tee -a "$ST"; }
-notify() { sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -n1 -c1 --mem=50M -J "$TAG: ${*:0:100}" \
+notify() { sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -n1 -c1 --mem=50M -J "${TAG}_$LABEL: ${*:0:90}" \
   -o /dev/null --mail-type=END --mail-user=$MAIL --wrap true >/dev/null 2>&1 || true; log "$*"; }
 waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60; done; }
 
 mkdir -p "$S/logs" "$S/analysis"
-echo "# $TAG, started $(date '+%Y-%m-%d %H:%M') (src $SRC_MS, $TRANGE, ${TRES} s)" > "$ST"
+echo "# ${TAG}_$LABEL, started $(date '+%Y-%m-%d %H:%M') (src $SRC_MS, $TRANGE, ${TRES} s)" > "$ST"
 D=$P/data/$TAG
 if [[ ! -d $D/$(basename "$SRC_MS") ]]; then
   j=$(sbatch -M calc-cpu -p cpu-daily --time=00:30:00 -n1 -c1 --mem=2G -J copy-$TAG -o "$S/logs/%x_%j.log" \
@@ -37,6 +40,10 @@ fi
 [[ -d $D/$(basename "$SRC_MS") ]] || { notify "copy failed"; exit 1; }
 log "data ready in $D"
 
+T=$P/out/$TAG/20220930/${SUN}_target
+for d in "$T"/imagedir_*_w_briggs_0.0; do
+  [[ -d $d ]] && mv "$d" "${d}_prev_$(date +%Y%m%d%H%M)" && log "moved existing $d aside"
+done
 source ~/paircars/env.sh >/dev/null 2>&1
 run-mwa-paircars $D --target_metafits $D/$(basename "$METAFITS") \
   --cal_datadir $P/data/${CAL}_all --cal_metafits $P/data/${CAL}_all/${CAL}.metafits \
@@ -54,15 +61,16 @@ until grep -q "P-AIRCARS execution is finished" "$mlog" 2>/dev/null; do
 done
 res=$(grep -oE "execution is finished: [A-Za-z]+" "$mlog" | tail -1)
 log "P-AIRCARS: ${res:-ended without a result line}"
-img=$(ls -d $P/out/$TAG/20220930/${SUN}_target/imagedir_* 2>/dev/null | head -1)
+img=$(ls -d "$T"/imagedir_*_w_briggs_0.0 2>/dev/null | head -1)
+[[ -n $img ]] && mv "$img" "${img}_$LABEL" && img="${img}_$LABEL"
 n=$(ls "$img"/pbcor_hpcs/*.fits 2>/dev/null | wc -l)
 log "$n images in $img/pbcor_hpcs"
 if [[ $n -gt 0 ]]; then
-  j=$(sbatch -M calc-cpu -p cpu-daily --time=00:30:00 -n1 -c2 --mem=8G -J plot-$TAG -o "$S/logs/%x_%j.log" \
+  j=$(sbatch -M calc-cpu -p cpu-daily --time=00:30:00 -n1 -c2 --mem=8G -J plot-${TAG}_$LABEL -o "$S/logs/%x_%j.log" \
       --wrap "source \$HOME/mwa/mwa-env.sh; R(){ singularity exec --bind /scratch \$MWA_DEMO_SIF \"\$@\"; }; \
-      R python3 $BIN/make_cube.py $img/pbcor_hpcs $S/analysis/$TAG.npz && \
-      R python3 $BIN/montage.py $S/analysis/$TAG.npz $S/analysis/$TAG.png" | awk '{print $4}')
+      R python3 $BIN/make_cube.py $img/pbcor_hpcs $S/analysis/${TAG}_$LABEL.npz && \
+      R python3 $BIN/montage.py $S/analysis/${TAG}_$LABEL.npz $S/analysis/${TAG}_$LABEL.png" | awk '{print $4}')
   waitjob "$j"
 fi
-if [[ -f $S/analysis/$TAG.png ]]; then notify "done: $n images, PNG in $S/analysis/$TAG.png"
-else notify "finished with problems (${res:-no result}); see ~/overnight/$TAG.md"; fi
+if [[ -f $S/analysis/${TAG}_$LABEL.png ]]; then notify "done: $n images, PNG in $S/analysis/${TAG}_$LABEL.png"
+else notify "finished with problems (${res:-no result}); see ~/overnight/${TAG}_$LABEL.md"; fi
