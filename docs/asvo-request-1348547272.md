@@ -72,3 +72,41 @@ ssh calculon 'cd ~/mwa && sbatch -M calc-cpu --export=ALL,OBSIDS=1348547272 ~/mw
 The download job (`STIX-MWA/scripts/calculon_asvo_download.sbatch`, installed as
 `~/mwa/asvo-download.sbatch`) waits for the ASVO job, runs at most 12 h and
 resumes when started again. Log: `~/mwa/logs/asvo-dl-<jobid>.out`.
+
+## Outcome (10 Oct 2026)
+
+* **Job 1109734 delivered 2 s, not 0.25 s.** Downloaded to
+  `/mnt/nas05/data02/MWA_data/data/mwa_data2/1348547272_1109734_ms.tar`
+  (20.8 GB, 15 min). The MS has 148 × 2 s steps (04:27:35–04:32:29), 8 × 160 kHz,
+  35 % flagged (dead tiles only: `no_rfi=true` worked). Leaving out
+  `avg_time_res` does **not** give the correlator resolution; ASVO conversion
+  jobs accept `avg_time_res` only from 0.5 s.
+* **0.25 s needs the raw files.** Raw-visibility job **1111033**
+  (`giant-squid submit-vis 1348547272`, whole observation, ≈ 1.09 TB) submitted
+  10 Oct 10:00 (Mac), state "Staging". Plan: download to calculon only when
+  ready, then Birli on calculon for ch116 at 0.25 s without AOFlagger.
+* 2 s images of the burst: `scripts/calculon/overnight/burst_series.sh`
+  (P-AIRCARS, ch116, 04:28:20–04:29:10, own calibration and self-cal).
+* Raw job 1111033 "Ready" (1014 GiB) on 10 Oct; download started 12:25 as Slurm
+  job 108698 on `calc-cpu` (`--time=23:59:00`, mail on end/fail), job ID passed
+  instead of the obsid so the 2 s conversion is not fetched again:
+  `sbatch -M calc-cpu --time=23:59:00 --export=ALL,OBSIDS=1111033 ~/mwa/asvo-download.sbatch`
+  → `/mnt/nas05/data02/MWA_data/data/mwa_data2/1348547272_1111033_vis.tar`.
+  Rerunning the same command resumes an interrupted download (`--keep-tar`).
+* That download (job 108698) stopped after 20 min at 26 GB with `[ERROR] request
+  or response body error`, yet giant-squid exited 0 and the job showed
+  COMPLETED. Restarted 11 Oct 00:24 as job 108715 with
+  `scripts/calculon/asvo-download-retry.sbatch` (installed as
+  `~/mwa/asvo-download-retry.sbatch`): resumes up to 30 times until the tar
+  reaches the data size (1,088,774,161,920 bytes). Expected ≈ 17–18 h at
+  ≈ 17 MB/s; rerun the same command if the 24 h limit is reached.
+
+## Birli settings for the 0.25 s conversion (reviewed with André, 12 Oct)
+
+Birli 0.18.1 (mwa-demo image), one coarse channel (ch116, 148.5 MHz), job
+`scripts/calculon/raw-birli.sbatch`:
+`--provided-chan-ranges --no-rfi --flag-edge-width 80 --avg-freq-res 160 --max-memory 48`,
+no `--avg-time-res` (native 0.25 s), metafits tile flags kept, default
+corrections (cable, geometric, digital gains, passband `auto`), no Van Vleck,
+no `--apply-di-cal`, phase centre from the metafits. Stages: extract + dry run
+(job 109786), then convert only after the dry-run summary is checked.
