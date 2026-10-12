@@ -100,3 +100,13 @@ resumes when started again. Log: `~/mwa/logs/asvo-dl-<jobid>.out`.
   `~/mwa/asvo-download-retry.sbatch`): resumes up to 30 times until the tar
   reaches the data size (1,088,774,161,920 bytes). Expected ≈ 17–18 h at
   ≈ 17 MB/s; rerun the same command if the 24 h limit is reached.
+
+## Birli settings for the 0.25 s conversion (reviewed with André, 12 Oct)
+
+Birli 0.18.1 (mwa-demo image), one coarse channel (ch116, 148.5 MHz), job
+`scripts/calculon/raw-birli.sbatch`:
+`--provided-chan-ranges --no-rfi --flag-edge-width 80 --avg-freq-res 160 --max-memory 48`,
+no `--avg-time-res` (native 0.25 s), metafits tile flags kept, default
+corrections (cable, geometric, digital gains, passband `auto`), no Van Vleck,
+no `--apply-di-cal`, phase centre from the metafits. Stages: extract + dry run
+(job 109786), then convert only after the dry-run summary is checked.
