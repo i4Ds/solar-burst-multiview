@@ -30,6 +30,33 @@ from sunkit_magex.pfss import tracing
 from solarburst.maps import aia_hpc_cutout
 
 
+def trace_ar_lines(gong: Path, earth, t, ar_hpc, rss: float = 2.5, span: float = 12.0):
+    """GONG map -> PFSS -> field lines traced from a 13 x 13 lon/lat grid of
+    half width SPAN deg around AR_HPC (arcsec, Earth view at T), at 1.05 R_sun."""
+    hpc = Helioprojective(observer=earth, obstime=t)
+    gmap = Map(str(gong)).resample([360, 180] * u.pix)
+    out = pfss.pfss(pfss.Input(gmap, 50, rss))
+    ar = SkyCoord(ar_hpc[0] * u.arcsec, ar_hpc[1] * u.arcsec, frame=hpc).transform_to(
+        HeliographicCarrington(observer=earth, obstime=t))
+    LON, LAT = np.meshgrid(np.linspace(-span, span, 13) + ar.lon.deg, np.linspace(-span, span, 13) + ar.lat.deg)
+    seeds = SkyCoord(LON.ravel() * u.deg, LAT.ravel() * u.deg, 1.05 * const.R_sun, frame=gmap.coordinate_frame)
+    return gmap, tracing.PerformanceTracer().trace(seeds, out)
+
+
+def project_line(fl, earth, t):
+    """Earth-view (x, y) arcsec of a field line, NaN where it is behind the disk,
+    and the heliocentric coordinates; None for lines shorter than 3 points."""
+    c = fl.coords
+    if len(c) < 3:
+        return None
+    rsun = ((const.R_sun / earth.radius).decompose() * u.rad).to_value(u.arcsec)
+    hc = c.transform_to(Heliocentric(observer=earth, obstime=t))
+    pc = c.transform_to(Helioprojective(observer=earth, obstime=t))
+    x, y = pc.Tx.to_value(u.arcsec), pc.Ty.to_value(u.arcsec)
+    behind = (hc.z.to_value(u.m) < 0) & (np.hypot(x, y) < rsun)
+    return np.where(behind, np.nan, x), np.where(behind, np.nan, y), hc
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("gong", type=Path)
@@ -45,20 +72,7 @@ def main() -> None:
     aia_map = Map(str(a.aia))
     t = aia_map.date
     earth = get_earth(t)
-    hpc = Helioprojective(observer=earth, obstime=t)
-
-    gmap = Map(str(a.gong))
-    gmap = gmap.resample([360, 180] * u.pix)
-    out = pfss.pfss(pfss.Input(gmap, 50, a.rss))
-
-    ar = SkyCoord(a.ar[0] * u.arcsec, a.ar[1] * u.arcsec, frame=hpc).transform_to(
-        HeliographicCarrington(observer=earth, obstime=t))
-    lons = np.linspace(-a.span, a.span, 13) + ar.lon.deg
-    lats = np.linspace(-a.span, a.span, 13) + ar.lat.deg
-    LON, LAT = np.meshgrid(lons, lats)
-    seeds = SkyCoord(LON.ravel() * u.deg, LAT.ravel() * u.deg, 1.05 * const.R_sun,
-                     frame=gmap.coordinate_frame)
-    lines = tracing.PerformanceTracer().trace(seeds, out)
+    gmap, lines = trace_ar_lines(a.gong, earth, t, a.ar, a.rss, a.span)
 
     rows = [r for r in json.load(open(a.centroids)) if r["snr"] > 50 and r["rho"] < 600]
     cx = np.array([r["x"] for r in rows]); cy = np.array([r["y"] for r in rows])
@@ -80,14 +94,10 @@ def main() -> None:
     heights = []
     n_open = n_closed = 0
     for fl in lines:
-        c = fl.coords
-        if len(c) < 3:
+        p = project_line(fl, earth, t)
+        if p is None:
             continue
-        hc = c.transform_to(Heliocentric(observer=earth, obstime=t))
-        pc = c.transform_to(hpc)
-        x, y = pc.Tx.to_value(u.arcsec), pc.Ty.to_value(u.arcsec)
-        behind = (hc.z.to_value(u.m) < 0) & (np.hypot(x, y) < rsun.to_value(u.arcsec))
-        x = np.where(behind, np.nan, x); y = np.where(behind, np.nan, y)
+        x, y, hc = p
         if fl.is_open:
             n_open += 1
             ax.plot(x, y, color="lime", lw=0.8, alpha=0.9)
