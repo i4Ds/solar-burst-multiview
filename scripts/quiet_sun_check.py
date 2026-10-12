@@ -45,6 +45,8 @@ def main() -> None:
     p.add_argument("--excl-r", type=float, default=400.0)
     p.add_argument("--compare", action="append", default=[], metavar="LABEL:X:Y",
                    help="positions to mark, e.g. 'burst 04:28:31:320:100'")
+    p.add_argument("--cal", default="3C444", help="calibrator name for the title")
+    p.add_argument("--frame", default="2 s", help="frame duration for the title")
     a = p.parse_args()
 
     d = np.load(a.cube)
@@ -103,7 +105,7 @@ def main() -> None:
     im = ax.imshow(tb / 1e6, origin="lower", extent=ext, cmap="inferno",
                    norm=ImageNormalize(vmin=0, vmax=np.nanpercentile(tb, 99.95) / 1e6, stretch=AsinhStretch(0.05)))
     fig.colorbar(im, ax=ax, fraction=0.046, label="T_B [MK]")
-    ax.set_title(f"MWA {freqs[0]:.1f} MHz, mean of {quiet.sum()} quiet 2 s frames")
+    ax.set_title(f"MWA {freqs[0]:.1f} MHz, mean of {quiet.sum()} quiet {a.frame} frame(s)")
     ax = axs[0, 1]
     ax.imshow(aia, origin="lower", extent=aext, cmap=f"sdoaia{int(smap.wavelength.value)}",
               norm=ImageNormalize(vmin=0, vmax=np.nanpercentile(aia, 99.8), stretch=AsinhStretch(0.02)))
@@ -135,7 +137,7 @@ def main() -> None:
     tick = list(range(0, len(times), max(1, len(times) // 10)))
     ax.set_xticks(tick); ax.set_xticklabels([f"{times[i][8:10]}:{times[i][10:12]}:{times[i][12:14]}" for i in tick], fontsize=8)
     ax.set_ylabel("frame peak [10⁵ Jy/beam]"); ax.legend(); ax.set_title("frame selection")
-    fig.suptitle(f"Quiet-Sun check, MWA {freqs[0]:.1f} MHz (P-AIRCARS, 3C444 + self-cal); cyan +: centre of quiet emission")
+    fig.suptitle(f"Quiet-Sun check, MWA {freqs[0]:.1f} MHz (P-AIRCARS, {a.cal} + self-cal); cyan +: centre of quiet emission")
     fig.tight_layout()
     fig.savefig(f"{a.out}.png", dpi=110)
     print(f"wrote {a.out}.png")

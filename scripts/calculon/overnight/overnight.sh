@@ -39,15 +39,18 @@ wait_jobs() {  # wait until none of the given "cluster:jobid" are queued/running
 }
 state() { sacct -M "${1%%:*}" -j "${1##*:}" -X -n -o State 2>/dev/null | head -1 | tr -d ' '; }
 
-echo "# Overnight run $(date '+%Y-%m-%d %H:%M')" > "$PROG"
+echo "# Overnight run $(date '+%Y-%m-%d %H:%M')" >> "$PROG"
 notify "started (extract, wide-field images, then P-AIRCARS 24 ch)"
 
 # --- A: extraction (CPU) and wide-field images (GPU) in parallel -------------
 cd "$S/logs"
-e1=$(sbatch -M calc-cpu -o "$S/logs/%x_%j.log" --mail-type=FAIL --mail-user=$MAIL \
-     --export=ALL,OBSID=$SUN "$BIN/extract-all.sbatch" | jobid)
-e2=$(sbatch -M calc-cpu -o "$S/logs/%x_%j.log" --mail-type=FAIL --mail-user=$MAIL \
-     --export=ALL,OBSID=$CAL "$BIN/extract-all.sbatch" | jobid)
+extract() {  # submit only if the data directory is not complete yet
+  if [[ $(ls -d $P/data/${1}_all/*.ms 2>/dev/null | wc -l) -ge 24 ]]; then echo 0; return; fi
+  sbatch -M calc-cpu -o "$S/logs/%x_%j.log" --mail-type=FAIL --mail-user=$MAIL \
+    --export=ALL,OBSID=$1 "$BIN/extract-all.sbatch" | jobid
+}
+e1=$(extract $SUN)
+e2=$(extract $CAL)
 pms=$(ls -d $P/out/$SUN/20220930/${SUN}_target/calibrated_ms/*.ms | head -1)
 w1=$(sbatch -o "$S/logs/%x_%j.log" --mail-type=FAIL --mail-user=$MAIL -J wide-3C444 \
      --export=ALL,MS=$F/${CAL}_ch112.ms,SOLUTIONS=$F/cal/hyp_soln_${CAL}_ch112.fits,METAFITS=$F/${CAL}.metafits,NAME=3C444_ch112_wide,OUTDIR=$S/img \

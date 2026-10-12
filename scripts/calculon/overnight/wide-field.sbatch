@@ -18,14 +18,17 @@ SIZE="${SIZE:-5120}"
 SCALE="${SCALE:-25asec}"
 out="${OUTDIR:-/scratch/$USER/overnight/img}"
 mkdir -p "$out"
-run() { singularity exec --nv --bind /scratch "$MWA_DEMO_SIF" "$@"; }
+# wsclean refuses to run with multi-threaded OpenBLAS.
+run() { singularity exec --nv --bind /scratch --env OPENBLAS_NUM_THREADS=1 "$MWA_DEMO_SIF" "$@"; }
 
 ms="$MS"
 if [[ -n ${SOLUTIONS:-} ]]; then
   cal="${MS%.ms}_cal.ms"
   if [[ ! -d $cal ]]; then
+    rm -rf "${cal%.ms}_partial.ms"
     run hyperdrive solutions-apply --data "$MS" "${METAFITS:?set METAFITS}" \
-      --solutions "$SOLUTIONS" --outputs "$cal"
+      --solutions "$SOLUTIONS" --outputs "${cal%.ms}_partial.ms"
+    mv "${cal%.ms}_partial.ms" "$cal"
   fi
   ms="$cal"
 fi
