@@ -4,7 +4,7 @@
         data/flare20220930/aia/aia.lev1.193A_2022_09_30T04_28_40.84Z.image_lev1.fits \
         --out figures/flare20220930/quiet_sun_ch116
 
-Frames whose peak is below the median peak are averaged (this drops the short
+Frames whose peak is at or below the --quantile of all peaks (default: the median) are averaged (this drops the short
 noise-storm spikes). The map is converted to brightness temperature with the
 Rayleigh-Jeans relation and the restoring beam. A circle of EXCL_R arcsec around
 the brightest pixel (the noise storm) is excluded from the quiet-disk numbers.
@@ -45,6 +45,8 @@ def main() -> None:
     p.add_argument("--excl-r", type=float, default=400.0)
     p.add_argument("--compare", action="append", default=[], metavar="LABEL:X:Y",
                    help="positions to mark, e.g. 'burst 04:28:31:320:100'")
+    p.add_argument("--quantile", type=float, default=0.5,
+                   help="keep frames whose peak is at or below this quantile of all peaks")
     p.add_argument("--cal", default="3C444", help="calibrator name for the title")
     p.add_argument("--frame", default="2 s", help="frame duration for the title")
     a = p.parse_args()
@@ -55,7 +57,7 @@ def main() -> None:
     nu = float(freqs[0]) * 1e6
     bmaj, bmin = float(beams[0][0]), float(beams[0][1])
     peaks = np.array([np.nanmax(im) for im in imgs])
-    quiet = peaks <= np.median(peaks)
+    quiet = peaks <= np.quantile(peaks, a.quantile)
     qmap = np.nanmean(imgs[quiet], axis=0)
 
     n = qmap.shape[0]
@@ -133,7 +135,7 @@ def main() -> None:
     ax.set_title(f"quiet-disk median {tb_quiet/1e6:.2f} MK; flux {s_tot:.3g} Jy (without storm {s_nostorm:.3g})")
     ax = axs[1, 1]
     ax.plot(range(len(times)), peaks / 1e5, "o-", color="grey")
-    ax.plot(np.flatnonzero(quiet), peaks[quiet] / 1e5, "o", color="tab:blue", label="used (≤ median)")
+    ax.plot(np.flatnonzero(quiet), peaks[quiet] / 1e5, "o", color="tab:blue", label=f"used (≤ {a.quantile:g} quantile)")
     tick = list(range(0, len(times), max(1, len(times) // 10)))
     ax.set_xticks(tick); ax.set_xticklabels([f"{times[i][8:10]}:{times[i][10:12]}:{times[i][12:14]}" for i in tick], fontsize=8)
     ax.set_ylabel("frame peak [10⁵ Jy/beam]"); ax.legend(); ax.set_title("frame selection")
