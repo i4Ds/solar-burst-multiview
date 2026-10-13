@@ -169,6 +169,12 @@ Useful for burst work: `--timerange`, `--freqrange`, `--image_timeres`, and
 `--do_forcereset_weightflag`. ASVO/AOFlagger flags and zero weights cut out
 solar bursts (see `src/solarburst/reflag.py`).
 
+`--timerange` must lie inside the unflagged data. The first and last seconds of
+an observation are flagged (quack time). If the range reaches into them, imaging
+stops with "Please provide valid time range between …", produces no images, and
+the run ends "Unsuccessful" after calibration has finished. For 1348547272 the
+valid range is 04:27:41–04:32:23.
+
 Workers are separate `cpu-daily` jobs; the master asks Slurm for at most
 8 CPUs and 16 GB. Do not start a second run of the same observation while
 one is in the queue.
