@@ -28,6 +28,7 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization import AsinhStretch, ImageNormalize
+from matplotlib.colors import LogNorm
 from matplotlib.patches import Circle
 from sunpy.map import Map
 
@@ -104,9 +105,10 @@ def main() -> None:
     aia = aia / smap.exposure_time.to_value(u.s)
     fig, axs = plt.subplots(2, 2, figsize=(13, 12))
     ax = axs[0, 0]
-    im = ax.imshow(tb / 1e6, origin="lower", extent=ext, cmap="inferno",
-                   norm=ImageNormalize(vmin=0, vmax=np.nanpercentile(tb, 99.95) / 1e6, stretch=AsinhStretch(0.05)))
-    fig.colorbar(im, ax=ax, fraction=0.046, label="T_B [MK]")
+    # Log scale: the noise storm is ~100x brighter than the quiet disk.
+    im = ax.imshow(np.clip(tb / 1e6, 0.05, None), origin="lower", extent=ext, cmap="inferno",
+                   norm=LogNorm(vmin=0.05, vmax=np.nanmax(tb) / 1e6))
+    fig.colorbar(im, ax=ax, fraction=0.046, label="T_B [MK], log scale")
     ax.set_title(f"MWA {freqs[0]:.1f} MHz, mean of {quiet.sum()} quiet {a.frame} frame(s)")
     ax = axs[0, 1]
     ax.imshow(aia, origin="lower", extent=aext, cmap=f"sdoaia{int(smap.wavelength.value)}",
