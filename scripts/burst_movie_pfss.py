@@ -3,16 +3,20 @@
     python scripts/burst_movie_pfss.py data/flare20220930/overnight/1348547272_025s_ch116_c2_burst.npz \
         data/flare20220930/gong/mrzqs220930t0404c2262_089.fits.gz \
         data/flare20220930/aia/aia.lev1.193A_2022_09_30T04_28_40.84Z.image_lev1.fits \
+        --centroids figures/flare20220930/centroids_042836_44.json \
         --out figures/flare20220930/burst025s_ch116_pfss --fps 8
 
 Field lines as in pfss_fieldlines.py (open green, closed white), traced once.
 Contours are fractions of the maximum over all frames, as in burst_movie.py.
+--centroids adds the per-channel burst centroids (fixed dots coloured by
+frequency, same selection as pfss_fieldlines.py).
 Writes <out>_peak.png, <out>.gif and, if ffmpeg is available, <out>.mp4.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 from pathlib import Path
 
@@ -41,6 +45,7 @@ def main() -> None:
     p.add_argument("--ar", nargs=2, type=float, default=(240.0, 158.0), help="AR position, HPC arcsec")
     p.add_argument("--rss", type=float, default=2.5)
     p.add_argument("--win", nargs=4, type=float, default=(-100, 900, -300, 700))
+    p.add_argument("--centroids", type=Path, default=None, help="per-channel centroid JSON")
     p.add_argument("--fps", type=float, default=2.0)
     a = p.parse_args()
 
@@ -65,7 +70,7 @@ def main() -> None:
     rws = ((np.array(win[2:]) - aext[2]) / (aext[3] - aext[2]) * ny).astype(int).clip(0, ny)
     vmax = np.nanpercentile(aia[rws[0]:rws[1], cols[0]:cols[1]], 99.8)
 
-    fig = plt.figure(figsize=(8.5, 10.5))
+    fig = plt.figure(figsize=(9.5 if a.centroids else 8.5, 10.5))
     gs = fig.add_gridspec(2, 1, height_ratios=[4, 1.1])
     ax, ax_lc = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
     ax.imshow(aia, origin="lower", extent=aext, cmap=f"sdoaia{wav}",
@@ -82,6 +87,11 @@ def main() -> None:
         else:
             n_closed += 1
             ax.plot(pl[0], pl[1], color="white", lw=0.5, alpha=0.5)
+    if a.centroids:
+        rows = [r for r in json.load(open(a.centroids)) if r["snr"] > 50 and r["rho"] < 600]
+        sc = ax.scatter([r["x"] for r in rows], [r["y"] for r in rows], c=[r["freq"] for r in rows],
+                        cmap="plasma", s=40, edgecolor="k", zorder=5)
+        fig.colorbar(sc, ax=ax, fraction=0.046, label="MWA centroid frequency [MHz], 04:28:36–44")
     ax.plot(*a.ar, "+", color="yellow", ms=14, mew=2)
     ax.annotate("AR 13110", a.ar, xytext=(-80, 10), textcoords="offset points", color="yellow")
     ax.set_xlim(win[0], win[1]); ax.set_ylim(win[2], win[3]); ax.set_aspect("equal")
