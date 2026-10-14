@@ -11,6 +11,7 @@
 #   SUN, CAL  solar and calibrator obsids (default 1348547272, 3C444 1348574416)
 #   CALDIR    calibrator MS directory (default /scratch/$USER/paircars/data/<CAL>_all)
 #   DATEDIR   observing date as P-AIRCARS names the output folder (default 20220930)
+#   EXTRA     further run-mwa-paircars options (e.g. --keep_calibrated_ms)
 #   MEMFRAC, WALL  P-AIRCARS --mem_frac and --walltime (0.25 s data: 0.10 and 12:00:00;
 #             flagging workers died at 0.05)
 #   LABEL     name of this image series; the image folder is renamed imagedir_..._<LABEL>
@@ -56,7 +57,7 @@ run-mwa-paircars $D --target_metafits $D/$(basename "$METAFITS") \
   --cal_datadir $CALDIR --cal_metafits $CALDIR/${CAL}.metafits \
   --workdir $P/work/$TAG --outdir $P/out/$TAG \
   --do_forcereset_weightflag --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
-  --cpu_frac 0.05 --mem_frac $MEMFRAC --cluster --partition cpu-daily --max_worker 1 --walltime $WALL \
+  --cpu_frac 0.05 --mem_frac $MEMFRAC --cluster --partition cpu-daily --max_worker 1 --walltime $WALL ${EXTRA:-} \
   > "$S/logs/$TAG-submit.out" 2>&1
 pid=$(grep -oE "Job ID: [0-9]+" "$S/logs/$TAG-submit.out" | head -1 | awk '{print $3}')
 [[ -n $pid ]] || { notify "P-AIRCARS submission failed"; exit 1; }
