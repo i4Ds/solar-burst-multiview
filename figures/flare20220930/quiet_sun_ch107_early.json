@@ -1,0 +1,34 @@
+{
+ "freq_mhz": 136.96,
+ "frames_total": 1,
+ "frames_quiet": 1,
+ "times_quiet": [
+  "20220930033012.0"
+ ],
+ "beam_arcsec": [
+  141.08880481983252,
+  81.82831702989853
+ ],
+ "quiet_centre_arcsec": [
+  -39.00675323561244,
+  44.57622031043236
+ ],
+ "radio_half_radius_rsun": 1.4500000000000004,
+ "tb_quiet_disk_MK": 0.3551552699321968,
+ "s_total_jy": 37727.05621190563,
+ "s_without_storm_jy": 25285.393743159668,
+ "s_expected_1p1rsun_0p5_1MK_jy": [
+  23629.0013060757,
+  47258.0026121514
+ ],
+ "storm_peak_xy": [
+  200.0,
+  40.0
+ ],
+ "storm_centroid_xy": [
+  187.49688444408906,
+  98.259382139742
+ ],
+ "storm_peak_tb_MK": 9.419092737650923,
+ "storm_area_arcsec2_above_half": 63200.0
+}
