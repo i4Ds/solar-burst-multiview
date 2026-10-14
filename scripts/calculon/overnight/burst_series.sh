@@ -10,6 +10,7 @@
 #   TRANGE    P-AIRCARS --timerange;  TRES  --image_timeres (s)
 #   SUN, CAL  solar and calibrator obsids (default 1348547272, 3C444 1348574416)
 #   CALDIR    calibrator MS directory (default /scratch/$USER/paircars/data/<CAL>_all)
+#   DATEDIR   observing date as P-AIRCARS names the output folder (default 20220930)
 #   MEMFRAC, WALL  P-AIRCARS --mem_frac and --walltime (0.25 s data: 0.10 and 12:00:00;
 #             flagging workers died at 0.05)
 #   LABEL     name of this image series; the image folder is renamed imagedir_..._<LABEL>
@@ -46,7 +47,7 @@ fi
 [[ -d $D/$(basename "$SRC_MS") ]] || { notify "copy failed"; exit 1; }
 log "data ready in $D"
 
-T=$P/out/$TAG/20220930/${SUN}_target
+T=$P/out/$TAG/${DATEDIR:-20220930}/${SUN}_target
 for d in "$T"/imagedir_*_w_briggs_0.0; do
   [[ -d $d ]] && mv "$d" "${d}_prev_$(date +%Y%m%d%H%M)" && log "moved existing $d aside"
 done
