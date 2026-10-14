@@ -162,10 +162,11 @@ M1.1 flare at the north-east limb (−867″, +397″).
 * **Channel lists change within a series.** From 1348547272 (04:27:34) the
   2022-09-30 solar series uses ch101–187 instead of ch58–226; calibrate those
   with 3C444 (1348574416).
-* **Mail notifications:** Slurm sends mail (`MailProg=/bin/mail` on the
-  controller); the login node has no `mail` command. A 1-second job whose name
-  is the message works as a notifier:
-  `sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -J "<message>" -o /dev/null --mail-type=END --mail-user=<address> --wrap true`.
+* **Mail notifications do not arrive.** Slurm is configured with
+  `MailProg=/bin/mail` on the controller, and the scripts submit 1-second
+  "notifier" jobs (`--mail-type=END --mail-user=…`), but no mail reached
+  andre.csillaghy@fhnw.ch (checked 15 Oct 2026). The login node has no `mail`
+  command. Rely on the status files (`~/overnight/*.md`) instead.
 
 | Job | Use |
 |---|---|
