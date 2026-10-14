@@ -23,8 +23,11 @@ notify() { sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -n1 -c1 --mem=50M -J 
 waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60; done; }
 jid() { awk '{print $4}'; }
 
-echo "# quiet2015 chain, started $(date '+%Y-%m-%d %H:%M') (ch$CH)" > "$ST"
+# FROM=pcars skips download and extraction (already done).
+FROM=${FROM:-download}
+echo "# quiet2015 chain, started $(date '+%Y-%m-%d %H:%M') (ch$CH, from $FROM)" >> "$ST"
 cd "$HOME/mwa" || exit 1
+if [[ $FROM == download ]]; then
 
 # 1. downloads (both in parallel; each resumes until the tar has the expected size)
 j1=$(sbatch -M calc-cpu --export=ALL,JOBID=$SUNJOB,OBSID=$SUN,KIND=ms,BYTES=$SUNBYTES,DEST=$DL \
@@ -49,11 +52,12 @@ for o in $SUN $CAL; do
   echo \"\$o: \$m\"
   tar -xf \$t ./\${o}.metafits \"\$m\" 2>/dev/null || tar -xf \$t \${o}.metafits \"\$m\"
 done
-ls -R $W | head -40; echo EXTRACT_OK")
+ls -R $W | head -40; echo EXTRACT_OK" | jid)
 waitjob "$j"
 grep -q EXTRACT_OK logs/extract-quiet2015_$j.log || { notify "extraction failed, see ~/mwa/logs/extract-quiet2015_$j.log"; exit 1; }
+log "extraction done"
+fi
 SUNMS=$(ls -d $W/$SUN/*.ms | head -1); CALMS=$(ls -d $W/$CAL/*.ms | head -1)
-log "extracted: $SUNMS and $CALMS (members: $(cat $W/$SUN/members.txt | tr '\n' ' ' | cut -c1-300))"
 
 # 3. P-AIRCARS: calibrator dir with only this channel, then one image over the observation
 CALDIR=/scratch/$USER/paircars/data/${CAL}_ch$CH
