@@ -28,15 +28,16 @@ def main() -> None:
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--title", default="")
     p.add_argument("--quantile", type=float, default=1.0)
+    p.add_argument("--chan", type=int, default=0, help="frequency index in the cube")
     p.add_argument("--vmax", type=float, default=1.5, help="MK")
     p.add_argument("--cut", type=float, default=0.2, help="MK; lower values are not shown")
     a = p.parse_args()
 
     d = np.load(a.cube)
-    imgs = d["data"][:, 0]
-    nu = float(d["freqs"][0]) * 1e6
-    bmaj, bmin = (float(x) for x in d["beams"][0][:2])
-    bpa = float(d["beams"][0][2]) if len(d["beams"][0]) > 2 else 0.0
+    imgs = d["data"][:, a.chan]
+    nu = float(d["freqs"][a.chan]) * 1e6
+    bmaj, bmin = (float(x) for x in d["beams"][a.chan][:2])
+    bpa = float(d["beams"][a.chan][2]) if len(d["beams"][a.chan]) > 2 else 0.0
     peaks = np.array([np.nanmax(im) for im in imgs])
     qmap = np.nanmean(imgs[peaks <= np.quantile(peaks, a.quantile)], axis=0)
     omega = np.pi * np.radians(bmaj / 3600) * np.radians(bmin / 3600) / (4 * np.log(2))
