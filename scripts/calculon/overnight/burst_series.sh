@@ -38,6 +38,9 @@ notify() { sbatch -M calc-cpu -p cpu-daily --time=00:01:00 -n1 -c1 --mem=50M -J 
 waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60; done; }
 
 mkdir -p "$S/logs" "$S/analysis"
+# One run per TAG at a time (two starts of the same TAG share work/out dirs).
+exec 9>"$S/logs/$TAG.lock"; flock -n 9 || { echo "another burst_series.sh run for $TAG is active"; exit 1; }
+SUB=$S/logs/$TAG-$LABEL-$(date +%Y%m%d%H%M%S)-submit.out
 echo "# ${TAG}_$LABEL, started $(date '+%Y-%m-%d %H:%M') (src $SRC_MS, $TRANGE, ${TRES} s)" > "$ST"
 D=$P/data/$TAG
 if [[ ! -d $D/$(basename "$SRC_MS") ]]; then
@@ -58,8 +61,8 @@ run-mwa-paircars $D --target_metafits $D/$(basename "$METAFITS") \
   --workdir $P/work/$TAG --outdir $P/out/$TAG \
   --do_forcereset_weightflag --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
   --cpu_frac 0.05 --mem_frac $MEMFRAC --cluster --partition cpu-daily --max_worker 1 --walltime $WALL ${EXTRA:-} \
-  > "$S/logs/$TAG-submit.out" 2>&1
-pid=$(grep -oE "Job ID: [0-9]+" "$S/logs/$TAG-submit.out" | head -1 | awk '{print $3}')
+  > "$SUB" 2>&1
+pid=$(grep -oE "Job ID: [0-9]+" "$SUB" | head -1 | awk '{print $3}')
 [[ -n $pid ]] || { notify "P-AIRCARS submission failed"; exit 1; }
 log "P-AIRCARS job $pid submitted"
 mlog=$P/work/$TAG/main_paircars_$pid.log
