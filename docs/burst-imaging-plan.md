@@ -55,6 +55,19 @@ Conversions come out much smaller than the archive size (10 kHz → 160 kHz).
 6 Phase IIIb events have no same-channel calibrator within 24 h: P-AIRCARS
 self-cal starts there from a calibrator with another channel set or a sky model.
 
+## Downloads: the ASVO watcher
+
+`scripts/calculon/asvo-watch.sbatch` (with `asvo_watch.py`, both copied to
+`~/mwa/`) runs on calculon: every 30 min `giant-squid list`, and every Ready job
+whose tar is not on the NAS with its full size is downloaded with
+`asvo-download-retry.sbatch` (Slurm job `asvo-dl-<jobid>`, at most 3 at once,
+into `mwa_data2`). It resubmits itself before its time limit and stops when
+nothing is pending. Status: `~/mwa/asvo-watch.status`. Started 19 Oct (job 111483).
+The ledger in git is updated from that status file, not by the watcher.
+
+Embargo: ASVO accepted all G0002 targets (collaboration access); the 5 OA004
+targets are refused until their release dates (open access: PI only).
+
 ## On calculon, once the data are there
 
 One Slurm array task per image, built from `configs/events/*.yaml`:

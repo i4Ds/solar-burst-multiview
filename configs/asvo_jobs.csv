@@ -6,30 +6,30 @@ obsid,kind,params,role,batch,asvo_job,state,requested,tar,note
 1419137296,ms,"output=ms,avg_time_res=0.5,avg_freq_res=160,flag_edge_width=160",target,2024-12-25,1106097,downloaded,2026-10-04,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419137296_1106097_ms.tar,params from STIX-MWA scripts/download_1419137296.sh: no no_rfi so AOFlagger probably on; check burst flags
 1419161128,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=160",calibrator,2024-12-25,1106098,downloaded,2026-10-04,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419161128_1106098_ms.tar,params from STIX-MWA scripts/download_1419137296.sh; AOFlagger probably on
 1419109008,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=160",calibrator,2024-12-25,1106099,downloaded,2026-10-04,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419109008_1106099_ms.tar,params from STIX-MWA scripts/download_1419137296.sh; AOFlagger probably on
-1419137296,vis,,target,0,,submitted,2026-10-19,,submitted 2026-10-19 by André (asvo-submit-2026-10-19.sh); job id from giant-squid list still to fill in
-1419161128,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,0,,submitted,2026-10-19,,submitted 2026-10-19 by André (asvo-submit-2026-10-19.sh); job id from giant-squid list still to fill in
+1419137296,vis,,target,0,1114407,ready,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419137296_1114407_vis.tar,; ASVO Ready 2026-10-19
+1419161128,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,0,1114408,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419161128_1114408_ms.tar,; ASVO Preprocessing 2026-10-19
 1443154216,vis,,target,1,,embargoed,2026-10-19,,ASVO 999: embargo until 2027-03-29; OA004 is open access: only the PI (S. Mondal)
-1446861616,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1446865216,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1446870616,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1449551392,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
+1446861616,vis,,target,1,1114409,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1446861616_1114409_vis.tar,; ASVO Downloading 2026-10-19
+1446865216,vis,,target,1,1114410,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1446865216_1114410_vis.tar,; ASVO Downloading 2026-10-19
+1446870616,vis,,target,1,1114411,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1446870616_1114411_vis.tar,; ASVO Downloading 2026-10-19
+1449551392,vis,,target,1,1114412,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1449551392_1114412_vis.tar,; ASVO Downloading 2026-10-19
 1449626656,vis,,target,1,,embargoed,2026-10-19,,ASVO 999: embargo until 2027-06-13; OA004 is open access: only the PI (S. Mondal)
-1450835520,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1451778960,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1451779192,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1451801392,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1458877312,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
-1469325616,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
+1450835520,vis,,target,1,1114413,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1450835520_1114413_vis.tar,; ASVO Preparing 2026-10-19
+1451778960,vis,,target,1,1114414,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1451778960_1114414_vis.tar,; ASVO Queued 2026-10-19
+1451779192,vis,,target,1,1114415,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1451779192_1114415_vis.tar,; ASVO Queued 2026-10-19
+1451801392,vis,,target,1,1114416,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1451801392_1114416_vis.tar,; ASVO Staging 2026-10-19
+1458877312,vis,,target,1,1114417,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1458877312_1114417_vis.tar,; ASVO Queued 2026-10-19
+1469325616,vis,,target,1,1114418,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1469325616_1114418_vis.tar,; ASVO Downloading 2026-10-19
 1471143136,vis,,target,1,,embargoed,2026-10-19,,ASVO 999: embargo until 2028-02-19; OA004 is open access: only the PI (S. Mondal)
 1471233856,vis,,target,1,,embargoed,2026-10-19,,ASVO 999: embargo until 2028-02-20; OA004 is open access: only the PI (S. Mondal)
 1472706736,vis,,target,1,,embargoed,2026-10-19,,ASVO 999: embargo until 2028-03-06; OA004 is open access: only the PI (S. Mondal)
-1475301616,vis,,target,1,,planned,2026-10-19,,G0002 under embargo: collaboration access to be confirmed by ASVO
+1475301616,vis,,target,1,1114419,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1475301616_1114419_vis.tar,; ASVO Downloading 2026-10-19
 1443177000,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,on_hold,2026-10-19,,"public, but its target is embargoed"
-1446843296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,planned,2026-10-19,,calibrator of a G0002 target
-1446893720,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,planned,2026-10-19,,calibrator of a G0002 target
+1446843296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,1114420,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1446843296_1114420_ms.tar,calibrator of a G0002 target; ASVO Downloading 2026-10-19
+1446893720,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,1114421,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1446893720_1114421_ms.tar,calibrator of a G0002 target; ASVO Downloading 2026-10-19
 1449607880,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,on_hold,2026-10-19,,"public, but its target is embargoed"
-1469313488,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,planned,2026-10-19,,calibrator of a G0002 target
+1469313488,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,1114422,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1469313488_1114422_ms.tar,calibrator of a G0002 target; ASVO Preparing 2026-10-19
 1471126944,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,on_hold,2026-10-19,,"public, but its target is embargoed"
 1471213288,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,on_hold,2026-10-19,,"public, but its target is embargoed"
 1472725200,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,on_hold,2026-10-19,,"public, but its target is embargoed"
-1475317992,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,,planned,2026-10-19,,calibrator of a G0002 target
+1475317992,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,1114423,submitted,2026-10-19,/mnt/nas05/data02/MWA_data/data/mwa_data2/1475317992_1114423_ms.tar,calibrator of a G0002 target; ASVO Preparing 2026-10-19
