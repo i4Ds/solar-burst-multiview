@@ -118,8 +118,9 @@ def status(want: pd.DataFrame, reg: pd.DataFrame, led: pd.DataFrame) -> pd.DataF
     return pd.DataFrame(out).drop(columns="Index")
 
 
-def submit_lines(req: pd.DataFrame, chunk: int) -> list[str]:
-    """sbatch lines for scripts/calculon/asvo-submit-retry.sbatch, at most `chunk` obsids per job."""
+def submit_lines(req: pd.DataFrame, chunk: int, local: bool = False) -> list[str]:
+    """sbatch lines for scripts/calculon/asvo-submit-retry.sbatch, at most `chunk` obsids per job;
+    with `local`, plain giant-squid commands for a shell that has MWA_ASVO_API_KEY set."""
     lines = []
     for batch, gb in req.groupby("batch", sort=True):
         tb = gb.bytes.sum() / 1e12 if "bytes" in gb else float("nan")
@@ -128,7 +129,11 @@ def submit_lines(req: pd.DataFrame, chunk: int) -> list[str]:
             ids = [str(o) for o in g.obsid]
             for i in range(0, len(ids), chunk):
                 part = " ".join(ids[i:i + chunk])
-                env = f"ALL,SUBMIT={'vis' if kind == 'vis' else 'conv'},OBSIDS='{part}'"
+                if local:
+                    lines.append(f"giant-squid submit-vis {part}" if kind == "vis" else
+                                 f"giant-squid submit-conv -p {params} {part}")
+                    continue
+                env =f"ALL,SUBMIT={'vis' if kind == 'vis' else 'conv'},OBSIDS='{part}'"
                 if kind != "vis":
                     env += f",PARAMS='{params}'"
                 lines.append(f"sbatch -M calc-cpu --export={env} ~/mwa/asvo-submit-retry.sbatch")
@@ -149,9 +154,18 @@ def cmd_plan(args) -> None:
     print(f"\n{len(st)} wanted, {len(st) - len(req)} already covered, {len(req)} to request", file=sys.stderr)
     if req.empty:
         return
-    print("\n# submit (on calculon, API key from ~/.config/mwa_asvo/api_key):")
-    for line in submit_lines(req, args.chunk):
-        print(line)
+    lines = submit_lines(req, args.chunk, args.local)
+    if args.local:
+        lines = ["#!/bin/bash", "# ASVO submissions; needs MWA_ASVO_API_KEY. Record the job ids in configs/asvo_jobs.csv.",
+                 "set -euo pipefail", ': "${MWA_ASVO_API_KEY:?set MWA_ASVO_API_KEY}"'] + lines + ["giant-squid list"]
+    else:
+        lines = ["# submit (on calculon, API key from ~/.config/mwa_asvo/api_key):"] + lines
+    text = "\n".join(lines) + "\n"
+    if args.out:
+        Path(args.out).write_text(text)
+        print(f"-> {args.out}", file=sys.stderr)
+    else:
+        print("\n" + text)
     if args.write_ledger:
         new = req.assign(asvo_job="", state="planned", requested=date.today().isoformat(), tar="",
                          note=req.get("note", ""))[LEDGER_COLS]
@@ -171,6 +185,8 @@ def main(argv: list[str] | None = None) -> None:
     a.add_argument("--batch", help="only these batches, comma separated")
     a.add_argument("--chunk", type=int, default=5, help="obsids per ASVO submission")
     a.add_argument("--write-ledger", action="store_true")
+    a.add_argument("--local", action="store_true", help="giant-squid commands instead of sbatch lines")
+    a.add_argument("--out", help="write the commands to this file")
     a.set_defaults(func=cmd_plan)
     args = ap.parse_args(argv)
     args.func(args)
