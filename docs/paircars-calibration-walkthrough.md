@@ -135,4 +135,54 @@ run-mwa-flag \
   --cpu_frac 0.5 --mem_frac 0.6
 ```
 
+Result (2026-10-19): **no new flags.** Flag fraction 1.55 % before and after
+(Tile103 only); the flag summary shows 0.78 % for every other tile, which is
+their one baseline with Tile103. `DATA` unchanged.
+
+The MS `HISTORY` table confirms what ran: `clip` (zeros), `tfcrop`
+(timecutoff = freqcutoff = 5, flagdimension freqtime) and `extend`
+(growtime = growfreq = 80). `flag_badants` writes no history entry; Tile103
+was already flagged. So tfcrop ran and found nothing above its cutoff.
+`scripts/paircars-walkthrough/plot_flag_check.py` shows the 11 × 6 plane per
+baseline and an approximate outlier statistic (line fit in time, MAD σ; not
+the CASA algorithm): median largest deviation ≈ 2.6σ, as expected for 66
+noise-like samples; 39 of 16,002 baseline-polarisations exceed 5σ on that
+approximation.
+
+The HISTORY also shows how the sample was made: Birli 0.18.2 (cable-length,
+digital-gain, PFB-gain and geometric corrections; AOFlagger with the
+`mwa-default` strategy), then `flagdata(mode='unflag')` on the full MS.
+So the AOFlagger flags, including Tile103, were removed before the sample was
+published; the flat per-baseline phases in A0 are consistent with the cable
+and geometric corrections.
+
+## A3. Import the calibrator model (hyperdrive)
+
+This is where the 29 Sep run failed. `import_model.py` 51–188:
+
+1. Beam file: the `mwa_full_embedded_element_pattern_<kHz>.h5` closest to
+   the MS channel width → `_160.h5`. Sky model: `GGSM.txt` (WSClean/hyperdrive
+   text format) in the P-AIRCARS data directory.
+2. `hyperdrive vis-simulate -m <metafits> --beam-file … --middle-freq <MS mean>
+   --freq-res 160 --time-res 10 --source-dist-cutoff <FWHM FoV in deg> -s GGSM.txt
+   -n 1000 --num-fine-channels 6 --num-timesteps 11 --output-autos
+   --output-model-files <ms>_model.ms`, run in the `paircarshyperdrive`
+   udocker container. The brightest 1000 GGSM sources within the field of view,
+   attenuated by the FEE beam, predicted as visibilities.
+3. `setjy(standard='manual', fluxdensity=[1,0,0,0], usescratch=True)` only to
+   create a `MODEL_DATA` column, then `MODEL_DATA` ← `DATA` of the model MS
+   (`putcol`, no check of row order or shape).
+4. `.modeling_succeed` / `.modeling_failed` marker in the MS.
+
+The pipeline log only recorded "Total failure: 6". The CLI with `--verbose`
+should show hyperdrive's own error.
+
+```bash
+cp -r /data/stepwise/cal /data/stepwise/cal_after_A2
+run-mwa-import-model \
+  /data/stepwise/cal/calibrator_1111476056_ch_113_t_20150327072047_20150327072227.ms,/data/stepwise/cal/calibrator_1111476056_ch_114_t_20150327072047_20150327072227.ms \
+  /data/cal/1111476056.metafits --workdir /data/stepwise/cal \
+  --cpu_frac 0.5 --mem_frac 0.6 --verbose 2>&1 | tee /data/stepwise/a3_import_model.log
+```
+
 Result: _pending_.
