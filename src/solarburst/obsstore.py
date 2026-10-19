@@ -5,8 +5,10 @@ Three files under `configs/`, all versioned:
 - `calculon_obs.csv`  the registry: every ASVO tar on the calculon NAS
   (`<obsid>_[<label>_]<asvojob>_<kind>.tar`), from one `ls` of the data dirs.
 - `asvo_jobs.csv`     the ledger: every ASVO job we plan or submit, with its state
-  (planned, submitted, ready, downloaded, failed). A job in flight counts as data
-  we have, so it is never requested again.
+  (planned, submitted, ready, downloaded, failed, embargoed, on_hold). A job in
+  flight counts as data we have, so it is never requested again; embargoed
+  (MWA data are restricted to the PI for 18 months, `public_release_date_utc`
+  in mwa.observation) and on_hold rows are not requested either.
 - `asvo/wanted-*.csv` what we want: obsid, product, role, batch.
 
 Products. `vis` is the raw archive (all channels, all time steps, correlator
@@ -110,6 +112,11 @@ def status(want: pd.DataFrame, reg: pd.DataFrame, led: pd.DataFrame) -> pd.DataF
                 if covers(r.kind, r.params, w.kind, params):
                     hit = (f"ledger:{r.state}", f"asvo job {r.asvo_job}" if str(r.asvo_job) else "")
                     break
+        if hit is None:
+            # embargoed (ASVO error 999, data restricted to the PI) or deliberately held back
+            held = led[(led.obsid == w.obsid) & led.state.isin(["embargoed", "on_hold"])]
+            if len(held):
+                hit = (held.state.iloc[0], held.note.iloc[0])
         if hit is None:
             other = reg[reg.obsid == w.obsid]
             note = ("on calculon only as " + ", ".join(sorted(set(other.kind))) + " (params unknown)") if len(other) else ""
