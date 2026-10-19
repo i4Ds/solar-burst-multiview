@@ -91,6 +91,16 @@ used. WSClean 3.7 in that container was not built with IDG, so imaging uses
 `-gridder wgridder`. `MWA_BEAM_FILE` inside the container must point at
 `data/mwa_full_embedded_element_pattern.h5`.
 
+Rapthor runs natively (arm64) from the same image tag as calculon, pulled into
+the `paircars` Colima VM because the `default` VM has only 8 GiB. It has
+rapthor v2.2.dev117, DP3 6.6.0, WSClean 3.6 and AOFlagger, but no hyperdrive
+or birli. WSClean in it needs `OPENBLAS_NUM_THREADS=1`:
+
+```bash
+docker --context colima-paircars run --rm -e OPENBLAS_NUM_THREADS=1 \
+  -v "$PWD":/work -w /work ghcr.io/d3v-null/rapthor-mwa:sha-e27456d-pass rapthor --help
+```
+
 Notebooks: `notebooks/03_mwa_download.ipynb` talks to the archive.
 `notebooks/03_mwa_imaging.ipynb` only reads files already under `data/<obsid>/`.
 
