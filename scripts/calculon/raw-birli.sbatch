@@ -5,8 +5,9 @@
 #   sbatch -M calc-cpu --export=ALL,STAGES="extract dryrun" ~/mwa/flare/raw-birli.sbatch
 #   sbatch -M calc-cpu --export=ALL,STAGES=convert ~/mwa/flare/raw-birli.sbatch
 # Birli options reviewed with André on 12 Oct 2026 (docs/asvo-request-1348547272.md):
-# no AOFlagger (it flags solar bursts), native 0.25 s, 160 kHz, 80 kHz edge flags,
-# metafits tile flags, default corrections, only the provided channel.
+# no AOFlagger (it flags solar bursts), native 0.25 s, 160 kHz, 80 kHz edge flags
+# (one fine channel when the obs is stored at 160 kHz; EDGE overrides), metafits tile
+# flags, default corrections, only the provided channel.
 #SBATCH --job-name=raw-birli
 #SBATCH --partition=cpu-daily
 #SBATCH --ntasks=1
@@ -26,12 +27,20 @@ OUT="$W/${OBSID}_ch${CH}_0.25s.ms"
 mkdir -p "$W"
 cd "$W"
 
+# Edge flags must be whole fine channels: 80 kHz for 10/40/80 kHz data, one fine
+# channel (160 kHz) for obs stored at 160 kHz (Phase III/IIIb solar obs, e.g. 1419137296).
+edge_width() {
+  local fc
+  fc=$(grep -a -o "FINECHAN= *[0-9.]*" "$W/${OBSID}.metafits" | awk '{print int($2)}')
+  if [[ -z $fc ]]; then echo 80; elif (( fc > 80 )); then echo "$fc"; else echo 80; fi
+}
+
 birli_run() {
   singularity exec --bind /scratch "$MWA_DEMO_SIF" birli \
     --metafits "$W/${OBSID}.metafits" \
     --provided-chan-ranges \
     --no-rfi \
-    --flag-edge-width 80 \
+    --flag-edge-width "${EDGE:-$(edge_width)}" \
     --avg-freq-res 160 \
     --max-memory 48 \
     --no-draw-progress \

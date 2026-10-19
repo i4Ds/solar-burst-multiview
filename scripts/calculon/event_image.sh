@@ -32,8 +32,10 @@ until ondisk "$SUN_JOB" && ondisk "$CAL_JOB"; do sleep 600; done
 log "tars on the NAS (ASVO jobs $SUN_JOB, $CAL_JOB)"
 
 j1= j2=
+stages="extract convert"   # skip the tar scan when this channel is already extracted
+compgen -G "$W/${SUN}_*_ch${CH}_*.fits" >/dev/null && [[ -f $W/${SUN}.metafits ]] && stages=convert
 [[ -d $MS ]] || j1=$(sub -o "$EV/logs/birli_${SUN}_%j.log" \
-  --export=ALL,OBSID=$SUN,CH=$CH,TAR=$NAS/${SUN}_${SUN_JOB}_vis.tar,W=$W,STAGES="extract convert" ~/mwa/flare/raw-birli.sbatch)
+  --export=ALL,OBSID=$SUN,CH=$CH,TAR=$NAS/${SUN}_${SUN_JOB}_vis.tar,W=$W,STAGES="$stages" ~/mwa/flare/raw-birli.sbatch)
 [[ -f $CALDIR/EXTRACT_OK ]] || j2=$(sub -o "$EV/logs/extract_${CAL}_%j.log" \
   --export=ALL,OBSID=$CAL,TAR=$NAS/${CAL}_${CAL_JOB}_ms.tar,DEST=$CALDIR ~/overnight/bin/extract-all.sbatch)
 log "Birli job ${j1:-skipped (MS exists)}, calibrator extraction ${j2:-skipped}"
