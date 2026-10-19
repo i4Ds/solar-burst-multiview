@@ -16,6 +16,7 @@ the NAS; run it inside a job or an `srun`, not on the login node.
 | `~/mwa/images/mwa-demo_cuda12.5.1.sif` | `docker://mwatelescope/mwa-demo:cuda12.5.1` | Official stack. Hyperdrive base plus birli, giant-squid, wsclean, EveryBeam, IDG, CHIPS, AOFlagger, SSINS. [Dockerfile](https://github.com/MWATelescope/mwa-demo/blob/main/Dockerfile). |
 | `~/mwa/images/hyperdrive_0.6.1-autos-cuda12.5.1-ubuntu24.04.sif` | `docker://mwatelescope/hyperdrive:0.6.1-autos-cuda12.5.1-ubuntu24.04` | Image used in the interactive `hyperdrive vis-sim` notes. |
 | `~/mwa/images/sp5505_sha-967aa66-pass.sif` | `docker://ghcr.io/d3v-null/sp5505:sha-967aa66-pass` | Swiss Karabo/Spack build: hyperdrive, wsclean, aoflagger, DP3. Same tag as on Daint and Besso. |
+| `~/mwa/images/rapthor-mwa_sha-e27456d-pass.sif` | `docker://ghcr.io/d3v-null/rapthor-mwa:sha-e27456d-pass` | Rapthor (direction-dependent self-cal) built for MWA by d3v-null. |
 
 Build cache and temporary files go to `/scratch/$USER/mwa` (BeeGFS). The SIF
 files sit in `$HOME` so both clusters see them.

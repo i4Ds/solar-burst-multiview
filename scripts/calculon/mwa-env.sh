@@ -33,6 +33,10 @@ export MWA_DEMO_URI="docker://mwatelescope/mwa-demo:cuda12.5.1"
 export SWISS_SIF="$MWA_IMAGES/sp5505_sha-967aa66-pass.sif"
 export SWISS_URI="docker://ghcr.io/d3v-null/sp5505:sha-967aa66-pass"
 
+# Rapthor (LOFAR direction-dependent self-cal pipeline) built for MWA by d3v-null.
+export RAPTHOR_SIF="$MWA_IMAGES/rapthor-mwa_sha-e27456d-pass.sif"
+export RAPTHOR_URI="docker://ghcr.io/d3v-null/rapthor-mwa:sha-e27456d-pass"
+
 mwa_mkdirs() {
   mkdir -p "$MWA_IMAGES" "$MWA_SMOKE" "$MWA_CACHE" "$MWA_TMP" "$MWA_ROOT/logs"
 }

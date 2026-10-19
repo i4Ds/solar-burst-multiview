@@ -30,7 +30,7 @@ inventory() {
   local name="$1" sif="$2"
   echo "===== $name ====="
   singularity exec "$sif" bash -lc '
-    for c in hyperdrive birli wsclean giant-squid aoflagger DP3 dp3 chips ssins python3; do
+    for c in hyperdrive birli wsclean giant-squid aoflagger DP3 dp3 chips ssins rapthor python3; do
       if command -v "$c" >/dev/null 2>&1; then
         printf "OK %s -> %s\n" "$c" "$(command -v "$c")"
       else
@@ -54,9 +54,19 @@ swiss_rc=$?
 set -e
 echo "swiss_rc=$swiss_rc"
 
+set +e
+pull "$RAPTHOR_SIF" "$RAPTHOR_URI"
+rapthor_rc=$?
+set -e
+echo "rapthor_rc=$rapthor_rc"
+
 inventory hyperdrive "$HYPERDRIVE_SIF"
 inventory mwa-demo "$MWA_DEMO_SIF"
 if [[ "$swiss_rc" -eq 0 && -f "$SWISS_SIF" ]]; then
   inventory swiss "$SWISS_SIF"
+fi
+if [[ "$rapthor_rc" -eq 0 && -f "$RAPTHOR_SIF" ]]; then
+  inventory rapthor "$RAPTHOR_SIF"
+  singularity exec "$RAPTHOR_SIF" bash -lc 'rapthor --version 2>&1 | head -3' || true
 fi
 echo PULL_DONE
