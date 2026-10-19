@@ -48,6 +48,31 @@ In the full run of 29 Sep 2026, A3 failed for all 6 channels (log gives only
 "Total failure: 6"), so there were no calibrator solutions; B4 intensity
 self-cal succeeded on all 6, polarisation self-cal failed on all 6.
 
+## A0. The raw calibrator visibilities
+
+Read directly from the `DATA` column of `/data/cal/1111476056_ch113-114.ms`
+with `scripts/paircars-walkthrough/plot_raw_vis.py` (python-casacore).
+Plots (not committed; the sample is not for publication):
+`P-AIRCARS-data/stepwise/plots/00_raw_vis_*.png`.
+
+- ASVO output, already averaged: metafits `INTTIME` 0.5 s and `FINECHAN`
+  40 kHz → MS at 10 s and 160 kHz. 11 timestamps × 8256 rows (128 tiles with
+  autocorrelations). Picket-fence observation, 24 coarse channels in 12 pairs
+  (`CHANNELS` 62 … 188); this MS is the pair 113/114 (144.0–146.56 MHz).
+- Pointing az 135°, alt 59.8° (sweet-spot grid); phase centre on Pictor A.
+  Sun 81.7° away at altitude 37°. `QUACKTIM` 3 s.
+- Tile103 (antenna index 74) is all zeros. It is flagged in the metafits
+  but the MS `FLAG` column is entirely false, so nothing is flagged yet.
+  The split's `clipzeros` and step A2 will catch it.
+- Cross-correlation spectrum: the first and last 160 kHz channel of each
+  coarse channel are ~15–20 % low (filterbank roll-off). These are the
+  channels the split drops.
+- Phases per baseline are roughly flat across the 2.56 MHz, but each baseline
+  sits at its own offset (instrumental gain phases φᵢ − φⱼ), so phase vs
+  baseline length is scrambled. That offset is what the gain solve removes.
+- Baseline matrix shows block structure by receiver group and a few
+  low-amplitude tiles: per-tile gain differences before calibration.
+
 ## A1. Split the calibrator
 
 Pipeline call: `run_target_split_jobs(..., datacolumn="data",
@@ -60,7 +85,7 @@ prefix="calibrator", move_solarcenter=False, quack_timestamps=...)`.
 show-paircars-ms /data/cal/1111476056_ch113-114.ms
 run-mwa-split /data/cal/1111476056_ch113-114.ms /data/cal/1111476056.metafits \
   --workdir /data/stepwise/cal --prefix calibrator \
-  --timeres 10 --freqres 0.16 --quack_timestamps 8 \
+  --timeres 10 --freqres 0.16 --quack_timestamps 0 \
   --cpu_frac 0.5 --mem_frac 0.6
 ```
 
