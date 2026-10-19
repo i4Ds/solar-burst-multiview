@@ -107,7 +107,7 @@ def status(want: pd.DataFrame, reg: pd.DataFrame, led: pd.DataFrame) -> pd.DataF
                 hit = ("have", r.path)
                 break
         if hit is None:
-            live = led[(led.obsid == w.obsid) & led.state.isin(["planned", "submitted", "ready", "downloaded"])]
+            live = led[(led.obsid == w.obsid) & led.state.isin(["submitted", "ready", "downloaded"])]
             for r in live.itertuples():
                 if covers(r.kind, r.params, w.kind, params):
                     hit = (f"ledger:{r.state}", f"asvo job {r.asvo_job}" if str(r.asvo_job) else "")
@@ -115,8 +115,16 @@ def status(want: pd.DataFrame, reg: pd.DataFrame, led: pd.DataFrame) -> pd.DataF
         if hit is None:
             # embargoed (ASVO error 999, data restricted to the PI) or deliberately held back
             held = led[(led.obsid == w.obsid) & led.state.isin(["embargoed", "on_hold"])]
+            # during the embargo, open-access (OA...) data go to the PI only; collaboration
+            # projects (e.g. G0002) are open to MWA collaboration members
+            rel = getattr(w, "public_release_date_utc", "")
+            oa = str(getattr(w, "projectid", "")).startswith("OA")
             if len(held):
                 hit = (held.state.iloc[0], held.note.iloc[0])
+            elif oa and isinstance(rel, str) and rel and pd.Timestamp(rel) > pd.Timestamp.now(tz="UTC"):
+                hit = ("embargoed", f"open-access project, public from {rel[:10]}")
+        if hit is None and len(led[(led.obsid == w.obsid) & (led.state == "planned")]):
+            hit = ("planned", "in the ledger, not yet submitted")
         if hit is None:
             other = reg[reg.obsid == w.obsid]
             note = ("on calculon only as " + ", ".join(sorted(set(other.kind))) + " (params unknown)") if len(other) else ""
@@ -129,6 +137,8 @@ def submit_lines(req: pd.DataFrame, chunk: int, local: bool = False) -> list[str
     """sbatch lines for scripts/calculon/asvo-submit-retry.sbatch, at most `chunk` obsids per job;
     with `local`, plain giant-squid commands for a shell that has MWA_ASVO_API_KEY set."""
     lines = []
+    if local:   # one obsid per call, so an obs ASVO refuses (e.g. embargo) does not stop the others
+        chunk = 1
     for batch, gb in req.groupby("batch", sort=True):
         tb = gb.bytes.sum() / 1e12 if "bytes" in gb else float("nan")
         lines.append(f"# batch {batch}: {len(gb)} obs, {tb:.2f} TB in the archive (conversions come out smaller)")
@@ -137,8 +147,9 @@ def submit_lines(req: pd.DataFrame, chunk: int, local: bool = False) -> list[str
             for i in range(0, len(ids), chunk):
                 part = " ".join(ids[i:i + chunk])
                 if local:
-                    lines.append(f"giant-squid submit-vis {part}" if kind == "vis" else
-                                 f"giant-squid submit-conv -p {params} {part}")
+                    cmd = (f"giant-squid submit-vis {part}" if kind == "vis" else
+                           f"giant-squid submit-conv -p {params} {part}")
+                    lines.append(f"{cmd} || failed+=({part})")
                     continue
                 env =f"ALL,SUBMIT={'vis' if kind == 'vis' else 'conv'},OBSIDS='{part}'"
                 if kind != "vis":
@@ -157,14 +168,17 @@ def cmd_plan(args) -> None:
         st = st[st.batch.astype(str).isin(args.batch.split(","))]
     pd.set_option("display.width", 200)
     print(st[["batch", "role", "obsid", "kind", "state", "where"]].to_string(index=False))
-    req = st[st.state == "request"]
-    print(f"\n{len(st)} wanted, {len(st) - len(req)} already covered, {len(req)} to request", file=sys.stderr)
+    req = st[st.state.isin(["request", "planned"])]
+    print(f"\n{len(st)} wanted, {len(st) - len(req)} covered or held, {len(req)} to submit", file=sys.stderr)
     if req.empty:
         return
     lines = submit_lines(req, args.chunk, args.local)
     if args.local:
-        lines = ["#!/bin/bash", "# ASVO submissions; needs MWA_ASVO_API_KEY. Record the job ids in configs/asvo_jobs.csv.",
-                 "set -euo pipefail", ': "${MWA_ASVO_API_KEY:?set MWA_ASVO_API_KEY}"'] + lines + ["giant-squid list"]
+        lines = (["#!/bin/bash",
+                  "# ASVO submissions, one obsid per call; a refused obsid is reported and skipped.",
+                  "# Needs MWA_ASVO_API_KEY. Paste the final list back so the job ids go into configs/asvo_jobs.csv.",
+                  ': "${MWA_ASVO_API_KEY:?set MWA_ASVO_API_KEY}"', "failed=()"] + lines +
+                 ['echo; echo "not submitted (${#failed[@]}): ${failed[*]:-none}"', "giant-squid list"])
     else:
         lines = ["# submit (on calculon, API key from ~/.config/mwa_asvo/api_key):"] + lines
     text = "\n".join(lines) + "\n"
@@ -173,7 +187,8 @@ def cmd_plan(args) -> None:
         print(f"-> {args.out}", file=sys.stderr)
     else:
         print("\n" + text)
-    if args.write_ledger:
+    req = req[req.state == "request"]   # only rows not yet in the ledger are added
+    if args.write_ledger and len(req):
         new = req.assign(asvo_job="", state="planned", requested=date.today().isoformat(), tar="",
                          note=req.get("note", ""))[LEDGER_COLS]
         pd.concat([led, new], ignore_index=True).to_csv(LEDGER, index=False)

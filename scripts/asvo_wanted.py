@@ -60,6 +60,13 @@ def main():
                       or [pd.DataFrame(columns=["obs_id", "total_archived_data_bytes"])])
     sizes = sizes.drop_duplicates("obs_id").set_index("obs_id").total_archived_data_bytes
     w["bytes"] = w.obsid.map(sizes)
+    # project and end of embargo from the archive (open-access projects: PI only until then)
+    import pyvo
+    tap = pyvo.dal.TAPService("https://vo.mwatelescope.org/mwa_asvo/tap")
+    ids = ",".join(str(o) for o in w.obsid)
+    t = tap.search(f"SELECT obs_id, projectid, public_release_date_utc FROM mwa.observation "
+                   f"WHERE obs_id IN ({ids})").to_table().to_pandas()
+    w = w.merge(t.rename(columns={"obs_id": "obsid"}), on="obsid", how="left")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     w.to_csv(args.out, index=False)
     print(w.groupby(["batch", "role"]).agg(n=("obsid", "size"), TB=("bytes", lambda b: round(b.sum() / 1e12, 2)))

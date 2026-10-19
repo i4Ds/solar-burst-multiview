@@ -1,47 +1,47 @@
-obsid,kind,params,role,batch,event_utc,tier,phase,has_ch127,note,bytes
-1419137296,vis,,target,0,2024-12-25 04:49:54,A,III,True,,45718801920
-1419161128,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,0,2024-12-25 04:49:54,A,III,True,"for 1419137296; Cal_solar_PKS2356-61, 6.6 h",106072450560
-1443154216,vis,,target,1,2025-09-29 04:12:34,B,IIIb,True,,105703902720
-1446861616,vis,,target,1,2025-11-11 02:00:12,B,IIIb,True,,53416005120
-1446865216,vis,,target,1,2025-11-11 03:01:55,C,IIIb,True,,53416005120
-1446870616,vis,,target,1,2025-11-11 04:31:33,B,IIIb,True,,53416005120
-1449551392,vis,,target,1,2025-12-12 05:09:58,B,IIIb,False,no same-channel calibrator within 24 h,26708002560
-1449626656,vis,,target,1,2025-12-13 02:06:54,B,IIIb,True,,106831941120
-1450835520,vis,,target,1,2025-12-27 01:51:46,B,IIIb,True,no same-channel calibrator within 24 h,53416005120
-1451778960,vis,,target,1,2026-01-06 23:55:42,C,IIIb,False,no same-channel calibrator within 24 h,53416005120
-1451779192,vis,,target,1,2026-01-07 00:01:33,C,IIIb,True,no same-channel calibrator within 24 h,53416005120
-1451801392,vis,,target,1,2026-01-07 06:11:13,B,IIIb,False,no same-channel calibrator within 24 h,53416005120
-1458877312,vis,,target,1,2026-03-30 03:41:36,C,IIIb,True,no same-channel calibrator within 24 h,53416005120
-1469325616,vis,,target,1,2026-07-29 02:00:36,B,IIIb,True,,53416005120
-1471143136,vis,,target,1,2026-08-19 02:54:54,B,IIIb,True,,106831941120
-1471233856,vis,,target,1,2026-08-20 04:07:09,A,IIIb,True,,106831941120
-1472706736,vis,,target,1,2026-09-06 05:12:03,B,IIIb,True,,106831941120
-1475301616,vis,,target,1,2026-10-06 06:00:52,A,IIIb,True,,53416005120
-1443177000,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-09-29 04:12:34,B,IIIb,True,"for 1443154216; Cal_solar_HerA, 6.3 h",476768332800
-1446843296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-11-11 02:00:12,B,IIIb,True,"for 1446861616; Cal_solar_HydA, 5.1 h",480502195200
-1446893720,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-11-11 04:31:33,B,IIIb,True,"for 1446870616; Cal_solar_3C444, 6.4 h",480502195200
-1449607880,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-12-13 02:06:54,B,IIIb,True,"for 1449626656; Cal_solar_HydA, 5.3 h",480502195200
-1469313488,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-07-29 02:00:36,B,IIIb,True,"for 1469325616; Cal_solar_PicA, 3.4 h",480502195200
-1471126944,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-08-19 02:54:54,B,IIIb,True,"for 1471143136; Cal_solar_PicA, 4.5 h",480502195200
-1471213288,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-08-20 04:07:09,A,IIIb,True,"for 1471233856; Cal_solar_PicA, 5.8 h",480502195200
-1472725200,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-09-06 05:12:03,B,IIIb,True,"for 1472706736; Cal_solar_HerA, 5.1 h",480502195200
-1475317992,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-10-06 06:00:52,A,IIIb,True,"for 1475301616; Cal_solar_3C444, 4.5 h",480502195200
-1339475176,vis,,target,2,2022-06-17 04:27:53,A,II Extended,True,,882789857280
-1347335176,vis,,target,2,2022-09-16 03:47:05,A,II Extended,False,,882789857280
-1347594008,vis,,target,2,2022-09-19 03:41:21,A,II Extended,True,,1088774161920
-1348547272,vis,,target,2,2022-09-30 04:28:31,A,II Extended,False,,1088774161920
-1387165944,vis,,target,2,2023-12-21 03:53:23,A,II Compact,True,,66487979520
-1406167216,vis,,target,2,2024-07-28 02:01:44,A,II Extended,True,,26376261120
-1407292216,vis,,target,2,2024-08-10 02:31:06,A,II Extended,True,,26376261120
-1416884416,vis,,target,2,2024-11-29 03:00:16,A,III,True,,48076623360
-1419137056,vis,,target,2,2024-12-25 04:47:39,A,III,True,,45718801920
-1419477136,vis,,target,2,2024-12-29 03:12:23,A,III,True,,45718801920
-1339452016,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-06-17 04:27:53,A,II Extended,True,"for 1339475176; Oberoi2022A_Cal_3C444, 6.5 h",882789857280
-1347359296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-09-16 03:47:05,A,II Extended,False,"for 1347335176; Oberoi2022A_Cal_HerA, 6.7 h",882789857280
-1347571816,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-09-19 03:41:21,A,II Extended,True,"for 1347594008; Oberoi2022A_Cal_PKS0408-65, 6.2 h",882789857280
-1348574416,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-09-30 04:28:31,A,II Extended,False,"for 1348547272; Oberoi2022A_cal_3C444, 7.5 h",1077739289280
-1387139416,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2023-12-21 03:53:23,A,II Compact,True,"for 1387165944; Oberoi2023B_Cal_HydA, 7.4 h",82001825280
-1406154616,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-07-28 02:01:44,A,II Extended,True,"for 1406167216; Oberoi2024A_Cal_PicA, 3.5 h",65061342720
-1407276200,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-08-10 02:31:06,A,II Extended,True,"for 1407292216; Oberoi2024A_Cal_PicA, 4.5 h",65061342720
-1416862472,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-11-29 03:00:16,A,III,True,"for 1416884416; Cal_solar_pol_RADec99.0,-20.7, 6.1 h",152505331200
-1419455048,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-12-29 03:12:23,A,III,True,"for 1419477136; Cal_solar_pol_RADec184.5,-10.3, 6.1 h",106072450560
+obsid,kind,params,role,batch,event_utc,tier,phase,has_ch127,note,bytes,projectid,public_release_date_utc
+1419137296,vis,,target,0,2024-12-25 04:49:54,A,III,True,,45718801920,OA004,2026-06-25T04:47:58.000Z
+1419161128,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,0,2024-12-25 04:49:54,A,III,True,"for 1419137296; Cal_solar_PKS2356-61, 6.6 h",106072450560,D0006,2024-12-25T11:25:10.000Z
+1443154216,vis,,target,1,2025-09-29 04:12:34,B,IIIb,True,,105703902720,OA004,2027-03-29T04:09:58.000Z
+1446861616,vis,,target,1,2025-11-11 02:00:12,B,IIIb,True,,53416005120,G0002,2027-05-11T01:59:58.000Z
+1446865216,vis,,target,1,2025-11-11 03:01:55,C,IIIb,True,,53416005120,G0002,2027-05-11T02:59:58.000Z
+1446870616,vis,,target,1,2025-11-11 04:31:33,B,IIIb,True,,53416005120,G0002,2027-05-11T04:29:58.000Z
+1449551392,vis,,target,1,2025-12-12 05:09:58,B,IIIb,False,no same-channel calibrator within 24 h,26708002560,G0002,2027-06-12T05:09:34.000Z
+1449626656,vis,,target,1,2025-12-13 02:06:54,B,IIIb,True,,106831941120,OA004,2027-06-13T02:03:58.000Z
+1450835520,vis,,target,1,2025-12-27 01:51:46,B,IIIb,True,no same-channel calibrator within 24 h,53416005120,G0002,2027-06-27T01:51:42.000Z
+1451778960,vis,,target,1,2026-01-06 23:55:42,C,IIIb,False,no same-channel calibrator within 24 h,53416005120,G0002,2027-07-06T23:55:42.000Z
+1451779192,vis,,target,1,2026-01-07 00:01:33,C,IIIb,True,no same-channel calibrator within 24 h,53416005120,G0002,2027-07-06T23:59:34.000Z
+1451801392,vis,,target,1,2026-01-07 06:11:13,B,IIIb,False,no same-channel calibrator within 24 h,53416005120,G0002,2027-07-07T06:09:34.000Z
+1458877312,vis,,target,1,2026-03-30 03:41:36,C,IIIb,True,no same-channel calibrator within 24 h,53416005120,G0002,2027-09-30T03:41:34.000Z
+1469325616,vis,,target,1,2026-07-29 02:00:36,B,IIIb,True,,53416005120,G0002,2028-01-29T01:59:58.000Z
+1471143136,vis,,target,1,2026-08-19 02:54:54,B,IIIb,True,,106831941120,OA004,2028-02-19T02:51:58.000Z
+1471233856,vis,,target,1,2026-08-20 04:07:09,A,IIIb,True,,106831941120,OA004,2028-02-20T04:03:58.000Z
+1472706736,vis,,target,1,2026-09-06 05:12:03,B,IIIb,True,,106831941120,OA004,2028-03-06T05:11:58.000Z
+1475301616,vis,,target,1,2026-10-06 06:00:52,A,IIIb,True,,53416005120,G0002,2028-04-06T05:59:58.000Z
+1443177000,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-09-29 04:12:34,B,IIIb,True,"for 1443154216; Cal_solar_HerA, 6.3 h",476768332800,D0006,2025-09-29T10:29:42.000Z
+1446843296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-11-11 02:00:12,B,IIIb,True,"for 1446861616; Cal_solar_HydA, 5.1 h",480502195200,D0006,2025-11-10T20:54:38.000Z
+1446893720,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-11-11 04:31:33,B,IIIb,True,"for 1446870616; Cal_solar_3C444, 6.4 h",480502195200,D0006,2025-11-11T10:55:02.000Z
+1449607880,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2025-12-13 02:06:54,B,IIIb,True,"for 1449626656; Cal_solar_HydA, 5.3 h",480502195200,D0006,2025-12-12T20:51:02.000Z
+1469313488,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-07-29 02:00:36,B,IIIb,True,"for 1469325616; Cal_solar_PicA, 3.4 h",480502195200,D0006,2026-07-28T22:37:50.000Z
+1471126944,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-08-19 02:54:54,B,IIIb,True,"for 1471143136; Cal_solar_PicA, 4.5 h",480502195200,D0006,2026-08-18T22:22:06.000Z
+1471213288,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-08-20 04:07:09,A,IIIb,True,"for 1471233856; Cal_solar_PicA, 5.8 h",480502195200,D0006,2026-08-19T22:21:10.000Z
+1472725200,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-09-06 05:12:03,B,IIIb,True,"for 1472706736; Cal_solar_HerA, 5.1 h",480502195200,D0006,2026-09-06T10:19:42.000Z
+1475317992,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,1,2026-10-06 06:00:52,A,IIIb,True,"for 1475301616; Cal_solar_3C444, 4.5 h",480502195200,D0006,2026-10-06T10:32:54.000Z
+1339475176,vis,,target,2,2022-06-17 04:27:53,A,II Extended,True,,882789857280,G0002,2023-12-17T04:25:58.000Z
+1347335176,vis,,target,2,2022-09-16 03:47:05,A,II Extended,False,,882789857280,G0002,2024-03-16T03:45:58.000Z
+1347594008,vis,,target,2,2022-09-19 03:41:21,A,II Extended,True,,1088774161920,G0002,2024-03-19T03:39:50.000Z
+1348547272,vis,,target,2,2022-09-30 04:28:31,A,II Extended,False,,1088774161920,G0002,2024-03-30T04:27:34.000Z
+1387165944,vis,,target,2,2023-12-21 03:53:23,A,II Compact,True,,66487979520,G0002,2025-06-21T03:52:06.000Z
+1406167216,vis,,target,2,2024-07-28 02:01:44,A,II Extended,True,,26376261120,G0002,2026-01-28T01:59:58.000Z
+1407292216,vis,,target,2,2024-08-10 02:31:06,A,II Extended,True,,26376261120,G0002,2026-02-10T02:29:58.000Z
+1416884416,vis,,target,2,2024-11-29 03:00:16,A,III,True,,48076623360,G0002,2026-05-29T02:59:58.000Z
+1419137056,vis,,target,2,2024-12-25 04:47:39,A,III,True,,45718801920,OA004,2026-06-25T04:43:58.000Z
+1419477136,vis,,target,2,2024-12-29 03:12:23,A,III,True,,45718801920,OA004,2026-06-29T03:11:58.000Z
+1339452016,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-06-17 04:27:53,A,II Extended,True,"for 1339475176; Oberoi2022A_Cal_3C444, 6.5 h",882789857280,G0002,2022-06-16T21:59:58.000Z
+1347359296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-09-16 03:47:05,A,II Extended,False,"for 1347335176; Oberoi2022A_Cal_HerA, 6.7 h",882789857280,G0002,2022-09-16T10:27:58.000Z
+1347571816,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-09-19 03:41:21,A,II Extended,True,"for 1347594008; Oberoi2022A_Cal_PKS0408-65, 6.2 h",882789857280,G0002,2022-09-18T21:29:58.000Z
+1348574416,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2022-09-30 04:28:31,A,II Extended,False,"for 1348547272; Oberoi2022A_cal_3C444, 7.5 h",1077739289280,G0002,2022-09-30T11:59:58.000Z
+1387139416,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2023-12-21 03:53:23,A,II Compact,True,"for 1387165944; Oberoi2023B_Cal_HydA, 7.4 h",82001825280,G0002,2023-12-20T20:29:58.000Z
+1406154616,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-07-28 02:01:44,A,II Extended,True,"for 1406167216; Oberoi2024A_Cal_PicA, 3.5 h",65061342720,G0002,2024-07-27T22:29:58.000Z
+1407276200,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-08-10 02:31:06,A,II Extended,True,"for 1407292216; Oberoi2024A_Cal_PicA, 4.5 h",65061342720,G0002,2024-08-09T22:03:02.000Z
+1416862472,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-11-29 03:00:16,A,III,True,"for 1416884416; Cal_solar_pol_RADec99.0,-20.7, 6.1 h",152505331200,D0006,2024-11-28T20:54:14.000Z
+1419455048,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,2,2024-12-29 03:12:23,A,III,True,"for 1419477136; Cal_solar_pol_RADec184.5,-10.3, 6.1 h",106072450560,D0006,2024-12-28T21:03:50.000Z
