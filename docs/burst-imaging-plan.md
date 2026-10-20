@@ -87,3 +87,21 @@ One Slurm array task per image, built from `configs/events/*.yaml`:
 - André submits (his ASVO key). After each submission the job ids go into
   `configs/asvo_jobs.csv`; downloads with `asvo-download-retry.sbatch`.
 - Batch 0 first, end to end; batch 1 only after its image is checked.
+
+## Experiment tracking: MLflow on calculon
+
+One MLflow run per image in the experiment `archive-bursts` (set up 21 Oct):
+params (obsid, calibrator, channel, 4 s window, pipeline settings, git commit from
+`~/mwa/events/VERSION`), metrics (peak, off-Sun rms, peak/rms, half-max centroid,
+beam, Rayleigh–Jeans T_B, half-max area in beams), artifacts (FITS, light curve,
+P-AIRCARS montage). `event_image.sh` logs each new image at the end
+(`scripts/calculon/log_event_mlflow.py`); older images can be logged by hand with
+the same script.
+
+- Store: `sqlite:///~/mwa/mlflow/mlflow.db`, artifacts `~/mwa/mlflow/artifacts`
+  (home on the NAS, not /scratch). Environment `~/mwa/mlflow-venv`, built on the
+  login node: compute nodes have Python 3.9, the login node 3.12.
+- UI: `ssh calculon 'bash ~/mwa/events/mlflow-ui.sh'` (one worker, job runner
+  off), then on the Mac `ssh -N -L 5000:localhost:5000 calculon` and
+  <http://localhost:5000>. It listens on localhost of the shared login node, so
+  other calculon users could reach it too.

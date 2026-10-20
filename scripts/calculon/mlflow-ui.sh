@@ -6,7 +6,9 @@
 PORT=${PORT:-5000}
 if [[ ${1:-} == stop ]]; then pkill -u "$USER" -f "mlflow ui.*--port $PORT" && echo stopped; exit 0; fi
 if ss -ltn | grep -q "127.0.0.1:$PORT\b"; then echo "already running on localhost:$PORT"; exit 0; fi
-setsid nohup ~/mwa/mlflow-venv/bin/mlflow ui --host 127.0.0.1 --port "$PORT" \
+# shared login node: one web worker, no background job runner (used only for GenAI evaluations)
+MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false \
+setsid nohup ~/mwa/mlflow-venv/bin/mlflow ui --host 127.0.0.1 --port "$PORT" --workers 1 \
   --backend-store-uri "sqlite:///$HOME/mwa/mlflow/mlflow.db" \
   > ~/mwa/logs/mlflow-ui.log 2>&1 < /dev/null &
 sleep 5; ss -ltn | grep -q "127.0.0.1:$PORT\b" && echo "MLflow UI on localhost:$PORT (tunnel: ssh -N -L $PORT:localhost:$PORT calculon)"
