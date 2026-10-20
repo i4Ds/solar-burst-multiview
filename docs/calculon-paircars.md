@@ -87,6 +87,15 @@ to apply (`stop_prefect_server` then `start_prefect_server`, as above, after
 After a login-node reboot both services are gone; rerun the `start_prefect_server`
 line above.
 
+**Postgres hung after a /scratch I/O error (15–20 Oct).** On 15 Oct 19:32 UTC
+`postgres.log` shows `could not read file "global/pg_filenode.map": Remote I/O
+error` (BeeGFS). Postgres kept its port open but stopped accepting work: `ss -ltn`
+showed Recv-Q 2001 on :5260 (backlog 2000) while `api/health` still said `true`.
+The next P-AIRCARS run (20 Oct) died about 10 min in with `httpx.ReadTimeout` in
+`create_flow_run`, before touching any data. Restarting with `start_prefect_server`
+(above) fixed it. Check for this before a run: a full Recv-Q on 5260, or the last
+`postgres.log` lines being errors rather than checkpoints.
+
 ## A run
 
 From the login node, with absolute paths. In the git version the target is a
