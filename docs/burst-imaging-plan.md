@@ -105,3 +105,15 @@ the same script.
   off), then on the Mac `ssh -N -L 5000:localhost:5000 calculon` and
   <http://localhost:5000>. It listens on localhost of the shared login node, so
   other calculon users could reach it too.
+
+Runs carry a readable name ("2024-12-25 04:51:45 type II, 162.5 MHz"), tags
+(`event_date`, `burst_type`, `phase`, `project`, `tier`, `status` ok/check/bad), a
+Markdown description, and the image figure with Stonyhurst grid made on calculon
+(`event_figure.py`). Logging an image again updates its run. Per-event tags and
+markers: `LOGARGS` in `event_image.sh`.
+
+**Catalogue page** (for reading, MLflow stays the store):
+`~/mwa/mlflow-venv/bin/python ~/mwa/events/build_catalogue.py` writes
+`~/mwa/catalogue/` (sortable table and one card per image with image, MWA light
+curve and GOES/STIX/e-Callisto context). Copied to the Mac and published as an
+Artifact: https://claude.ai/artifact/QwU6ZtNBeVh7Vxuuip27qk (private).
