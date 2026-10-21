@@ -10,7 +10,10 @@ P-AIRCARS images, the MWA light curves (dynspec npz) and the metafits, and write
                     base64 (artifact pages do not serve raw binary files)
   movies/<prod>.mp4 series with more than MAX_FRAMES frames (burst_movie_mwa.py: full Sun and
                     zoom on the source, Stonyhurst grid, peak curve), <prod>_peak.png poster
-  img/              context figures
+  img/              context figures; <prod>_euv.png: MWA contours on AIA 193 A with NOAA
+                    regions and PFSS lines (euv_context.py, brightest frame)
+  events: GOES flares during the observation (HEK, cached in events.json);
+  products: calibration method, calibrator source (metafits CALIBSRC) and obsid
 The page draws the images itself, so scale, colour map and comparisons are chosen there.
 Run with ~/mwa/tools-venv/bin/python; copy ~/mwa/board to the Mac and publish the page.
 """
@@ -152,6 +155,61 @@ def movie(p, frames, crops, extent, fns):
     return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
 
 
+def obs_window(sun):
+    """Start and end of the MWA observation (metafits DATE-OBS + EXPOSURE), ISO strings."""
+    mf = f"{SCR}/mwa/events/{sun}/{sun}.metafits"
+    if not os.path.exists(mf):
+        return "", ""
+    from astropy.time import Time
+    h = fits.getheader(mf)
+    t0 = Time(h["DATE-OBS"])
+    return t0.isot[:19], (t0 + float(h.get("EXPOSURE", 0)) / 86400).isot[:19]
+
+
+def goes_flares(t0, t1):
+    """GOES flares (HEK, SWPC) overlapping the observation +-10 min: class, start/peak/end, NOAA region."""
+    from astropy.time import Time
+    from sunpy.net import Fido
+    from sunpy.net import attrs as a
+    import astropy.units as u
+    res = Fido.search(a.Time(Time(t0) - 10 * u.min, Time(t1) + 10 * u.min), a.hek.EventType("FL"),
+                      a.hek.OBS.Observatory == "GOES")
+    out = []
+    for r in res["hek"] if len(res) else []:
+        out.append(dict(cls=str(r["fl_goescls"]), start=str(r["event_starttime"])[:19],
+                        peak=str(r["event_peaktime"])[:19], end=str(r["event_endtime"])[:19],
+                        ar=int(r["ar_noaanum"] or 0)))
+    order = "ABCMX"
+    return sorted(out, key=lambda f: (order.find(f["cls"][:1]), float(f["cls"][1:] or 0)), reverse=True)
+
+
+def calibration(p):
+    """Calibration of a product: method, calibrator source (metafits CALIBSRC) and obsid, self-cal."""
+    src = ""
+    for mf in glob.glob(f"{SCR}/paircars/data/{p['cal']}_*/{p['cal']}.metafits"):
+        src = str(fits.getheader(mf).get("CALIBSRC", "")).strip()
+        if src:
+            break
+    return dict(method=p.get("method", "P-AIRCARS"), source=src, obsid=p.get("cal", ""),
+                selfcal=p.get("selfcal", True))
+
+
+def euv(p, fn):
+    """MWA contours over AIA 193 A with NOAA regions and PFSS lines (euv_context.py), cached."""
+    out = f"{OUT}/img/{p['product']}_euv.png"
+    stamp = f"{fn} {os.path.getmtime(fn):.0f}"
+    sf = f"{OUT}/img/{p['product']}_euv.stamp"
+    if os.path.exists(out) and os.path.exists(sf) and open(sf).read() == stamp:
+        return f"img/{p['product']}_euv.png"
+    r = subprocess.run([f"{H}/mwa/tools-venv/bin/python", f"{H}/mwa/events/euv_context.py", fn, "--out", out,
+                        "--cache", f"{H}/mwa/board_cache/{p['sun']}"], capture_output=True, text=True)
+    if r.returncode or not os.path.exists(out):
+        print(f"EUV figure for {p['product']} failed: {r.stderr[-400:]}")
+        return None
+    open(sf, "w").write(stamp)
+    return f"img/{p['product']}_euv.png"
+
+
 def main():
     os.makedirs(f"{OUT}/data", exist_ok=True)
     os.makedirs(f"{OUT}/img", exist_ok=True)
@@ -186,6 +244,9 @@ def main():
             if p.get("state") in (None, "running", "waiting", "imaging") and p.get("legacy"):
                 p["state"] = "done"
         p["lc"] = lightcurve(p["sun"], p["ch"])
+        p["calibration"] = calibration(p)
+        if fns:   # EUV context of the brightest frame
+            p["euv"] = euv(p, fns[int(np.argmax([fr["peak"] for fr in frames]))])
         prods.append(p)
 
     evs = []
@@ -198,6 +259,13 @@ def main():
             if os.path.exists(mf):
                 t = fits.getheader(mf).get("DATE-OBS", "")
         e["date"] = t[:10]
+        e["obs_start"], e["obs_end"] = obs_window(sun)
+        if "goes" not in events.get(sun, {}) and e["obs_start"]:
+            try:
+                events.setdefault(sun, {})["goes"] = goes_flares(e["obs_start"], e["obs_end"])
+            except Exception as err:
+                print(f"GOES query for {sun} failed: {err}")
+        e["goes"] = events.get(sun, {}).get("goes")
         if t:
             e["grid"] = grid_lines(t)
         ctx = e.pop("context", "")
@@ -205,6 +273,7 @@ def main():
             shutil.copy(ctx, f"{OUT}/img/{os.path.basename(ctx)}")
             e["context_png"] = f"img/{os.path.basename(ctx)}"
         evs.append(e)
+    json.dump(events, open(f"{PR}/events.json", "w"), indent=1)    # cached GOES lists
     json.dump({"generated": time.strftime("%Y-%m-%d %H:%M %Z"), "events": evs, "products": prods},
               open(f"{OUT}/board.json", "w"), separators=(",", ":"))
     print(f"{len(evs)} events, {len(prods)} products, {sum(len(p['frames']) for p in prods)} frames -> {OUT}")

@@ -75,7 +75,10 @@ textarea { width: 100%; min-height: 54px; resize: vertical; box-sizing: border-b
 .chans label { font-family: var(--mono); font-size: .78rem; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; display: flex; gap: 4px; align-items: center; background: var(--surface); }
 .chans label.cur { border-color: var(--accent); color: var(--accent); }
 .note { font-size: .82rem; color: var(--muted); }
-.ctx img { width: 100%; height: auto; border-radius: 4px; background: #fff; display: block; }
+.ctx img, .fig img { width: 100%; height: auto; border-radius: 4px; background: #fff; display: block; }
+.fig { margin: 0; display: grid; gap: 4px; }
+tr.evrow { background: var(--sunk); cursor: pointer; } tr.evrow td { border-top: 2px solid var(--line); }
+td.sub { padding-left: 18px; color: var(--muted); }
 .cmpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
 .cmpgrid figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
 .cmpgrid figcaption { font-size: .8rem; }
@@ -101,8 +104,8 @@ textarea { width: 100%; min-height: 54px; resize: vertical; box-sizing: border-b
 
   <section id="tab-board">
     <div class="tablewrap"><table>
-      <thead><tr><th title="select for Compare">cmp</th><th>event</th><th>type</th><th>phase</th><th>channel</th>
-      <th>window UTC</th><th>Δt s</th><th>calibrator</th><th>state</th><th>frames</th><th>peak/rms</th>
+      <thead><tr><th title="select for Compare">cmp</th><th>event · run</th><th>type</th><th>GOES</th><th>phase</th><th>channel</th>
+      <th>window UTC</th><th>Δt s</th><th>calibration</th><th>state</th><th>frames</th><th>peak/rms</th>
       <th>position ″</th><th>verdict</th><th>note</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
@@ -172,6 +175,18 @@ function draw(canvas, p, ix, mode, vmaxCommon, showGrid) {
     const X = x => (x + 1500) / 3000 * W, Y = y => H - (y + 1500) / 3000 * H;
     const dx = (extent[1] - extent[0]) / (nx - 1), dy = (extent[3] - extent[2]) / (ny - 1);
     ctx.drawImage(off, X(extent[0] - dx / 2), Y(extent[3] + dy / 2), (extent[1] - extent[0] + dx) / 3000 * W, (extent[3] - extent[2] + dy) / 3000 * H);
+    // contours at 30/50/70/90 % of the frame peak (marching squares on the data grid)
+    const val = (i, j) => arr[ix * n + j * nx + i] * s, px = i => X(extent[0] + i * dx), py = j => Y(extent[2] + j * dy);
+    ctx.strokeStyle = "rgba(120,255,255,.95)";
+    [0.3, 0.5, 0.7, 0.9].forEach((lv, k) => { const L = lv * fr.peak; ctx.lineWidth = 0.7 + 0.3 * k; ctx.beginPath();
+      for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+        const a = val(i, j), b = val(i + 1, j), c = val(i + 1, j + 1), d = val(i, j + 1);
+        const pts = [];
+        const cut = (v1, v2, x1, y1, x2, y2) => { if ((v1 >= L) !== (v2 >= L)) { const f2 = (L - v1) / (v2 - v1); pts.push([x1 + f2 * (x2 - x1), y1 + f2 * (y2 - y1)]); } };
+        cut(a, b, i, j, i + 1, j); cut(b, c, i + 1, j, i + 1, j + 1); cut(c, d, i + 1, j + 1, i, j + 1); cut(d, a, i, j + 1, i, j);
+        for (let q = 0; q + 1 < pts.length; q += 2) { ctx.moveTo(px(pts[q][0]), py(pts[q][1])); ctx.lineTo(px(pts[q + 1][0]), py(pts[q + 1][1])); }
+      }
+      ctx.stroke(); });
     const e = ev(p.sun);
     if (showGrid && e.grid) {
       ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 0.7;
@@ -242,18 +257,30 @@ function stats() {
   $("#ncmp").textContent = cmpSel.size ? `(${cmpSel.size})` : "";
 }
 
+const fold = new Set();   // events whose runs are folded away
+const goesTop = e => (e.goes || [])[0];
+const goesTxt = e => { const g = goesTop(e); return g ? `${g.cls} ${g.peak.slice(11, 16)}${g.ar ? " AR" + g.ar : ""}` : (e.goes ? "none" : "—"); };
+const calTxt = p => { const c = p.calibration || {}; return `${c.method || "P-AIRCARS"}${c.source ? " · " + c.source : ""} ${c.obsid || p.cal}${c.selfcal === false ? "" : " + self-cal"}`; };
+
 function rows() {
-  const P = [...B.products].sort((a, b) => (ev(a.sun).date || "").localeCompare(ev(b.sun).date || "") || a.product.localeCompare(b.product));
-  $("#rows").innerHTML = P.map(p => { const e = ev(p.sun), f = p.frames, best = f.length ? f.reduce((a, b) => a.snr > b.snr ? a : b) : null,
-    v = verdict(p.product);
-    return `<tr data-id="${esc(p.product)}" class="${sel === p.product ? "sel" : ""}">
-      <td><input type="checkbox" aria-label="compare ${esc(p.product)}" ${cmpSel.has(p.product) ? "checked" : ""} ${p.data ? "" : "disabled"}></td>
-      <td class="mono">${esc(e.date)} <span class="muted">${esc(p.sun)}</span></td><td>${esc(e.burst_type || "")}</td><td>${esc(e.phase || "")}</td>
-      <td class="mono">ch ${esc(p.ch)} · ${mhz(p)}${p.note ? ` <span title="${esc(p.note)}">⚠</span>` : ""}</td>
-      <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(p.cal)}</td>
-      <td><span class="pill s-${esc(p.state)}">${esc(p.state)}</span></td><td class="num">${f.length}</td>
-      <td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td class="num mono">${best ? `(${best.x}, ${best.y})` : "—"}</td>
-      <td><span class="pill ${v ? "v-" + v : "v-none"}">${v || "—"}</span></td><td class="muted">${esc((judg[p.product]?.note || "").slice(0, 40))}</td></tr>`; }).join("");
+  const suns = [...new Set(B.products.map(p => p.sun))].sort((a, b) => (ev(a).date || "").localeCompare(ev(b).date || "") || a.localeCompare(b));
+  $("#rows").innerHTML = suns.map(sun => { const e = ev(sun), P = B.products.filter(p => p.sun === sun).sort((a, b) => a.product.localeCompare(b.product));
+    const best = P.flatMap(p => p.frames).reduce((a, b) => (!a || b.snr > a.snr) ? b : a, null), open = !fold.has(sun);
+    const head = `<tr class="evrow" data-ev="${esc(sun)}"><td>${open ? "▾" : "▸"}</td>
+      <td><b class="mono">${esc(e.date)}</b> <span class="muted mono">${esc(sun)}</span></td><td>${esc(e.burst_type || "")}</td>
+      <td class="mono" title="${esc((e.goes || []).map(g => `${g.cls} ${g.start.slice(11, 16)}–${g.end.slice(11, 16)} peak ${g.peak.slice(11, 16)} AR${g.ar}`).join("; "))}">${esc(goesTxt(e))}</td>
+      <td>${esc(e.phase || "")}</td><td colspan="4" class="muted">${esc([e.project, e.tier && "tier " + e.tier].filter(Boolean).join(" · "))} · ${P.length} run${P.length > 1 ? "s" : ""}</td>
+      <td></td><td></td><td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td></td><td></td><td></td></tr>`;
+    const subs = open ? P.map(p => { const f = p.frames, b = f.length ? f.reduce((x, y) => x.snr > y.snr ? x : y) : null, v = verdict(p.product);
+      return `<tr class="run ${sel === p.product ? "sel" : ""}" data-id="${esc(p.product)}">
+        <td><input type="checkbox" aria-label="compare ${esc(p.product)}" ${cmpSel.has(p.product) ? "checked" : ""} ${p.data || p.movie ? "" : "disabled"}></td>
+        <td class="mono sub">↳ ${esc(p.label)}</td><td></td><td></td><td></td>
+        <td class="mono">ch ${esc(p.ch)} · ${mhz(p)}${p.note ? ` <span title="${esc(p.note)}">⚠</span>` : ""}</td>
+        <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(calTxt(p))}</td>
+        <td><span class="pill s-${esc(p.state)}">${esc(p.state)}</span></td><td class="num">${f.length}</td>
+        <td class="num">${b ? b.snr.toFixed(0) : "—"}</td><td class="num mono">${b ? `(${b.x}, ${b.y})` : "—"}</td>
+        <td><span class="pill ${v ? "v-" + v : "v-none"}">${v || "—"}</span></td><td class="muted">${esc((judg[p.product]?.note || "").slice(0, 40))}</td></tr>`; }).join("") : "";
+    return head + subs; }).join("");
 }
 
 function detail() {
@@ -280,7 +307,8 @@ function detail() {
       <div class="side">
         <dl class="kv">
           <dt>window</dt><dd class="mono">${esc(p.trange || "—")} (${esc(p.tres)} s)</dd>
-          <dt>calibrator</dt><dd class="mono">${esc(p.cal)} <span class="muted">ASVO ${esc(p.cal_job)}</span></dd>
+          <dt>calibration</dt><dd class="mono">${esc(calTxt(p))} <span class="muted">ASVO ${esc(p.cal_job || "—")}</span></dd>
+          <dt>GOES</dt><dd>${esc((e.goes || []).map(g => `${g.cls}, ${g.start.slice(11, 16)}–${g.end.slice(11, 16)}, peak ${g.peak.slice(11, 16)}${g.ar ? ", AR " + g.ar : ""}`).join("; ") || (e.goes ? "no flare during the observation" : "not checked"))}</dd>
           ${f ? `<dt>peak / rms</dt><dd>${(f.peak / 1e3).toFixed(0)} kJy/beam / ${(f.rms / 1e3).toFixed(1)} kJy/beam = <b>${f.snr.toFixed(0)}</b></dd>
           <dt>position</dt><dd class="mono">(${f.x}″, ${f.y}″), ${f.r_rsun.toFixed(2)} R☉</dd>
           <dt>beam, T_B</dt><dd>${f.bmaj}″ × ${f.bmin}″; ${f.tb_rj.toExponential(1)} K (Rayleigh–Jeans)</dd>` : ""}
@@ -288,7 +316,10 @@ function detail() {
           <dt>attempts</dt><dd>${(p.attempts || []).length || 1} · last: ${esc((p.log_tail || []).slice(-1)[0] || "")}</dd>
           ${p.note || e.note ? `<dt>notes</dt><dd>${esc([p.note, e.note].filter(Boolean).join(" "))}</dd>` : ""}
         </dl>
-        ${lcSvg(p)}
+        <figure class="fig"><img src="img/${esc(p.sun)}_spectrum.png" alt="e-Callisto dynamic spectrum" onerror="this.parentNode.hidden=true">
+          <figcaption class="note">e-Callisto dynamic spectrum: MWA observation (orange), image windows and channels of all runs (red), GOES peaks (dashed)</figcaption></figure>
+        ${p.euv ? `<figure class="fig"><a href="${esc(p.euv)}" target="_blank" rel="noopener"><img src="${esc(p.euv)}" alt="MWA contours on AIA 193 with PFSS lines"></a>
+          <figcaption class="note">MWA contours (cyan) on AIA 193 Å with NOAA regions and PFSS field lines (open green, closed white)</figcaption></figure>` : ""}
         ${e.context_png ? `<details class="ctx"><summary class="note">GOES, STIX, e-Callisto, MWA</summary><img src="${esc(e.context_png)}" alt="context light curves"></details>` : ""}
         <div class="box"><h3>Verdict</h3>
           <div class="row">${["ok", "check", "bad"].map(s => `<button class="btn" data-v="${s}" aria-pressed="${j.status === s}">${s}</button>`).join("")}</div>
@@ -367,7 +398,9 @@ function reqList() {
 function render() { stats(); rows(); detail(); if (!$("#tab-compare").hidden) compare(); reqList(); }
 
 $("#rows").addEventListener("click", ev2 => {
-  const tr = ev2.target.closest("tr"); if (!tr) return; const id = tr.dataset.id;
+  const tr = ev2.target.closest("tr"); if (!tr) return;
+  if (tr.dataset.ev) { fold.has(tr.dataset.ev) ? fold.delete(tr.dataset.ev) : fold.add(tr.dataset.ev); rows(); return; }
+  const id = tr.dataset.id;
   if (ev2.target.matches("input[type=checkbox]")) { ev2.stopPropagation();
     if (ev2.target.checked) { if (cmpSel.size >= 4) { ev2.target.checked = false; return; } cmpSel.add(id); } else cmpSel.delete(id);
     stats(); return; }

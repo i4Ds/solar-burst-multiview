@@ -92,11 +92,19 @@ def main() -> None:
     marker = ax_lc.axvline(ip, color="red", lw=1.5)
     title = fig.suptitle("")
 
+    contours = []
+
     def draw(i):
         for im in ims:
             im.set_data(imgs[i])
+        while contours:   # contours at 30/50/70/90 % of this frame's peak, both panels
+            contours.pop().remove()
+        if peaks[i] > 0:
+            for ax in (ax_full, ax_zoom):
+                contours.append(ax.contour(imgs[i], levels=peaks[i] * np.array([0.3, 0.5, 0.7, 0.9]),
+                                           colors="cyan", linewidths=0.6))
         marker.set_xdata([i, i])
-        title.set_text(f"MWA {freqs[k]:.1f} MHz, P-AIRCARS {step:g} s, {labels[i]} UTC; Stonyhurst grid {a.grid:g}°, cyan: optical limb")
+        title.set_text(f"MWA {freqs[k]:.1f} MHz, P-AIRCARS {step:g} s, {labels[i]} UTC; Stonyhurst grid {a.grid:g}°, cyan: optical limb and contours 30/50/70/90 %")
         return ims
 
     draw(ip)
