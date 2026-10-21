@@ -1,10 +1,12 @@
-# Phase IIIb events whose calibrator (Cal_solar, same channel set, 3-8 h away) was requested
-# on 21 Oct 2026 (ASVO 1115547-1115551). event_image.sh waits until asvo-watch has the tars.
-# Events sharing calibrator 1451768712 (1451778960, 1451779192) are not next to each other.
-# SUN SUN_JOB CAL CAL_JOB DATEDIR LOGARGS (log_event_mlflow.py options)
-1451801392 1114416 1451820528 1115550 20260107 --tag burst_type=IIIGG/3 --tag phase=IIIb --tag project=G0002 --tag tier=B
-1451778960 1114414 1451768712 1115549 20260106 --tag burst_type=IIIG/3 --tag phase=IIIb --tag project=G0002 --tag tier=C
-1449551392 1114412 1449573496 1115547 20251212 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B
-1450835520 1114413 1450817864 1115548 20251227 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B
-1451779192 1114415 1451768712 1115549 20260107 --tag burst_type=IIIGG/3 --tag phase=IIIb --tag project=G0002 --tag tier=C
-1458877312 1114417 1458901872 1115551 20260330 --tag burst_type=IV --tag phase=IIIb --tag project=G0002 --tag tier=C
+# The 6 remaining Phase IIIb events (21 Oct 2026, second attempt).
+# Calibrators requested again 17:43 with no_rfi=true, 2 s, 160 kHz (ASVO 1115658-1115663): the
+# 04:24 requests (1115547-1115551) lost their parameters in sbatch --export (comma split) and were
+# converted with AOFlagger at 80 kHz; not used. Three obs have no channel 127: nearest channel
+# (CH=) with a contiguous Ch121 calibrator (channels 109-132) that contains it.
+# SUN SUN_JOB CAL CAL_JOB DATEDIR [CH=nnn] LOGARGS (log_event_mlflow.py options, no spaces in values)
+1450835520 1114413 1450817864 1115658 20251227 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B
+1449551392 1114412 1449573328 1115661 20251212 CH=126 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B --tag channel_note=ch126_obs_has_no_ch127
+1451779192 1114415 1451768712 1115659 20260106 --tag burst_type=IIIGG/3 --tag phase=IIIb --tag project=G0002 --tag tier=C
+1451801392 1114416 1451820360 1115663 20260107 CH=129 --tag burst_type=IIIGG/3 --tag phase=IIIb --tag project=G0002 --tag tier=B --tag channel_note=ch129_obs_has_no_ch127
+1458877312 1114417 1458901872 1115660 20260330 --tag burst_type=IV --tag phase=IIIb --tag project=G0002 --tag tier=C
+1451778960 1114414 1451768544 1115662 20260106 CH=128 --tag burst_type=IIIG/3 --tag phase=IIIb --tag project=G0002 --tag tier=C --tag channel_note=ch128_obs_has_no_ch127
