@@ -1,0 +1,7 @@
+# Phase IIIb events with a same-channel calibrator on the NAS (21 Oct 2026).
+# SUN SUN_JOB CAL CAL_JOB DATEDIR LOGARGS (log_event_mlflow.py options)
+1475301616 1114419 1475317992 1114423 20261006 --tag burst_type=II/3 --tag phase=IIIb --tag project=G0002 --tag tier=A
+1446861616 1114409 1446843296 1114420 20251111 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B
+1469325616 1114418 1469313488 1114422 20260729 --tag burst_type=III/2 --tag phase=IIIb --tag project=G0002 --tag tier=B
+1446870616 1114411 1446893720 1114421 20251111 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B
+1446865216 1114410 1446843296 1114420 20251111 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=C
