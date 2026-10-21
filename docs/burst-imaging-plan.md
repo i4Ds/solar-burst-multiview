@@ -110,12 +110,15 @@ The images made with `event_image.sh` were entered with `register_legacy.py`
 sunpy) writes `~/mwa/board/`: `board.json` (events with channel list and Stonyhurst grid;
 products with state, attempts, per-frame peak / rms / centroid / beam / T_B, MWA light
 curve) and `data/<product>.txt` (all frames, Stokes I cropped to +-1500 arcsec, int16
-scaled per frame, base64: artifact pages serve no raw binary). `product_run.sh` runs
-the export after each product.
+scaled per frame, base64: artifact pages serve no raw binary) for products with up to
+10 frames; series with more frames become a movie instead (`movies/<product>.mp4` and
+`_peak.png`, made with `scripts/burst_movie_mwa.py`: full Sun and a zoom on the
+source at its brightest frame, Stonyhurst grid, peak curve; H.264 from imageio-ffmpeg,
+remade only when the frames change). `product_run.sh` runs the export after each product.
 
 **Board page** `scripts/board/index.html`, published with the export as
 https://claude.ai/artifact/QwU6ZtNBeVh7Vxuuip27qk (private): table of all products
-with state; per product a viewer (linear or log scale, grid, frame slider for series),
+with state; per product a viewer (linear or log scale, grid; series with more than 10 frames as a movie),
 light curve with the window, context figure, a verdict (ok / check / bad, note) and a
 next-step request (time series, more channels, other calibrator, other window).
 Verdicts and requests live in the page's database (`judgements`, `requests`); Claude

@@ -8,6 +8,8 @@ P-AIRCARS images, the MWA light curves (dynspec npz) and the metafits, and write
   data/<prod>.txt   all frames of a product, Stokes I cropped to +-1500 arcsec, int16 scaled
                     per frame (value = int16 * frame scale), row-major, y up, little-endian,
                     base64 (artifact pages do not serve raw binary files)
+  movies/<prod>.mp4 series with more than MAX_FRAMES frames (burst_movie_mwa.py: full Sun and
+                    zoom on the source, Stonyhurst grid, peak curve), <prod>_peak.png poster
   img/              context figures
 The page draws the images itself, so scale, colour map and comparisons are chosen there.
 Run with ~/mwa/tools-venv/bin/python; copy ~/mwa/board to the Mac and publish the page.
@@ -18,6 +20,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import time
 
 import numpy as np
@@ -27,6 +30,7 @@ H = os.path.expanduser("~")
 PR, EV, OUT = f"{H}/mwa/products", f"{H}/mwa/events", f"{H}/mwa/board"
 SCR = f"/scratch/{os.environ.get('USER', 'andre_csillaghy')}"
 HALF = 1500.0   # arcsec
+MAX_FRAMES = 10  # more frames: a movie (burst_movie_mwa.py) instead of frames drawn by the page
 
 
 def legacy_state(p):
@@ -122,6 +126,32 @@ def lightcurve(sun, ch):
             "y": [None if not np.isfinite(v) else round(float(v), 2) for v in lc]}
 
 
+def movie(p, frames, crops, extent, fns):
+    """MP4 + peak-frame PNG of a series with more than MAX_FRAMES frames (burst_movie_mwa.py).
+    Remade only when the frames changed (count or newest FITS)."""
+    os.makedirs(f"{OUT}/movies", exist_ok=True)
+    base = f"{OUT}/movies/{p['product']}"
+    stamp = f"{len(fns)} {max(os.path.getmtime(f) for f in fns):.0f}"
+    if os.path.exists(f"{base}.mp4") and os.path.exists(f"{base}.stamp") and open(f"{base}.stamp").read() == stamp:
+        return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
+    n = min(min(c.shape) for c in crops)
+    cube = np.stack([c[:n, :n] for c in crops])[:, None]            # (time, freq, y, x)
+    times = np.array([re.sub(r"[-T:]", "", fr["t"])[:16] for fr in frames])
+    ip = int(np.argmax([fr["peak"] for fr in frames]))
+    np.savez_compressed(f"{base}_cube.npz", data=cube, times=times, freqs=np.array([frames[0]["freq_mhz"]]),
+                        extent=np.array(extent))
+    fps = float(min(10, max(2, len(frames) / 20)))
+    r = subprocess.run([f"{H}/mwa/tools-venv/bin/python", f"{H}/mwa/events/burst_movie_mwa.py", f"{base}_cube.npz",
+                        "--out", base, "--no-gif", "--fps", str(fps),
+                        "--zoom", str(frames[ip]["x"]), str(frames[ip]["y"]), "600"], capture_output=True, text=True)
+    os.remove(f"{base}_cube.npz")
+    if r.returncode or not os.path.exists(f"{base}.mp4"):
+        print(f"movie for {p['product']} failed: {r.stderr[-500:]}")
+        return None
+    open(f"{base}.stamp", "w").write(stamp)
+    return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
+
+
 def main():
     os.makedirs(f"{OUT}/data", exist_ok=True)
     os.makedirs(f"{OUT}/img", exist_ok=True)
@@ -143,7 +173,11 @@ def main():
             frames.append(meta)
             crops.append(crop)
         p["frames"] = frames
-        if crops:
+        if len(crops) > MAX_FRAMES:   # series: a movie instead of frames drawn by the page
+            p["movie"] = movie(p, frames, crops, extent, fns)
+            if p.get("state") in (None, "running", "waiting", "imaging") and p.get("legacy"):
+                p["state"] = "done"
+        elif crops:
             ny, nx = crops[0].shape
             scales = [float(np.abs(c).max() / 32767) or 1.0 for c in crops]
             arr = np.stack([np.round(c / s) for c, s in zip(crops, scales)]).astype("<i2")

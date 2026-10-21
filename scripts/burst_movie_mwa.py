@@ -6,8 +6,8 @@
 The cube comes from scripts/calculon/overnight/make_cube.py (P-AIRCARS HPC
 images, Stokes I, square grid centred on Sun centre). Each frame is wrapped in
 a sunpy Map (observer Earth) so that Stonyhurst latitude/longitude lines and the
-limb are drawn with sunpy. Writes <out>_peak.png, <out>.gif and <out>.mp4
-(if ffmpeg is available).
+limb are drawn with sunpy. Writes <out>_peak.png, <out>.mp4 (ffmpeg on the PATH or from
+imageio-ffmpeg) and, unless --no-gif, <out>.gif.
 """
 
 from __future__ import annotations
@@ -35,6 +35,7 @@ def main() -> None:
     p.add_argument("--fov", type=float, default=1500.0)
     p.add_argument("--grid", type=float, default=15.0, help="grid spacing, deg")
     p.add_argument("--fps", type=float, default=2.0)
+    p.add_argument("--no-gif", action="store_true", help="only the PNG and the MP4")
     a = p.parse_args()
 
     d = np.load(a.cube)
@@ -87,7 +88,7 @@ def main() -> None:
     ax_lc.plot(range(len(times)), peaks / 1e5, "o-")
     tick = list(range(0, len(times), max(1, len(times) // 12)))
     ax_lc.set_xticks(tick); ax_lc.set_xticklabels([labels[i] for i in tick], fontsize=8)
-    ax_lc.set_ylabel("peak [10⁵ Jy/beam]"); ax_lc.set_xlabel(f"UTC, 2022-09-30 ({step:g} s steps)")
+    ax_lc.set_ylabel("peak [10⁵ Jy/beam]"); ax_lc.set_xlabel(f"UTC, {times[0][:4]}-{times[0][4:6]}-{times[0][6:8]} ({step:g} s steps)")
     marker = ax_lc.axvline(ip, color="red", lw=1.5)
     title = fig.suptitle("")
 
@@ -102,10 +103,21 @@ def main() -> None:
     a.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(f"{a.out}_peak.png", dpi=120)
     anim = FuncAnimation(fig, draw, frames=len(times), blit=False)
-    anim.save(f"{a.out}.gif", writer=PillowWriter(fps=a.fps), dpi=90)
-    print(f"wrote {a.out}_peak.png, {a.out}.gif")
-    if shutil.which("ffmpeg"):
-        anim.save(f"{a.out}.mp4", writer=FFMpegWriter(fps=a.fps), dpi=120)
+    if not a.no_gif:
+        anim.save(f"{a.out}.gif", writer=PillowWriter(fps=a.fps), dpi=90)
+        print(f"wrote {a.out}_peak.png, {a.out}.gif")
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        try:
+            import imageio_ffmpeg
+            ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        except ImportError:
+            ffmpeg = None
+    if ffmpeg:
+        plt.rcParams["animation.ffmpeg_path"] = ffmpeg
+        # H.264 in yuv420p plays in every browser
+        anim.save(f"{a.out}.mp4", writer=FFMpegWriter(fps=a.fps, codec="libx264",
+                                                       extra_args=["-pix_fmt", "yuv420p"]), dpi=100)
         print(f"wrote {a.out}.mp4")
 
 

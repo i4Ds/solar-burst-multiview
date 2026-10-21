@@ -58,6 +58,7 @@ td.num { text-align: right; } .mono { font-family: var(--mono); font-size: .92em
 @media (max-width: 900px) { .work { grid-template-columns: 1fr; } }
 .viewer { display: grid; gap: 8px; min-width: 0; }
 canvas.img { width: 100%; max-width: 520px; aspect-ratio: 1; background: #000; border-radius: 4px; display: block; }
+video.movie { width: 100%; max-width: 760px; border-radius: 4px; background: #000; display: block; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: .84rem; }
 .controls label { display: flex; gap: 6px; align-items: center; }
 .side { display: grid; gap: 14px; min-width: 0; }
@@ -218,6 +219,18 @@ function lcSvg(p) {
     <text x="2" y="14" font-size="10" style="fill:var(--muted)">${ymax.toFixed(0)}× median</text></svg>`;
 }
 
+function peakSvg(p) {
+  const F = p.frames, n = F.length, W = 600, H = 110, pad = 30;
+  if (n < 2) return "";
+  const ymax = Math.max(...F.map(f => f.peak)) * 1.05, X = i => pad + i / (n - 1) * (W - pad - 6), Y = v => H - 18 - v / ymax * (H - 26);
+  const d = F.map((f, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(f.peak).toFixed(1)}`).join("");
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" role="img" aria-label="image peak per frame">
+    <path d="${d}" style="fill:none;stroke:var(--accent);stroke-width:1.2"/>
+    <text x="${pad}" y="${H - 4}" font-size="10" style="fill:var(--muted)">${esc(F[0].t.slice(11, 21))}</text>
+    <text x="${W - 6}" y="${H - 4}" font-size="10" text-anchor="end" style="fill:var(--muted)">${esc(F[n - 1].t.slice(11, 21))}</text>
+    <text x="2" y="12" font-size="10" style="fill:var(--muted)">image peak, ${(ymax / 1e3).toFixed(0)} kJy/beam</text></svg>`;
+}
+
 function stats() {
   const P = B.products, c = s => P.filter(p => p.state === s).length;
   const open = reqs.filter(r => (r.state || "open") === "open").length;
@@ -246,18 +259,21 @@ function rows() {
 function detail() {
   const p = B.products.find(q => q.product === sel), D = $("#detail");
   if (!p) { D.hidden = true; return; }
-  const e = ev(p.sun), f = p.frames[frameIx] || p.frames[0], j = judg[p.product] || {};
+  const e = ev(p.sun), j = judg[p.product] || {};
+  const f = p.movie ? p.frames.reduce((a, b) => a.peak > b.peak ? a : b) : (p.frames[frameIx] || p.frames[0]);
   const otherCh = (e.channels || []).filter(c => c !== +p.ch);
   D.hidden = false;
   D.innerHTML = `<header><h2>${esc(e.date)} ${esc(e.burst_type ? "type " + e.burst_type : "")} — MWA ${esc(p.sun)}, ch ${esc(p.ch)} (${mhz(p)} MHz)</h2>
     <span class="pill s-${esc(p.state)}">${esc(p.state)}</span><span class="muted mono">${esc(p.product)}</span></header>
     <div class="work">
       <div class="viewer">
-        <canvas class="img" id="cv" width="520" height="520" aria-label="MWA image"></canvas>
-        <div class="controls">
+        ${p.movie ? `<video class="movie" src="${esc(p.movie.mp4)}" poster="${esc(p.movie.poster)}" controls loop playsinline preload="metadata"></video>
+        <p class="note">${p.frames.length} frames, ${esc(p.tres)} s steps: movie with full Sun and a zoom on the source; the poster is the brightest frame.</p>
+        ${peakSvg(p)}` : `<canvas class="img" id="cv" width="520" height="520" aria-label="MWA image"></canvas>`}
+        <div class="controls" ${p.movie ? "hidden" : ""}>
           <label>Scale <select id="scale"><option value="own">linear, own peak</option><option value="log">log</option></select></label>
           <label><input type="checkbox" id="grid" checked> grid</label>
-          ${p.frames.length > 1 ? `<label>Frame <input type="range" id="fr" min="0" max="${p.frames.length - 1}" value="${frameIx}"> <span id="frl" class="mono"></span></label>` : ""}
+          ${p.frames.length > 1 && !p.movie ? `<label>Frame <input type="range" id="fr" min="0" max="${p.frames.length - 1}" value="${frameIx}"> <span id="frl" class="mono"></span></label>` : ""}
         </div>
         ${p.frames.length ? "" : `<p class="note">No image yet. ${esc((p.log_tail || []).slice(-1)[0] || "")}</p>`}
       </div>
@@ -293,7 +309,7 @@ function detail() {
     </div>`;
   const w = winOf(p).split("–"), cv = $("#cv"), sc = $("#scale"), gr = $("#grid");
   $("#t0").value = w[0] && w[0] !== "—" ? shift(w[0], -10) : ""; $("#t1").value = w[1] ? shift(w[1], 10) : "";
-  const redraw = () => { if (p.frames.length) draw(cv, p, frameIx, sc.value, 0, gr.checked); if ($("#frl")) $("#frl").textContent = (p.frames[frameIx]?.t || "").slice(11, 21); };
+  const redraw = () => { if (p.frames.length && !p.movie) draw(cv, p, frameIx, sc.value, 0, gr.checked); if ($("#frl")) $("#frl").textContent = (p.frames[frameIx]?.t || "").slice(11, 21); };
   sc.onchange = gr.onchange = redraw;
   if ($("#fr")) $("#fr").oninput = ev2 => { frameIx = +ev2.target.value; redraw(); };
   redraw();
@@ -332,11 +348,11 @@ async function sendRequest() {
 function compare() {
   const P = B.products.filter(p => cmpSel.has(p.product)), mode = $("#cmpScale").value, grid = $("#cmpGrid").checked;
   const vmax = Math.max(1, ...P.flatMap(p => p.frames.map(f => f.peak)));
-  $("#cmp").innerHTML = P.length ? P.map((p, i) => `<figure><canvas class="img" id="c${i}" width="520" height="520"></canvas>
+  $("#cmp").innerHTML = P.length ? P.map((p, i) => `<figure>${p.movie ? `<video class="movie" src="${esc(p.movie.mp4)}" poster="${esc(p.movie.poster)}" controls loop playsinline preload="metadata"></video>` : `<canvas class="img" id="c${i}" width="520" height="520"></canvas>`}
     <figcaption><b>${esc(ev(p.sun).date)}</b> ${esc(ev(p.sun).burst_type || "")} · ch ${esc(p.ch)} ${mhz(p)} MHz ·
     peak/rms ${p.frames[0]?.snr.toFixed(0) ?? "—"} · <span class="mono">(${p.frames[0]?.x}″, ${p.frames[0]?.y}″)</span></figcaption>
     ${lcSvg(p)}</figure>`).join("") : `<p class="note">Nothing selected yet.</p>`;
-  P.forEach((p, i) => draw($("#c" + i), p, 0, mode, vmax, grid));
+  P.forEach((p, i) => { if (!p.movie) draw($("#c" + i), p, 0, mode, vmax, grid); });
 }
 
 function reqList() {
