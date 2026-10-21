@@ -151,10 +151,12 @@ def submit_lines(req: pd.DataFrame, chunk: int, local: bool = False) -> list[str
                            f"giant-squid submit-conv -p {params} {part}")
                     lines.append(f"{cmd} || failed+=({part})")
                     continue
-                env =f"ALL,SUBMIT={'vis' if kind == 'vis' else 'conv'},OBSIDS='{part}'"
+                # values go in through the environment: sbatch --export splits at commas, which
+                # silently dropped everything after output=ms on 21 Oct (AOFlagger on, 80 kHz)
+                env = f"SUBMIT={'vis' if kind == 'vis' else 'conv'} OBSIDS='{part}'"
                 if kind != "vis":
-                    env += f",PARAMS='{params}'"
-                lines.append(f"sbatch -M calc-cpu --export={env} ~/mwa/asvo-submit-retry.sbatch")
+                    env += f" PARAMS='{params}'"
+                lines.append(f"{env} sbatch -M calc-cpu --export=ALL ~/mwa/asvo-submit-retry.sbatch")
     return lines
 
 
