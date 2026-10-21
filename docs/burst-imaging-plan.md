@@ -117,3 +117,13 @@ markers: `LOGARGS` in `event_image.sh`.
 `~/mwa/catalogue/` (sortable table and one card per image with image, MWA light
 curve and GOES/STIX/e-Callisto context). Copied to the Mac and published as an
 Artifact: https://claude.ai/artifact/QwU6ZtNBeVh7Vxuuip27qk (private).
+
+**MLflow on the Mac without the VPN (22 Oct).** `scripts/mlflow_sync.sh` copies a
+consistent snapshot of the calculon store (sqlite backup API) and the artifacts to
+`~/mwa-mlflow/`, rewrites the artifact paths, and the local MLflow 3.17.1 (same
+version as calculon) serves it at <http://localhost:5050> (5000 is the macOS AirPlay
+receiver). Two launchd agents: `ch.fhnw.mwa-mlflow-ui` keeps the UI running,
+`ch.fhnw.mwa-mlflow-sync` syncs every 30 min and skips quietly without the VPN.
+The copy is read-only in practice: runs logged locally would be overwritten.
+Remove: `launchctl bootout gui/$(id -u)/ch.fhnw.mwa-mlflow-{ui,sync}` and delete the
+plists in `~/Library/LaunchAgents/`.
