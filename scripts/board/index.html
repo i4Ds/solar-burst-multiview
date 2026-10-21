@@ -1,0 +1,382 @@
+<title>MWA Image Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: an observing-desk console. Summary strip and tabs; the board is a dense table of
+   image products, the selected product opens a working panel (viewer, light curve, verdict,
+   next step). Compare puts up to four products on one grid and scale. */
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --sunk: #eef1f5; --fg: #16202c; --muted: #5b6676; --line: #dbe1e8;
+  --accent: #1c5cab; --accent-ink: #ffffff; --ok: #1f7a4d; --check: #9a5b00; --bad: #b3261e; --run: #5b4fc4;
+  --display: "Fraunces", Georgia, serif; --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141b; --surface: #171e28; --sunk: #121821; --fg: #e5eaf0; --muted: #96a2b1; --line: #29323f;
+  --accent: #7fb0ec; --accent-ink: #0f141b; --ok: #5fc896; --check: #e3a64a; --bad: #f2867c; --run: #a99cf5;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #171e28; --sunk: #121821; --fg: #e5eaf0; --muted: #96a2b1; --line: #29323f;
+  --accent: #7fb0ec; --accent-ink: #0f141b; --ok: #5fc896; --check: #e3a64a; --bad: #f2867c; --run: #a99cf5;
+  color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.45; }
+main { max-width: 1400px; margin: 0 auto; padding-inline: 18px; padding-block: 22px 60px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+main > * { min-width: 0; }
+h1 { font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.1rem); margin: 0; }
+h2 { font-size: 1rem; margin: 0; font-weight: 600; }
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.top p { margin: 4px 0 0; color: var(--muted); font-size: .88rem; max-width: 80ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 22px; font-variant-numeric: tabular-nums; }
+.stats div { display: grid; }
+.stats b { font-family: var(--mono); font-size: 1.2rem; font-weight: 500; }
+.stats span { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs button { font: inherit; font-size: .9rem; background: none; border: 0; padding: 8px 14px; color: var(--muted);
+  border-bottom: 2px solid transparent; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+button, select, input, textarea { font: inherit; font-size: .88rem; }
+.btn { background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 600; }
+.btn:disabled { opacity: .5; cursor: default; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+th { font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; background: var(--sunk); }
+tbody tr { cursor: pointer; } tbody tr:hover { background: var(--sunk); }
+tbody tr.sel { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+td.num { text-align: right; } .mono { font-family: var(--mono); font-size: .92em; }
+.pill { display: inline-block; font-size: .7rem; padding: 1px 8px; border-radius: 99px; font-weight: 600; letter-spacing: .03em;
+  border: 1px solid currentColor; }
+.s-done, .v-ok { color: var(--ok); } .s-failed, .v-bad { color: var(--bad); } .v-check { color: var(--check); }
+.s-running, .s-imaging, .s-preparing, .s-waiting { color: var(--run); } .v-none { color: var(--muted); border-style: dashed; }
+.muted { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
+.panel header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+.work { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .work { grid-template-columns: 1fr; } }
+.viewer { display: grid; gap: 8px; min-width: 0; }
+canvas.img { width: 100%; max-width: 520px; aspect-ratio: 1; background: #000; border-radius: 4px; display: block; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: .84rem; }
+.controls label { display: flex; gap: 6px; align-items: center; }
+.side { display: grid; gap: 14px; min-width: 0; }
+dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; font-size: .86rem; }
+dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.side, .viewer, .box { overflow-wrap: anywhere; }
+svg.lc { width: 100%; height: 150px; display: block; }
+.box { border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: grid; gap: 8px; background: var(--sunk); }
+.box h3 { margin: 0; font-size: .85rem; font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+textarea, input[type=text], select { background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px; }
+textarea { width: 100%; min-height: 54px; resize: vertical; box-sizing: border-box; }
+.chans { display: flex; flex-wrap: wrap; gap: 4px; }
+.chans label { font-family: var(--mono); font-size: .78rem; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; display: flex; gap: 4px; align-items: center; background: var(--surface); }
+.chans label.cur { border-color: var(--accent); color: var(--accent); }
+.note { font-size: .82rem; color: var(--muted); }
+.ctx img { width: 100%; height: auto; border-radius: 4px; background: #fff; display: block; }
+.cmpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.cmpgrid figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+.cmpgrid figcaption { font-size: .8rem; }
+.req { display: grid; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: .86rem; }
+.req:last-child { border-bottom: 0; }
+.msg { font-size: .82rem; } .msg.err { color: var(--bad); }
+[hidden] { display: none !important; }
+</style>
+<main>
+  <div class="top">
+    <div>
+      <h1>MWA Image Board</h1>
+      <p id="sub">Image products of MWA solar radio bursts: one row per product (observation, channel, time window,
+      time resolution, calibrator). Open a product to look at it, give a verdict and ask for the next step.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="board">Board</button>
+    <button role="tab" aria-selected="false" data-tab="compare">Compare <span id="ncmp" class="muted"></span></button>
+    <button role="tab" aria-selected="false" data-tab="requests">Requests <span id="nreq" class="muted"></span></button>
+  </nav>
+
+  <section id="tab-board">
+    <div class="tablewrap"><table>
+      <thead><tr><th title="select for Compare">cmp</th><th>event</th><th>type</th><th>phase</th><th>channel</th>
+      <th>window UTC</th><th>Δt s</th><th>calibrator</th><th>state</th><th>frames</th><th>peak/rms</th>
+      <th>position ″</th><th>verdict</th><th>note</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <p class="note" id="dbnote"></p>
+  </section>
+
+  <section id="tab-compare" hidden>
+    <div class="panel">
+      <div class="controls">
+        <label>Scale <select id="cmpScale"><option value="common">common (max of the selected)</option>
+          <option value="own">each to its own peak</option><option value="log">log, each to its own peak</option></select></label>
+        <label><input type="checkbox" id="cmpGrid" checked> grid</label>
+        <span class="note">Tick up to four products in the Board’s first column.</span>
+      </div>
+      <div class="cmpgrid" id="cmp"></div>
+    </div>
+  </section>
+
+  <section id="tab-requests" hidden>
+    <div class="panel"><div id="reqs"></div></div>
+  </section>
+
+  <section id="detail" class="panel" hidden></section>
+</main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let B = null, sel = null, frameIx = 0, cmpSel = new Set(), judg = {}, reqs = [], db = null, uid = null;
+const cache = {};
+
+// inferno-like colour map
+const STOPS = [[0,0,0,4],[.13,31,12,72],[.25,85,15,109],[.38,136,34,106],[.5,186,54,85],[.63,227,89,51],[.75,249,140,10],[.88,249,201,50],[1,252,255,164]];
+const LUT = Array.from({ length: 256 }, (_, i) => { const t = i / 255; let k = 1; while (STOPS[k][0] < t) k++;
+  const a = STOPS[k - 1], b = STOPS[k], f = (t - a[0]) / (b[0] - a[0]); return [1, 2, 3].map(j => Math.round(a[j] + f * (b[j] - a[j]))); });
+
+const ev = sun => B.events.find(e => e.sun === sun) || {};
+const fmtT = s => (s || "").replace(/^\d{4}\/\d\d\/\d\d\//, "").replace("~", "–").replace(/\/\d{4}\/\d\d\/\d\d\//, "");
+const winOf = p => { const m = (p.trange || "").match(/(\d\d:\d\d:\d\d(?:\.\d+)?)~\d{4}\/\d\d\/\d\d\/(\d\d:\d\d:\d\d(?:\.\d+)?)/); return m ? `${m[1]}–${m[2]}` : "—"; };
+const mhz = p => (p.frames[0]?.freq_mhz ?? +p.ch * 1.28).toFixed(1);
+const verdict = id => judg[id]?.status || "";
+
+async function load(p) {
+  if (!p.data) return null;
+  if (!cache[p.product]) cache[p.product] = fetch(p.data.file).then(r => r.text()).then(s => { const b = atob(s.trim()), u8 = new Uint8Array(b.length);
+    for (let i = 0; i < b.length; i++) u8[i] = b.charCodeAt(i); return new Int16Array(u8.buffer); });
+  return cache[p.product];
+}
+
+function draw(canvas, p, ix, mode, vmaxCommon, showGrid) {
+  const ctx = canvas.getContext("2d"), W = canvas.width = 520, H = canvas.height = 520;
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  return load(p).then(arr => {
+    if (!arr) return;
+    const { nx, ny, extent, scale } = p.data, n = nx * ny, s = scale[ix], fr = p.frames[ix];
+    const off = new OffscreenCanvas(nx, ny), oc = off.getContext("2d"), im = oc.createImageData(nx, ny);
+    const vmax = mode === "common" ? vmaxCommon : fr.peak;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      let v = arr[ix * n + j * nx + i] * s, t;
+      if (mode === "log") t = v <= vmax * 1e-3 ? 0 : (Math.log10(v / vmax) + 3) / 3; else t = v / vmax;
+      const c = LUT[Math.max(0, Math.min(255, Math.round(t * 255)))], o = 4 * ((ny - 1 - j) * nx + i);
+      im.data[o] = c[0]; im.data[o + 1] = c[1]; im.data[o + 2] = c[2]; im.data[o + 3] = 255;
+    }
+    oc.putImageData(im, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    // map the crop extent onto the fixed +-1500 arcsec canvas
+    const X = x => (x + 1500) / 3000 * W, Y = y => H - (y + 1500) / 3000 * H;
+    const dx = (extent[1] - extent[0]) / (nx - 1), dy = (extent[3] - extent[2]) / (ny - 1);
+    ctx.drawImage(off, X(extent[0] - dx / 2), Y(extent[3] + dy / 2), (extent[1] - extent[0] + dx) / 3000 * W, (extent[3] - extent[2] + dy) / 3000 * H);
+    const e = ev(p.sun);
+    if (showGrid && e.grid) {
+      ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 0.7;
+      for (const l of e.grid.lines) { ctx.beginPath(); let pen = false;
+        for (const q of l.pts) { if (!q) { pen = false; continue; } pen ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1])); pen = true; }
+        ctx.lineWidth = l.v === 0 ? 1.2 : 0.6; ctx.stroke(); }
+      ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.arc(X(0), Y(0), e.grid.limb / 3000 * W, 0, 2 * Math.PI); ctx.stroke();
+    }
+    for (const [mx, my, lab] of e.marks || []) {
+      ctx.strokeStyle = "#5ff"; ctx.lineWidth = 2; const x = X(mx), y = Y(my);
+      ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x + 7, y); ctx.moveTo(x, y - 7); ctx.lineTo(x, y + 7); ctx.stroke();
+      ctx.fillStyle = "#5ff"; ctx.font = "11px sans-serif"; ctx.fillText(lab, x + 9, y - 6);
+    }
+    ctx.strokeStyle = "#5ff"; ctx.lineWidth = 1; ctx.beginPath();     // restoring beam
+    ctx.ellipse(X(-1300), Y(-1300), fr.bmaj / 2 / 3000 * W, fr.bmin / 2 / 3000 * W, (90 - fr.bpa) * Math.PI / 180, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "12px IBM Plex Mono, monospace";
+    ctx.fillText(`${(fr.t || "").slice(11, 21)} UTC  ${fr.freq_mhz.toFixed(1)} MHz`, 10, 18);
+    ctx.fillText(`max ${(vmax / 1e3).toFixed(0)} kJy/beam ${mode === "log" ? "(log, 3 decades)" : ""}`, 10, 34);
+    ctx.fillText("±1500″", W - 60, H - 10);
+  });
+}
+
+function lcSvg(p) {
+  if (!p.lc) return `<p class="note">No MWA light curve for this channel yet.</p>`;
+  const y = p.lc.y, n = y.length, W = 600, H = 150, pad = 26;
+  const skip = Math.ceil(8 / p.lc.dt);   // first 8 s: quack time, flagged by the correlator
+  const ymax = Math.max(...y.slice(skip).filter(v => v != null)) * 1.05 || 1;
+  const X = i => pad + i / (n - 1) * (W - pad - 6), Y = v => H - 18 - v / ymax * (H - 28);
+  let d = "", pen = false;
+  y.forEach((v, i) => { if (v == null || i < skip) { pen = false; return; } d += `${pen ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`; pen = true; });
+  const sec = s => { const m = s.match(/(\d\d):(\d\d):(\d\d(?:\.\d+)?)$/); if (!m) return null;
+    const t0 = new Date(p.lc.t0 * 1000); const base = Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth(), t0.getUTCDate());
+    return ((base + ((+m[1]) * 3600 + (+m[2]) * 60 + (+m[3])) * 1000) / 1000 - p.lc.t0) / p.lc.dt; };
+  let win = "";
+  const w = (p.trange || "").split("~");
+  if (w.length === 2) { const a = sec(w[0]), b = sec(w[1]); if (a != null && b != null)
+    win = `<rect x="${X(a)}" y="6" width="${Math.max(2, X(b) - X(a))}" height="${H - 24}" style="fill:var(--bad);opacity:.35"/>`; }
+  const t0 = new Date(p.lc.t0 * 1000).toISOString().slice(11, 19), dur = Math.round(n * p.lc.dt);
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" role="img" aria-label="MWA light curve">
+    ${win}<line x1="${pad}" y1="${H - 18}" x2="${W - 6}" y2="${H - 18}" style="stroke:var(--line)"/>
+    <path d="${d}" style="fill:none;stroke:var(--accent);stroke-width:1.2"/>
+    <text x="${pad}" y="${H - 4}" font-size="10" style="fill:var(--muted)">${t0} UTC</text>
+    <text x="${W - 6}" y="${H - 4}" font-size="10" style="fill:var(--muted)" text-anchor="end">+${dur} s</text>
+    <text x="2" y="14" font-size="10" style="fill:var(--muted)">${ymax.toFixed(0)}× median</text></svg>`;
+}
+
+function stats() {
+  const P = B.products, c = s => P.filter(p => p.state === s).length;
+  const open = reqs.filter(r => (r.state || "open") === "open").length;
+  $("#stats").innerHTML = [[B.events.length, "events"], [P.length, "products"], [c("done"), "done"],
+    [P.length - c("done") - c("failed"), "in progress"], [c("failed"), "failed"],
+    [P.filter(p => verdict(p.product)).length, "judged"], [open, "open requests"]]
+    .map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#nreq").textContent = reqs.length ? `(${open} open)` : "";
+  $("#ncmp").textContent = cmpSel.size ? `(${cmpSel.size})` : "";
+}
+
+function rows() {
+  const P = [...B.products].sort((a, b) => (ev(a.sun).date || "").localeCompare(ev(b.sun).date || "") || a.product.localeCompare(b.product));
+  $("#rows").innerHTML = P.map(p => { const e = ev(p.sun), f = p.frames, best = f.length ? f.reduce((a, b) => a.snr > b.snr ? a : b) : null,
+    v = verdict(p.product);
+    return `<tr data-id="${esc(p.product)}" class="${sel === p.product ? "sel" : ""}">
+      <td><input type="checkbox" aria-label="compare ${esc(p.product)}" ${cmpSel.has(p.product) ? "checked" : ""} ${p.data ? "" : "disabled"}></td>
+      <td class="mono">${esc(e.date)} <span class="muted">${esc(p.sun)}</span></td><td>${esc(e.burst_type || "")}</td><td>${esc(e.phase || "")}</td>
+      <td class="mono">ch ${esc(p.ch)} · ${mhz(p)}${p.note ? ` <span title="${esc(p.note)}">⚠</span>` : ""}</td>
+      <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(p.cal)}</td>
+      <td><span class="pill s-${esc(p.state)}">${esc(p.state)}</span></td><td class="num">${f.length}</td>
+      <td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td class="num mono">${best ? `(${best.x}, ${best.y})` : "—"}</td>
+      <td><span class="pill ${v ? "v-" + v : "v-none"}">${v || "—"}</span></td><td class="muted">${esc((judg[p.product]?.note || "").slice(0, 40))}</td></tr>`; }).join("");
+}
+
+function detail() {
+  const p = B.products.find(q => q.product === sel), D = $("#detail");
+  if (!p) { D.hidden = true; return; }
+  const e = ev(p.sun), f = p.frames[frameIx] || p.frames[0], j = judg[p.product] || {};
+  const otherCh = (e.channels || []).filter(c => c !== +p.ch);
+  D.hidden = false;
+  D.innerHTML = `<header><h2>${esc(e.date)} ${esc(e.burst_type ? "type " + e.burst_type : "")} — MWA ${esc(p.sun)}, ch ${esc(p.ch)} (${mhz(p)} MHz)</h2>
+    <span class="pill s-${esc(p.state)}">${esc(p.state)}</span><span class="muted mono">${esc(p.product)}</span></header>
+    <div class="work">
+      <div class="viewer">
+        <canvas class="img" id="cv" width="520" height="520" aria-label="MWA image"></canvas>
+        <div class="controls">
+          <label>Scale <select id="scale"><option value="own">linear, own peak</option><option value="log">log</option></select></label>
+          <label><input type="checkbox" id="grid" checked> grid</label>
+          ${p.frames.length > 1 ? `<label>Frame <input type="range" id="fr" min="0" max="${p.frames.length - 1}" value="${frameIx}"> <span id="frl" class="mono"></span></label>` : ""}
+        </div>
+        ${p.frames.length ? "" : `<p class="note">No image yet. ${esc((p.log_tail || []).slice(-1)[0] || "")}</p>`}
+      </div>
+      <div class="side">
+        <dl class="kv">
+          <dt>window</dt><dd class="mono">${esc(p.trange || "—")} (${esc(p.tres)} s)</dd>
+          <dt>calibrator</dt><dd class="mono">${esc(p.cal)} <span class="muted">ASVO ${esc(p.cal_job)}</span></dd>
+          ${f ? `<dt>peak / rms</dt><dd>${(f.peak / 1e3).toFixed(0)} kJy/beam / ${(f.rms / 1e3).toFixed(1)} kJy/beam = <b>${f.snr.toFixed(0)}</b></dd>
+          <dt>position</dt><dd class="mono">(${f.x}″, ${f.y}″), ${f.r_rsun.toFixed(2)} R☉</dd>
+          <dt>beam, T_B</dt><dd>${f.bmaj}″ × ${f.bmin}″; ${f.tb_rj.toExponential(1)} K (Rayleigh–Jeans)</dd>` : ""}
+          <dt>event</dt><dd>${esc([e.phase && "phase " + e.phase, e.project, e.tier && "tier " + e.tier, e.flare].filter(Boolean).join(" · "))}</dd>
+          <dt>attempts</dt><dd>${(p.attempts || []).length || 1} · last: ${esc((p.log_tail || []).slice(-1)[0] || "")}</dd>
+          ${p.note || e.note ? `<dt>notes</dt><dd>${esc([p.note, e.note].filter(Boolean).join(" "))}</dd>` : ""}
+        </dl>
+        ${lcSvg(p)}
+        ${e.context_png ? `<details class="ctx"><summary class="note">GOES, STIX, e-Callisto, MWA</summary><img src="${esc(e.context_png)}" alt="context light curves"></details>` : ""}
+        <div class="box"><h3>Verdict</h3>
+          <div class="row">${["ok", "check", "bad"].map(s => `<button class="btn" data-v="${s}" aria-pressed="${j.status === s}">${s}</button>`).join("")}</div>
+          <textarea id="vnote" placeholder="What you see, what to check">${esc(j.note || "")}</textarea>
+          <div class="row"><button class="btn primary" id="vsave">Save verdict</button><span class="msg" id="vmsg"></span></div></div>
+        <div class="box"><h3>Next step</h3>
+          <div class="row"><label>Action <select id="act">
+            <option value="series">time series (more time steps)</option><option value="channels">more channels (same window)</option>
+            <option value="calibrator">same product, other calibrator</option><option value="window">other window, one image</option></select></label></div>
+          <div class="row" id="f-time"><label>from <input type="text" id="t0" size="9" class="mono"></label><label>to <input type="text" id="t1" size="9" class="mono"></label>
+            <label>Δt <select id="dt">${[0.25, 0.5, 1, 2, 4].map(v => `<option ${v === 1 ? "selected" : ""}>${v}</option>`).join("")}</select> s</label></div>
+          <div id="f-ch"><div class="note">Channels of this observation (ch → ×1.28 MHz):</div><div class="chans">${(e.channels || []).map(c =>
+            `<label class="${c === +p.ch ? "cur" : ""}"><input type="checkbox" value="${c}" ${c === +p.ch ? "checked disabled" : ""}>${c}</label>`).join("")}</div></div>
+          <div class="row" id="f-cal" hidden><label>calibrator obsid <input type="text" id="cal" size="12" class="mono" placeholder="or leave empty: nearest other"></label></div>
+          <textarea id="rnote" placeholder="Why, what to look for"></textarea>
+          <div class="row"><button class="btn primary" id="rsend">Send request</button><span class="msg" id="rmsg"></span></div></div>
+      </div>
+    </div>`;
+  const w = winOf(p).split("–"), cv = $("#cv"), sc = $("#scale"), gr = $("#grid");
+  $("#t0").value = w[0] && w[0] !== "—" ? shift(w[0], -10) : ""; $("#t1").value = w[1] ? shift(w[1], 10) : "";
+  const redraw = () => { if (p.frames.length) draw(cv, p, frameIx, sc.value, 0, gr.checked); if ($("#frl")) $("#frl").textContent = (p.frames[frameIx]?.t || "").slice(11, 21); };
+  sc.onchange = gr.onchange = redraw;
+  if ($("#fr")) $("#fr").oninput = ev2 => { frameIx = +ev2.target.value; redraw(); };
+  redraw();
+  const act = $("#act"), showF = () => { const a = act.value;
+    $("#f-time").hidden = !(a === "series" || a === "window"); $("#f-ch").hidden = a !== "channels"; $("#f-cal").hidden = a !== "calibrator"; };
+  act.onchange = showF; showF();
+  D.querySelectorAll("[data-v]").forEach(b => b.onclick = () => D.querySelectorAll("[data-v]").forEach(x => x.setAttribute("aria-pressed", x === b)));
+  $("#vsave").onclick = saveVerdict; $("#rsend").onclick = sendRequest;
+  if (!db) { ["#vsave", "#rsend"].forEach(s => $(s).disabled = true);
+    $("#vmsg").textContent = $("#rmsg").textContent = "Saving needs the claude.ai viewer (signed in)."; }
+}
+function shift(hms, ds) { const [h, m, s] = hms.split(":").map(Number); let t = h * 3600 + m * 60 + s + ds;
+  t = Math.max(0, t); return [Math.floor(t / 3600), Math.floor(t % 3600 / 60), Math.floor(t % 60)].map(v => String(v).padStart(2, "0")).join(":"); }
+
+async function saveVerdict() {
+  const status = [...document.querySelectorAll("[data-v]")].find(b => b.getAttribute("aria-pressed") === "true")?.dataset.v || "";
+  const m = $("#vmsg"); m.className = "msg"; m.textContent = "Saving…";
+  try { await db.collection("judgements").doc(sel).set({ product: sel, status, note: $("#vnote").value.trim(),
+      updated: new Date().toISOString(), by: uid || "" }); m.textContent = "Saved."; }
+  catch (e) { m.className = "msg err"; m.textContent = `Not saved: ${e.message || e.code}`; }
+}
+async function sendRequest() {
+  const p = B.products.find(q => q.product === sel), a = $("#act").value, m = $("#rmsg"); m.className = "msg";
+  const r = { product: p.product, sun: p.sun, ch: +p.ch, cal: p.cal, action: a, note: $("#rnote").value.trim(), state: "open",
+    created: new Date().toISOString(), by: uid || "" };
+  if (a === "series" || a === "window") { r.from = $("#t0").value.trim(); r.to = $("#t1").value.trim(); r.dt = a === "series" ? +$("#dt").value : 4;
+    if (!/^\d\d:\d\d:\d\d$/.test(r.from) || !/^\d\d:\d\d:\d\d$/.test(r.to)) { m.className = "msg err"; m.textContent = "Times as hh:mm:ss (UTC)."; return; } }
+  if (a === "channels") { r.channels = [...document.querySelectorAll("#f-ch input:checked:not(:disabled)")].map(x => +x.value);
+    if (!r.channels.length) { m.className = "msg err"; m.textContent = "Tick at least one more channel."; return; } }
+  if (a === "calibrator") r.calibrator = $("#cal").value.trim() || "nearest other";
+  m.textContent = "Sending…";
+  try { await db.collection("requests").add(r); m.textContent = "Request sent. Claude picks it up on the next round."; $("#rnote").value = ""; }
+  catch (e) { m.className = "msg err"; m.textContent = `Not sent: ${e.message || e.code}`; }
+}
+
+function compare() {
+  const P = B.products.filter(p => cmpSel.has(p.product)), mode = $("#cmpScale").value, grid = $("#cmpGrid").checked;
+  const vmax = Math.max(1, ...P.flatMap(p => p.frames.map(f => f.peak)));
+  $("#cmp").innerHTML = P.length ? P.map((p, i) => `<figure><canvas class="img" id="c${i}" width="520" height="520"></canvas>
+    <figcaption><b>${esc(ev(p.sun).date)}</b> ${esc(ev(p.sun).burst_type || "")} · ch ${esc(p.ch)} ${mhz(p)} MHz ·
+    peak/rms ${p.frames[0]?.snr.toFixed(0) ?? "—"} · <span class="mono">(${p.frames[0]?.x}″, ${p.frames[0]?.y}″)</span></figcaption>
+    ${lcSvg(p)}</figure>`).join("") : `<p class="note">Nothing selected yet.</p>`;
+  P.forEach((p, i) => draw($("#c" + i), p, 0, mode, vmax, grid));
+}
+
+function reqList() {
+  const R = [...reqs].sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+  $("#reqs").innerHTML = R.length ? R.map(r => `<div class="req"><div class="row"><span class="pill ${r.state === "done" ? "v-ok" : r.state === "rejected" ? "v-bad" : "v-check"}">${esc(r.state || "open")}</span>
+    <b>${esc(r.action)}</b> <span class="mono">${esc(r.product)}</span> <span class="muted">${esc((r.created || "").slice(0, 16).replace("T", " "))}</span></div>
+    <div class="mono">${esc([r.from && `${r.from}–${r.to}`, r.dt && `Δt ${r.dt} s`, r.channels && `channels ${r.channels.join(", ")}`, r.calibrator && `calibrator ${r.calibrator}`].filter(Boolean).join(" · "))}</div>
+    ${r.note ? `<div>${esc(r.note)}</div>` : ""}${r.reply ? `<div class="note">Claude: ${esc(r.reply)}</div>` : ""}</div>`).join("")
+    : `<p class="note">No requests yet. Open a product on the Board and use “Next step”.</p>`;
+}
+
+function render() { stats(); rows(); detail(); if (!$("#tab-compare").hidden) compare(); reqList(); }
+
+$("#rows").addEventListener("click", ev2 => {
+  const tr = ev2.target.closest("tr"); if (!tr) return; const id = tr.dataset.id;
+  if (ev2.target.matches("input[type=checkbox]")) { ev2.stopPropagation();
+    if (ev2.target.checked) { if (cmpSel.size >= 4) { ev2.target.checked = false; return; } cmpSel.add(id); } else cmpSel.delete(id);
+    stats(); return; }
+  sel = sel === id ? null : id; frameIx = 0; rows(); detail(); if (sel) $("#detail").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  ["board", "compare", "requests"].forEach(t => $("#tab-" + t).hidden = t !== b.dataset.tab);
+  $("#detail").hidden = b.dataset.tab !== "board" || !sel; if (b.dataset.tab === "compare") compare();
+});
+$("#cmpScale").onchange = $("#cmpGrid").onchange = compare;
+
+fetch("board.json").then(r => r.json()).then(b => {
+  B = b; $("#sub").textContent += ` Data exported ${b.generated}.`; render();
+  connect();
+});
+async function connect() {
+  const c = window.claude;
+  db = c ? await c.use("db") : null;
+  const user = c ? await c.use("user") : null;
+  try { uid = user ? await user.id() : null; } catch { uid = null; }
+  if (!db) { $("#dbnote").textContent = "Verdicts and requests are stored only when the page is opened in claude.ai, signed in."; render(); return; }
+  db.collection("judgements").onSnapshot(s => { judg = {}; s.docs.forEach(d => judg[d.id] = d.data()); stats(); rows();
+    if (sel && !document.activeElement?.matches?.("textarea")) detail(); });
+  db.collection("requests").onSnapshot(s => { reqs = s.docs.map(d => ({ id: d.id, ...d.data() })); stats(); reqList(); });
+  render();
+}
+</script>

@@ -63,10 +63,4 @@ img=$(ls -d "$P/out/${SUN}_ch${CH}/$DATEDIR/${SUN}_target"/imagedir_*_peak4s 2>/
 n=$(ls "$img"/pbcor_hpcs/*.fits 2>/dev/null | wc -l)
 if [[ $n -gt 0 ]]; then log "DONE: $n image(s) in $img/pbcor_hpcs"
 else log "FAILED in P-AIRCARS: see ~/overnight/${SUN}_ch${CH}_peak4s.md"; exit 1; fi
-# one MLflow run per image (experiment archive-bursts; UI: mlflow-ui.sh).
-# LOGARGS: further log_event_mlflow.py options as one shell-quoted string, e.g.
-#   LOGARGS='--tag burst_type=II --tag phase=IIIb --tag project=G0002 --tag tier=A'
-eval "logargs=(${LOGARGS:-})"
-if ~/mwa/mlflow-venv/bin/python ~/mwa/events/log_event_mlflow.py --sun "$SUN" --cal "$CAL" --ch "$CH" \
-     --datedir "$DATEDIR" "${logargs[@]}" >> "$EV/logs/mlflow_${SUN}.log" 2>&1; then log "logged to MLflow"
-else log "MLflow logging failed, see $EV/logs/mlflow_${SUN}.log"; fi
+# superseded on 22 Oct 2026 by product_run.sh (products, board export); MLflow logging removed

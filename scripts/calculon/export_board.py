@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Export the image products for the image board page (~/mwa/board/).
+
+Reads the product registry (~/mwa/products/*.json), the event table (events.json), the
+P-AIRCARS images, the MWA light curves (dynspec npz) and the metafits, and writes
+  board.json        events (meta, channel list, Stonyhurst grid, context figure) and products
+                    (parameters, state, attempts, frames with peak / rms / centroid, light curve)
+  data/<prod>.txt   all frames of a product, Stokes I cropped to +-1500 arcsec, int16 scaled
+                    per frame (value = int16 * frame scale), row-major, y up, little-endian,
+                    base64 (artifact pages do not serve raw binary files)
+  img/              context figures
+The page draws the images itself, so scale, colour map and comparisons are chosen there.
+Run with ~/mwa/tools-venv/bin/python; copy ~/mwa/board to the Mac and publish the page.
+"""
+import base64
+import glob
+import json
+import os
+import re
+import shutil
+import time
+
+import numpy as np
+from astropy.io import fits
+
+H = os.path.expanduser("~")
+PR, EV, OUT = f"{H}/mwa/products", f"{H}/mwa/events", f"{H}/mwa/board"
+SCR = f"/scratch/{os.environ.get('USER', 'andre_csillaghy')}"
+HALF = 1500.0   # arcsec
+
+
+def legacy_state(p):
+    """State of a product made with event_image.sh, from ~/mwa/events/<SUN>.md."""
+    md = p.get("legacy_md", "")
+    txt = open(md).read() if os.path.exists(md) else ""
+    last = [l for l in txt.splitlines() if l.startswith("- ")]
+    lastl = last[-1] if last else ""
+    state = ("done" if re.search(r"DONE|logged to MLflow|MLflow logging", lastl) or "DONE:" in txt and "FAILED" not in lastl
+             else "failed" if "FAILED" in lastl else "waiting" if not last else "running")
+    m = re.search(r"window (\S+)", txt)
+    p.update(state=state, trange=m.group(1) if m else p.get("trange", ""), log_tail=last[-3:])
+    starts = re.findall(r"started (\d{4}-\d\d-\d\d \d\d:\d\d)", txt)
+    if not p["attempts"]:
+        p["attempts"] = [{"start": s} for s in starts]
+    return p
+
+
+def image_dir(p):
+    if p.get("imgdir"):
+        return p["imgdir"]
+    g = glob.glob(f"{SCR}/paircars/out/{p['tag']}/{p['datedir']}/{p['sun']}_target/imagedir_*_{p['label']}/pbcor_hpcs")
+    return g[0] if g else ""
+
+
+def frame(fn):
+    h = fits.getheader(fn)
+    d = np.squeeze(fits.getdata(fn)).astype(float)
+    while d.ndim > 2:
+        d = d[0]
+    s = 3600.0 if h.get("CUNIT1", "deg").strip().lower().startswith("deg") else 1.0
+    x = ((np.arange(d.shape[1]) - (h["CRPIX1"] - 1)) * h["CDELT1"] + h["CRVAL1"]) * s
+    y = ((np.arange(d.shape[0]) - (h["CRPIX2"] - 1)) * h["CDELT2"] + h["CRVAL2"]) * s
+    X, Y = np.meshgrid(x, y)
+    off = d[(np.hypot(X, Y) > 2500) & np.isfinite(d)]
+    rms = 1.4826 * np.nanmedian(np.abs(off - np.nanmedian(off)))
+    pk = np.nanmax(d)
+    m = d > 0.5 * pk
+    cx, cy = (d[m] * X[m]).sum() / d[m].sum(), (d[m] * Y[m]).sum() / d[m].sum()
+    ix, iy = np.flatnonzero(np.abs(x) <= HALF), np.flatnonzero(np.abs(y) <= HALF)
+    crop = np.nan_to_num(d[np.ix_(iy, ix)])
+    if h["CDELT2"] < 0:
+        crop = crop[::-1]
+    if h["CDELT1"] < 0:
+        crop = crop[:, ::-1]
+    nu = next((h[f"CRVAL{k}"] for k in range(1, 5) if str(h.get(f"CTYPE{k}", "")).startswith("FREQ")), np.nan)
+    bmaj, bmin = h["BMAJ"] * 3600, h["BMIN"] * 3600
+    tb = pk * 1e-26 * (2.998e8 / nu) ** 2 / (2 * 1.380649e-23 * np.pi / (4 * np.log(2)) * bmaj * bmin / 206265 ** 2)
+    meta = dict(t=h.get("DATE-OBS", ""), freq_mhz=round(nu / 1e6, 3), peak=float(pk), rms=float(rms),
+                snr=float(pk / rms), x=round(float(cx)), y=round(float(cy)), r_rsun=round(float(np.hypot(cx, cy) / 960), 3),
+                bmaj=round(bmaj), bmin=round(bmin), bpa=round(float(h.get("BPA", 0)), 1), tb_rj=float(tb))
+    extent = [float(min(x[ix])), float(max(x[ix])), float(min(y[iy])), float(max(y[iy]))]
+    return meta, crop, extent
+
+
+def grid_lines(t_obs):
+    import astropy.units as u
+    from astropy.coordinates import SkyCoord
+    from sunpy.coordinates import frames, get_earth
+    earth = get_earth(t_obs)
+    hpc = frames.Helioprojective(observer=earth, obstime=t_obs)
+    lines = []
+    for kind, values in (("lon", np.arange(-90, 91, 15)), ("lat", np.arange(-75, 76, 15))):
+        for v in values:
+            t = np.linspace(-90, 90, 61)
+            lon, lat = (np.full_like(t, v), t) if kind == "lon" else (t, np.full_like(t, v))
+            c = SkyCoord(lon * u.deg, lat * u.deg, frame=frames.HeliographicStonyhurst, obstime=t_obs).transform_to(hpc)
+            front = np.asarray(c.distance < earth.radius)
+            pts = [[round(float(a)), round(float(b))] if f else None
+                   for a, b, f in zip(c.Tx.arcsec, c.Ty.arcsec, front)]
+            lines.append({"kind": kind, "v": int(v), "pts": pts})
+    limb = 959.6 * u.AU.to(u.m) / earth.radius.to(u.m).value
+    return {"limb": round(float(limb), 1), "lines": lines}
+
+
+def channels(sun):
+    f = f"{SCR}/mwa/events/{sun}/{sun}.metafits"
+    if not os.path.exists(f):
+        return []
+    v = str(fits.getheader(f).get("CHANNELS", ""))   # long string over CONTINUE cards
+    return [int(c) for c in v.split(",") if c.strip().isdigit()]
+
+
+def lightcurve(sun, ch):
+    f = f"{SCR}/mwa/events/{sun}/dynspec_ch{ch}.npz"
+    if not os.path.exists(f):
+        return None
+    d = np.load(f)
+    with np.errstate(all="ignore"):
+        lc = np.nanmedian(d["amp"] / np.nanmedian(d["amp"], axis=1, keepdims=True), axis=0)
+    t = d["unix"]
+    return {"t0": float(t[0]), "dt": float(np.median(np.diff(t))),
+            "y": [None if not np.isfinite(v) else round(float(v), 2) for v in lc]}
+
+
+def main():
+    os.makedirs(f"{OUT}/data", exist_ok=True)
+    os.makedirs(f"{OUT}/img", exist_ok=True)
+    events = json.load(open(f"{PR}/events.json")) if os.path.exists(f"{PR}/events.json") else {}
+    prods = []
+    for f in sorted(glob.glob(f"{PR}/*.json")):
+        if os.path.basename(f) == "events.json":
+            continue
+        p = json.load(open(f))
+        if p.get("legacy"):
+            legacy_state(p)
+        elif os.path.exists(f"{PR}/{p['product']}.md"):
+            p["log_tail"] = [l for l in open(f"{PR}/{p['product']}.md").read().splitlines() if l.startswith("- ")][-3:]
+        d = image_dir(p)
+        fns = sorted(glob.glob(f"{d}/*.fits")) if d else []
+        frames, crops, extent = [], [], None
+        for fn in fns:
+            meta, crop, extent = frame(fn)
+            frames.append(meta)
+            crops.append(crop)
+        p["frames"] = frames
+        if crops:
+            ny, nx = crops[0].shape
+            scales = [float(np.abs(c).max() / 32767) or 1.0 for c in crops]
+            arr = np.stack([np.round(c / s) for c, s in zip(crops, scales)]).astype("<i2")
+            open(f"{OUT}/data/{p['product']}.txt", "w").write(base64.b64encode(arr.tobytes()).decode())
+            p["data"] = {"file": f"data/{p['product']}.txt", "nx": nx, "ny": ny, "extent": extent, "scale": scales}
+            if p.get("state") in (None, "running", "waiting", "imaging") and p.get("legacy"):
+                p["state"] = "done"
+        p["lc"] = lightcurve(p["sun"], p["ch"])
+        prods.append(p)
+
+    evs = []
+    for sun in sorted({p["sun"] for p in prods}):
+        e = dict(events.get(sun, {}), sun=sun)
+        e["channels"] = channels(sun)
+        t = next((fr["t"] for p in prods if p["sun"] == sun for fr in p["frames"]), "")
+        if not t:
+            mf = f"{SCR}/mwa/events/{sun}/{sun}.metafits"
+            if os.path.exists(mf):
+                t = fits.getheader(mf).get("DATE-OBS", "")
+        e["date"] = t[:10]
+        if t:
+            e["grid"] = grid_lines(t)
+        ctx = e.pop("context", "")
+        if ctx and os.path.exists(ctx):
+            shutil.copy(ctx, f"{OUT}/img/{os.path.basename(ctx)}")
+            e["context_png"] = f"img/{os.path.basename(ctx)}"
+        evs.append(e)
+    json.dump({"generated": time.strftime("%Y-%m-%d %H:%M %Z"), "events": evs, "products": prods},
+              open(f"{OUT}/board.json", "w"), separators=(",", ":"))
+    print(f"{len(evs)} events, {len(prods)} products, {sum(len(p['frames']) for p in prods)} frames -> {OUT}")
+
+
+if __name__ == "__main__":
+    main()

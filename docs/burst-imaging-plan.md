@@ -88,42 +88,37 @@ One Slurm array task per image, built from `configs/events/*.yaml`:
   `configs/asvo_jobs.csv`; downloads with `asvo-download-retry.sbatch`.
 - Batch 0 first, end to end; batch 1 only after its image is checked.
 
-## Experiment tracking: MLflow on calculon
+## Products and the image board (22 Oct)
 
-One MLflow run per image in the experiment `archive-bursts` (set up 21 Oct):
-params (obsid, calibrator, channel, 4 s window, pipeline settings, git commit from
-`~/mwa/events/VERSION`), metrics (peak, off-Sun rms, peak/rms, half-max centroid,
-beam, Rayleigh–Jeans T_B, half-max area in beams), artifacts (FITS, light curve,
-P-AIRCARS montage). `event_image.sh` logs each new image at the end
-(`scripts/calculon/log_event_mlflow.py`); older images can be logged by hand with
-the same script.
+MLflow (tried 21-22 Oct) is removed: it showed only successful runs, could not
+put images side by side, and gave no place for a verdict. In its place:
 
-- Store: `sqlite:///~/mwa/mlflow/mlflow.db`, artifacts `~/mwa/mlflow/artifacts`
-  (home on the NAS, not /scratch). Environment `~/mwa/mlflow-venv`, built on the
-  login node: compute nodes have Python 3.9, the login node 3.12.
-- UI: `ssh calculon 'bash ~/mwa/events/mlflow-ui.sh'` (one worker, job runner
-  off), then on the Mac `ssh -N -L 5000:localhost:5000 calculon` and
-  <http://localhost:5000>. It listens on localhost of the shared login node, so
-  other calculon users could reach it too.
+**Products.** One product = one observation, one coarse channel, one time window,
+one time resolution, one calibrator; id `<obsid>_ch<channel>_<label>`.
+`scripts/calculon/product_run.sh` makes one (same steps as `event_image.sh`, which it
+replaces: wait for the tars, Birli `--no-rfi`, calibrator MSs, MWA light curve, window
+if none given, P-AIRCARS via `burst_series.sh`). `TRANGE`, `TRES`, `LABEL`, `CH`, `CAL`
+make series (more time steps), other channels and other calibrators the same kind of
+run. The P-AIRCARS work directory includes the calibrator, so another calibrator is
+calibrated from scratch. Registry `~/mwa/products/<product>.json` (parameters, state,
+attempts), log `~/mwa/products/<product>.md` (one section per attempt). Lists of
+products: `scripts/calculon/run_products.sh` (KEY=VALUE lines, `PAR` at a time).
+The images made with `event_image.sh` were entered with `register_legacy.py`
+(`legacy: true`, state read from `~/mwa/events/<obsid>.md`).
 
-Runs carry a readable name ("2024-12-25 04:51:45 type II, 162.5 MHz"), tags
-(`event_date`, `burst_type`, `phase`, `project`, `tier`, `status` ok/check/bad), a
-Markdown description, and the image figure with Stonyhurst grid made on calculon
-(`event_figure.py`). Logging an image again updates its run. Per-event tags and
-markers: `LOGARGS` in `event_image.sh`.
+**Export.** `scripts/calculon/export_board.py` (`~/mwa/tools-venv`, numpy, astropy,
+sunpy) writes `~/mwa/board/`: `board.json` (events with channel list and Stonyhurst grid;
+products with state, attempts, per-frame peak / rms / centroid / beam / T_B, MWA light
+curve) and `data/<product>.txt` (all frames, Stokes I cropped to +-1500 arcsec, int16
+scaled per frame, base64: artifact pages serve no raw binary). `product_run.sh` runs
+the export after each product.
 
-**Catalogue page** (for reading, MLflow stays the store):
-`~/mwa/mlflow-venv/bin/python ~/mwa/events/build_catalogue.py` writes
-`~/mwa/catalogue/` (sortable table and one card per image with image, MWA light
-curve and GOES/STIX/e-Callisto context). Copied to the Mac and published as an
-Artifact: https://claude.ai/artifact/QwU6ZtNBeVh7Vxuuip27qk (private).
-
-**MLflow on the Mac without the VPN (22 Oct).** `scripts/mlflow_sync.sh` copies a
-consistent snapshot of the calculon store (sqlite backup API) and the artifacts to
-`~/mwa-mlflow/`, rewrites the artifact paths, and the local MLflow 3.17.1 (same
-version as calculon) serves it at <http://localhost:5050> (5000 is the macOS AirPlay
-receiver). Two launchd agents: `ch.fhnw.mwa-mlflow-ui` keeps the UI running,
-`ch.fhnw.mwa-mlflow-sync` syncs every 30 min and skips quietly without the VPN.
-The copy is read-only in practice: runs logged locally would be overwritten.
-Remove: `launchctl bootout gui/$(id -u)/ch.fhnw.mwa-mlflow-{ui,sync}` and delete the
-plists in `~/Library/LaunchAgents/`.
+**Board page** `scripts/board/index.html`, published with the export as
+https://claude.ai/artifact/QwU6ZtNBeVh7Vxuuip27qk (private): table of all products
+with state; per product a viewer (linear or log scale, grid, frame slider for series),
+light curve with the window, context figure, a verdict (ok / check / bad, note) and a
+next-step request (time series, more channels, other calibrator, other window).
+Verdicts and requests live in the page's database (`judgements`, `requests`); Claude
+reads them, runs the requests with `product_run.sh` and answers in the request
+(`state`, `reply`). Compare: up to four products on one grid, common or own scale.
+To refresh: export on calculon, copy `~/mwa/board` to the Mac with the page, publish.
