@@ -116,12 +116,20 @@ scaled per frame, base64: artifact pages serve no raw binary) for products with 
 source at its brightest frame, Stonyhurst grid, peak curve; H.264 from imageio-ffmpeg,
 remade only when the frames change). `product_run.sh` runs the export after each product.
 
-**Board page** `scripts/board/index.html`, published with the export as
-https://claude.ai/artifact/QwU6ZtNBeVh7Vxuuip27qk (private): table of all products
-with state; per product a viewer (linear or log scale, grid; series with more than 10 frames as a movie),
-light curve with the window, context figure, a verdict (ok / check / bad, note) and a
-next-step request (time series, more channels, other calibrator, other window).
-Verdicts and requests live in the page's database (`judgements`, `requests`); Claude
-reads them, runs the requests with `product_run.sh` and answers in the request
-(`state`, `reply`). Compare: up to four products on one grid, common or own scale.
-To refresh: export on calculon, copy `~/mwa/board` to the Mac with the page, publish.
+**Board page** `scripts/board/index.html`, on the laptop (22 Oct; a claude.ai copy existed
+briefly). `~/mwa-board/` holds the export (synced from calculon `~/mwa/board` by
+`scripts/board/sync_board.sh` whenever the VPN is up; e-Callisto spectra made locally with
+STIX-MWA `src/board_spectra.py`; page converted to pure ASCII by `asciify.py`) and the
+viewer's `judgements.json` and `requests.json`. `scripts/board/serve_board.py` (standard
+library) serves it at <http://localhost:8793> (8770 is taken by macOS sharingd) and stores
+verdicts and requests. Two launchd agents: `ch.fhnw.mwa-board-server` (keeps the server
+up), `ch.fhnw.mwa-board-sync` (every 30 min, skips without the VPN). Programs in
+`~/mwa-board/bin/`.
+
+Table: one row per event (image of the brightest run, GOES class, phase, project) with
+its runs below (image, channel, window, time resolution, calibration, run time, state,
+peak/rms, position, verdict); images open at full resolution. Per run: image with
+contours and grid (or a movie for more than 10 frames), e-Callisto dynamic spectrum,
+MWA contours on AIA 193 A with NOAA regions and PFSS lines, verdict, next-step request.
+Compare: up to four runs on one grid, common or own scale. Claude reads `requests.json`,
+runs the requests with `product_run.sh` and writes `state` and `reply` back.
