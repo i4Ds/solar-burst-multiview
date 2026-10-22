@@ -330,7 +330,7 @@ function detail() {
       <div class="viewer">
         ${p.movie ? `<video class="movie" src="${esc(p.movie.mp4)}" poster="${esc(p.movie.poster)}" controls loop playsinline preload="metadata"></video>
         <p class="note">${p.frames.length} frames, ${esc(p.tres)} s steps: movie with full Sun and a zoom on the source; the poster is the brightest frame.</p>
-        ${peakSvg(p)}` : `<canvas class="img" id="cv" width="520" height="520" aria-label="MWA image"></canvas>`}
+` : `<canvas class="img" id="cv" width="520" height="520" aria-label="MWA image"></canvas>`}
         ${p.full && !p.movie ? `<a class="note" href="${esc(p.full)}" target="_blank" rel="noopener">Brightest frame at full resolution (PNG)</a>` : ""}
         ${p.movie ? `<a class="note" href="${esc(p.movie.mp4)}" target="_blank" rel="noopener">Open the movie on its own</a>` : ""}
         <div class="controls" ${p.movie ? "hidden" : ""}>
