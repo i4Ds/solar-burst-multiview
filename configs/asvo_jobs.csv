@@ -44,3 +44,22 @@ obsid,kind,params,role,batch,asvo_job,state,requested,tar,note
 1449573328,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,batch2,1115661,submitted,2026-10-21,/mnt/nas05/data02/MWA_data/data/mwa_data2/1449573328_1115661_ms.tar,for 1449551392 (ch126)
 1451768544,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,batch2,1115662,submitted,2026-10-21,/mnt/nas05/data02/MWA_data/data/mwa_data2/1451768544_1115662_ms.tar,for 1451778960 (ch128)
 1451820360,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,batch2,1115663,submitted,2026-10-21,/mnt/nas05/data02/MWA_data/data/mwa_data2/1451820360_1115663_ms.tar,for 1451801392 (ch129)
+1339452016,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115917,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1339452016_1115917_ms.tar,batch 2 calibrator
+1339475176,vis,,target,round 23 Oct,1115916,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1339475176_1115916_vis.tar,batch 2
+1347335176,vis,,target,round 23 Oct,1115918,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1347335176_1115918_vis.tar,batch 2
+1347359296,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115919,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1347359296_1115919_ms.tar,batch 2 calibrator
+1347571816,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115923,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1347571816_1115923_ms.tar,batch 2 calibrator
+1347594008,vis,,target,round 23 Oct,1115921,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1347594008_1115921_vis.tar,batch 2
+1348574416,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115925,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1348574416_1115925_ms.tar,batch 2 calibrator
+1387139416,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=160,no_rfi=true",calibrator,round 23 Oct,1115931,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1387139416_1115931_ms.tar,"batch 2 calibrator; native 160 kHz, so flag_edge_width=160 (80 refused by ASVO)"
+1387165944,vis,,target,round 23 Oct,1115924,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1387165944_1115924_vis.tar,batch 2
+1406154616,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=160,no_rfi=true",calibrator,round 23 Oct,1115932,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1406154616_1115932_ms.tar,"batch 2 calibrator; native 160 kHz, so flag_edge_width=160 (80 refused by ASVO)"
+1406167216,vis,,target,round 23 Oct,1115927,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1406167216_1115927_vis.tar,batch 2
+1407276200,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=160,no_rfi=true",calibrator,round 23 Oct,1115933,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1407276200_1115933_ms.tar,"batch 2 calibrator; native 160 kHz, so flag_edge_width=160 (80 refused by ASVO)"
+1407292216,vis,,target,round 23 Oct,1115915,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1407292216_1115915_vis.tar,batch 2
+1416862472,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115928,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1416862472_1115928_ms.tar,batch 2 calibrator
+1416884416,vis,,target,round 23 Oct,1115920,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1416884416_1115920_vis.tar,batch 2
+1419137056,vis,,target,round 23 Oct,1115922,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419137056_1115922_vis.tar,batch 2
+1419455048,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115929,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419455048_1115929_ms.tar,batch 2 calibrator
+1419477136,vis,,target,round 23 Oct,1115926,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1419477136_1115926_vis.tar,batch 2
+1449573440,ms,"output=ms,avg_time_res=2,avg_freq_res=160,flag_edge_width=80,no_rfi=true",calibrator,round 23 Oct,1115930,submitted,2026-10-23,/mnt/nas05/data02/MWA_data/data/mwa_data2/1449573440_1115930_ms.tar,drift calibrator for 1449551392 (Cal_3C444_Ch169)
