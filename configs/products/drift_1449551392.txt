@@ -1,0 +1,11 @@
+# 1449551392 (2025-12-12, 05:09:34 + 120 s): 2 s images along the burst drift (22 Oct 2026).
+# Drift from e-Callisto ASSA_57 (STIX-MWA src/burst_drift.py, intensity-weighted lane centroid,
+# fit in log f): harmonic lane 185-220 MHz -0.039 MHz/s (205.8 -> 201.1 MHz), fundamental lane
+# 140-175 MHz -0.019 MHz/s (160.8 -> 158.6 MHz). The archive has 12 of 24 channels (97 120 132 138
+# 143 146 152 158 161 167 173 220): nearest to the harmonic lane ch 161 until 05:10:16, then ch 158;
+# fundamental lane: ch 120 throughout. Calibrators: Cal_3C444_Ch169 (158, 161; to request) and
+# Cal_3C444_Ch121 (120; ASVO 1115661), both 3C444 at +6.1 h. Order: the two runs that share a
+# calibrator are not next to each other. PAR=2.
+SUN=1449551392 SUN_JOB=1114412 CAL=1449573328 CAL_JOB=1115661 DATEDIR=20251212 CH=120 LABEL=drift_f_ch120 TRES=2 TRANGE=2025/12/12/05:09:34~2025/12/12/05:11:34
+SUN=1449551392 SUN_JOB=1114412 CAL=1449573440 CAL_JOB=auto DATEDIR=20251212 CH=161 LABEL=drift_h_ch161 TRES=2 TRANGE=2025/12/12/05:09:34~2025/12/12/05:10:16
+SUN=1449551392 SUN_JOB=1114412 CAL=1449573440 CAL_JOB=auto DATEDIR=20251212 CH=158 LABEL=drift_h_ch158 TRES=2 TRANGE=2025/12/12/05:10:16~2025/12/12/05:11:34

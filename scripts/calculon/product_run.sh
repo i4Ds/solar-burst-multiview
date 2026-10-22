@@ -33,6 +33,8 @@ log() { echo "- $(date '+%F %H:%M') $*" | tee -a "$ST"; }
 waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60; done; }
 sub() { sbatch -M calc-cpu --parsable "$@" | cut -d';' -f1; }
 ondisk() { grep -qE "^ *$1 .*on NAS" ~/mwa/asvo-watch.status 2>/dev/null; }
+# SUN_JOB/CAL_JOB=auto: the newest ASVO job of that obsid and kind that asvo-watch reports on the NAS
+jobof() { awk -v o="$1" -v k="$2" '$2 == o && $3 == k && /on NAS/ {j = $1} END {print j}' ~/mwa/asvo-watch.status 2>/dev/null; }
 reg() {  # update the registry entry: reg key=value ...
   python3 - "$PR/$PRODUCT.json" "$@" <<'EOF'
 import json, os, sys, time
@@ -54,6 +56,13 @@ echo -e "\n## attempt $(date '+%F %H:%M'): ch $CH, calibrator $CAL, ${TRANGE:-wi
 reg new_attempt=1 product=$PRODUCT sun=$SUN sun_job=$SUN_JOB cal=$CAL cal_job=$CAL_JOB ch=$CH \
     datedir=$DATEDIR label=$LABEL tres=$TRES request=$REQUEST tag=$TAG state=waiting
 
+while [[ $SUN_JOB == auto || $CAL_JOB == auto ]]; do
+  [[ $SUN_JOB == auto ]] && j=$(jobof "$SUN" vis) && [[ -n $j ]] && SUN_JOB=$j
+  [[ $CAL_JOB == auto ]] && j=$(jobof "$CAL" ms) && [[ -n $j ]] && CAL_JOB=$j
+  [[ $SUN_JOB == auto || $CAL_JOB == auto ]] && sleep 600
+done
+CALDIR=$P/data/${CAL}_${CAL_JOB}
+reg sun_job=$SUN_JOB cal_job=$CAL_JOB
 until ondisk "$SUN_JOB" && ondisk "$CAL_JOB"; do sleep 600; done
 log "tars on the NAS (ASVO jobs $SUN_JOB, $CAL_JOB)"; reg state=preparing
 
@@ -69,7 +78,10 @@ log "Birli job ${j1:-skipped (MS exists)}, calibrator extraction ${j2:-skipped}"
 [[ -n $j2 ]] && waitjob "$j2"
 [[ -d $MS ]] || fail "no MS from Birli, see $PR/logs/birli_${SUN}_ch${CH}_*.log"
 [[ -f $CALDIR/EXTRACT_OK ]] || fail "calibrator extraction, see $PR/logs/extract_${CAL}_*.log"
-[[ -d $CALDIR/${CAL}_ch${CH}.ms ]] || fail "calibrator $CAL has no channel $CH"
+# per-channel MSs (picket-fence conversions) or one MS with all channels (contiguous Ch121-type)
+if [[ ! -d $CALDIR/${CAL}_ch${CH}.ms ]] && [[ $(ls -d "$CALDIR"/*.ms 2>/dev/null | wc -l) -ne 1 ]]; then
+  fail "calibrator $CAL has no MS for channel $CH"
+fi
 rm -f "$W"/${SUN}_*_ch${CH}_*.fits
 log "MS $(du -sh "$MS" | cut -f1); calibrator $(ls -d "$CALDIR"/*.ms | wc -l) MS"
 

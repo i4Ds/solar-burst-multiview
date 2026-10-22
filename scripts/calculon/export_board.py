@@ -250,8 +250,17 @@ def main():
             legacy_state(p)
         elif os.path.exists(f"{PR}/{p['product']}.md"):
             p["log_tail"] = [l for l in open(f"{PR}/{p['product']}.md").read().splitlines() if l.startswith("- ")][-3:]
-        d = image_dir(p)
-        fns = sorted(glob.glob(f"{d}/*.fits")) if d else []
+        if p.get("parts"):   # composite (e.g. images along a burst drift over several channels)
+            parts = [json.load(open(f"{PR}/{q}.json")) for q in p["parts"] if os.path.exists(f"{PR}/{q}.json")]
+            fns = sorted((fn for q in parts if image_dir(q) for fn in glob.glob(f"{image_dir(q)}/*.fits")),
+                         key=lambda fn: fits.getheader(fn).get("DATE-OBS", ""))
+            states = [q.get("state", "waiting") for q in parts]
+            p["state"] = ("done" if parts and all(s == "done" for s in states) else
+                          "failed" if "failed" in states else "running" if fns else "waiting")
+            p["attempts"] = [a for q in parts for a in q.get("attempts", [])[-1:]]
+        else:
+            d = image_dir(p)
+            fns = sorted(glob.glob(f"{d}/*.fits")) if d else []
         frames, crops, extent = [], [], None
         for fn in fns:
             meta, crop, extent = frame(fn)
