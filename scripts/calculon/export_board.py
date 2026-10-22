@@ -251,9 +251,19 @@ def main():
         elif os.path.exists(f"{PR}/{p['product']}.md"):
             p["log_tail"] = [l for l in open(f"{PR}/{p['product']}.md").read().splitlines() if l.startswith("- ")][-3:]
         if p.get("parts"):   # composite (e.g. images along a burst drift over several channels)
-            parts = [json.load(open(f"{PR}/{q}.json")) for q in p["parts"] if os.path.exists(f"{PR}/{q}.json")]
-            fns = sorted((fn for q in parts if image_dir(q) for fn in glob.glob(f"{image_dir(q)}/*.fits")),
-                         key=lambda fn: fits.getheader(fn).get("DATE-OBS", ""))
+            # a part is a product id, or {"product", "from", "to"} (ISO UTC) to take only that time span
+            specs = [q if isinstance(q, dict) else {"product": q} for q in p["parts"]]
+            parts, fns = [], []
+            for s in specs:
+                if not os.path.exists(f"{PR}/{s['product']}.json"):
+                    continue
+                q = json.load(open(f"{PR}/{s['product']}.json"))
+                parts.append(q)
+                for fn in glob.glob(f"{image_dir(q)}/*.fits") if image_dir(q) else []:
+                    t_img = fits.getheader(fn).get("DATE-OBS", "")
+                    if s.get("from", "") <= t_img < s.get("to", "9999"):
+                        fns.append(fn)
+            fns.sort(key=lambda fn: fits.getheader(fn).get("DATE-OBS", ""))
             states = [q.get("state", "waiting") for q in parts]
             p["state"] = ("done" if parts and all(s == "done" for s in states) else
                           "failed" if "failed" in states else "running" if fns else "waiting")

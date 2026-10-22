@@ -24,6 +24,7 @@ TAR="${TAR:-/mnt/nas05/data02/MWA_data/data/mwa_data2/1348547272_1111033_vis.tar
 W="${W:-/scratch/$USER/mwa/flare20220930_raw}"
 STAGES="${STAGES:-extract dryrun}"
 OUT="$W/${OBSID}_ch${CH}_0.25s.ms"
+CHP=$(printf %03d $((10#$CH)))   # gpubox names are zero-padded: _ch097_
 mkdir -p "$W"
 cd "$W"
 
@@ -45,14 +46,14 @@ birli_run() {
     --max-memory 48 \
     --no-draw-progress \
     -M "$OUT" "$@" \
-    "$W"/${OBSID}_*_ch${CH}_*.fits
+    "$W"/${OBSID}_*_ch${CHP}_*.fits
 }
 
 for stage in $STAGES; do
   echo "== $(date -Is) stage $stage"
   case $stage in
     extract)
-      tar -xvf "$TAR" --wildcards "*${OBSID}.metafits" "*_ch${CH}_*.fits" | tee "$W/extracted.txt"
+      tar -xvf "$TAR" --wildcards "*${OBSID}.metafits" "*_ch${CHP}_*.fits" | tee "$W/extracted.txt"
       # files may sit in a sub-directory of the tar: move them up
       find "$W" -mindepth 2 \( -name "*.fits" -o -name "*.metafits" \) -exec mv {} "$W"/ \;
       ls -la "$W"

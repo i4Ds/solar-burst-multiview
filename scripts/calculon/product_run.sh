@@ -28,6 +28,7 @@ P=/scratch/$USER/paircars
 MS=$W/${SUN}_ch${CH}_0.25s.ms
 CALDIR=$P/data/${CAL}_${CAL_JOB}
 TAG=${SUN}_ch${CH}_c${CAL}
+CHP=$(printf %03d $((10#$CH)))   # gpubox names are zero-padded: _ch097_
 ST=$PR/$PRODUCT.md
 log() { echo "- $(date '+%F %H:%M') $*" | tee -a "$ST"; }
 waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60; done; }
@@ -68,7 +69,7 @@ log "tars on the NAS (ASVO jobs $SUN_JOB, $CAL_JOB)"; reg state=preparing
 
 j1= j2=
 stages="extract convert"   # skip the tar scan when this channel is already extracted
-compgen -G "$W/${SUN}_*_ch${CH}_*.fits" >/dev/null && [[ -f $W/${SUN}.metafits ]] && stages=convert
+compgen -G "$W/${SUN}_*_ch${CHP}_*.fits" >/dev/null && [[ -f $W/${SUN}.metafits ]] && stages=convert
 [[ -d $MS ]] || j1=$(sub -o "$PR/logs/birli_${SUN}_ch${CH}_%j.log" \
   --export=ALL,OBSID=$SUN,CH=$CH,TAR=$NAS/${SUN}_${SUN_JOB}_vis.tar,W=$W,STAGES="$stages" ~/mwa/flare/raw-birli.sbatch)
 [[ -f $CALDIR/EXTRACT_OK ]] || j2=$(sub -o "$PR/logs/extract_${CAL}_%j.log" \
@@ -82,7 +83,7 @@ log "Birli job ${j1:-skipped (MS exists)}, calibrator extraction ${j2:-skipped}"
 if [[ ! -d $CALDIR/${CAL}_ch${CH}.ms ]] && [[ $(ls -d "$CALDIR"/*.ms 2>/dev/null | wc -l) -ne 1 ]]; then
   fail "calibrator $CAL has no MS for channel $CH"
 fi
-rm -f "$W"/${SUN}_*_ch${CH}_*.fits
+rm -f "$W"/${SUN}_*_ch${CHP}_*.fits
 log "MS $(du -sh "$MS" | cut -f1); calibrator $(ls -d "$CALDIR"/*.ms | wc -l) MS"
 
 # MWA dynamic spectrum of this channel (light curve for the board; window if none given)

@@ -133,3 +133,20 @@ contours and grid (or a movie for more than 10 frames), e-Callisto dynamic spect
 MWA contours on AIA 193 A with NOAA regions and PFSS lines, verdict, next-step request.
 Compare: up to four runs on one grid, common or own scale. Claude reads `requests.json`,
 runs the requests with `product_run.sh` and writes `state` and `reply` back.
+
+## 1449551392: all channels, 2 s, whole obs (23 Oct)
+
+André asked for every channel. The archive holds 12 of the 24 channels of this obs. Eleven are imaged in 2 s over the whole 120 s (`configs/products/allch_1449551392.txt`; ch 120 is the earlier `drift_f_ch120` run). Ch 220 (281.6 MHz) is left out because no calibrator with that channel was observed within ±10 days.
+
+| channels | calibrator (3C444, +6.1 h) | ASVO job |
+|---|---|---|
+| 97 | Cal_3C444_Ch93 1449573272 | 1115936 |
+| 120, 132 | Cal_3C444_Ch121 1449573328 | 1115661 |
+| 138, 143, 146, 152 | Cal_3C444_Ch145 1449573384 | 1115937 |
+| 158, 161, 167, 173 | Cal_3C444_Ch169 1449573440 | 1115930 |
+
+- `scripts/calculon/start_allch.sh` runs the round:
+  - one Slurm job extracts the 9 missing channels from the 50 GB tar;
+  - after that, three product runs at a time.
+- The drift movie `1449551392_ch161-158_drift_h` is built from two full-obs runs, ch 161 before 05:10:16 and ch 158 after. Composite parts can now carry a time span (`{"product", "from", "to"}`).
+- Gpubox files are named with zero-padded channels (`_ch097_`), and `raw-birli.sbatch` and `product_run.sh` now pad the channel number.
