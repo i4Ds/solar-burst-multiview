@@ -386,7 +386,7 @@ function detail() {
   act.onchange = showF; showF();
   D.querySelectorAll("[data-v]").forEach(b => b.onclick = () => D.querySelectorAll("[data-v]").forEach(x => x.setAttribute("aria-pressed", x === b)));
   $("#vsave").onclick = saveVerdict; $("#rsend").onclick = sendRequest;
-  if (!db) { ["#vsave", "#rsend"].forEach(s => $(s).disabled = true);
+  if (!db && !local) { ["#vsave", "#rsend"].forEach(s => $(s).disabled = true);
     $("#vmsg").textContent = $("#rmsg").textContent = "Saving needs the claude.ai viewer (signed in)."; }
 }
 function shift(hms, ds) { const [h, m, s] = hms.split(":").map(Number); let t = h * 3600 + m * 60 + s + ds;
@@ -395,7 +395,8 @@ function shift(hms, ds) { const [h, m, s] = hms.split(":").map(Number); let t = 
 async function saveVerdict() {
   const status = [...document.querySelectorAll("[data-v]")].find(b => b.getAttribute("aria-pressed") === "true")?.dataset.v || "";
   const m = $("#vmsg"); m.className = "msg"; m.textContent = "Saving…";
-  try { await db.collection("judgements").doc(sel).set({ product: sel, status, note: $("#vnote").value.trim(),
+  try { if (local) { await post("api/judgement", { product: sel, status, note: $("#vnote").value.trim() }); await poll(); m.textContent = "Saved."; return; }
+    await db.collection("judgements").doc(sel).set({ product: sel, status, note: $("#vnote").value.trim(),
       updated: new Date().toISOString(), by: uid || "" }); m.textContent = "Saved."; }
   catch (e) { m.className = "msg err"; m.textContent = `Not saved: ${e.message || e.code}`; }
 }
@@ -409,7 +410,7 @@ async function sendRequest() {
     if (!r.channels.length) { m.className = "msg err"; m.textContent = "Tick at least one more channel."; return; } }
   if (a === "calibrator") r.calibrator = $("#cal").value.trim() || "nearest other";
   m.textContent = "Sending…";
-  try { await db.collection("requests").add(r); m.textContent = "Request sent. Claude picks it up on the next round."; $("#rnote").value = ""; }
+  try { if (local) await post("api/request", r), await poll(); else await db.collection("requests").add(r); m.textContent = "Request sent. Claude picks it up on the next round."; $("#rnote").value = ""; }
   catch (e) { m.className = "msg err"; m.textContent = `Not sent: ${e.message || e.code}`; }
 }
 
@@ -455,7 +456,25 @@ fetch("board.json").then(r => r.json()).then(b => {
   B = b; $("#sub").textContent += ` Data exported ${b.generated}.`; render();
   connect();
 });
+// Local mode: served by scripts/board/serve_board.py on the laptop; verdicts and requests
+// go to judgements.json / requests.json in the board folder. Otherwise the claude.ai page database.
+let local = false;
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+async function poll() {
+  const s = await fetch("api/state", { cache: "no-store" }).then(r => r.json());
+  judg = s.judgements || {}; reqs = s.requests || [];
+  stats(); rows(); reqList();
+}
 async function connect() {
+  try { const r = await fetch("api/state", { cache: "no-store" });
+    if (r.ok && (r.headers.get("content-type") || "").includes("json")) {
+      local = true; await poll(); setInterval(() => { if (!document.activeElement?.matches?.("textarea, input")) poll(); }, 30000);
+      $("#dbnote").textContent = "Local board: verdicts and requests are kept in judgements.json and requests.json in the board folder.";
+      render(); return; } } catch { /* not the local server */ }
   const c = window.claude;
   db = c ? await c.use("db") : null;
   const user = c ? await c.use("user") : null;
