@@ -106,7 +106,7 @@ canvas.thumb, img.thumb { display: block; border-radius: 3px; background: #000; 
   <section id="tab-board">
     <div class="tablewrap"><table>
       <thead><tr><th title="select for Compare">cmp</th><th>image</th><th>event · run</th><th>type</th><th>GOES</th><th>phase</th><th>channel</th>
-      <th>window UTC</th><th>Δt s</th><th>calibration</th><th>state</th><th>frames</th><th>peak/rms</th>
+      <th>window UTC</th><th>Δt s</th><th>calibration</th><th>run</th><th>state</th><th>frames</th><th>peak/rms</th>
       <th>position ″</th><th>verdict</th><th>note</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
@@ -262,6 +262,10 @@ function stats() {
 const fold = new Set();   // events whose runs are folded away
 const goesTop = e => (e.goes || [])[0];
 const goesTxt = e => { const g = goesTop(e); return g ? `${g.cls} ${g.peak.slice(11, 16)}${g.ar ? " AR" + g.ar : ""}` : (e.goes ? "none" : "—"); };
+const runTxt = p => { const A = p.attempts || [], a = A[A.length - 1]; if (!a || !a.start) return "—";
+  let s = a.start.slice(0, 16); if (a.end) { const m = Math.round((Date.parse(a.end.replace(" ", "T")) - Date.parse(a.start.replace(" ", "T"))) / 60000);
+    s += ` → ${a.end.slice(11, 16)} (${m >= 60 ? Math.floor(m / 60) + " h " : ""}${m % 60} min)`; }
+  return s + (A.length > 1 ? ` · ${A.length} attempts` : ""); };
 const calTxt = p => { const c = p.calibration || {}; return `${c.method || "P-AIRCARS"}${c.source ? " · " + c.source : ""} ${c.obsid || p.cal}${c.selfcal === false ? "" : " + self-cal"}`; };
 
 function rows() {
@@ -274,14 +278,14 @@ function rows() {
       <td><b class="mono">${esc(e.date)}</b> <span class="muted mono">${esc(sun)}</span></td><td>${esc(e.burst_type || "")}</td>
       <td class="mono" title="${esc((e.goes || []).map(g => `${g.cls} ${g.start.slice(11, 16)}–${g.end.slice(11, 16)} peak ${g.peak.slice(11, 16)} AR${g.ar}`).join("; "))}">${esc(goesTxt(e))}</td>
       <td>${esc(e.phase || "")}</td><td colspan="4" class="muted">${esc([e.project, e.tier && "tier " + e.tier].filter(Boolean).join(" · "))} · ${P.length} run${P.length > 1 ? "s" : ""}</td>
-      <td></td><td></td><td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td></td><td></td><td></td></tr>`;
+      <td></td><td></td><td></td><td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td></td><td></td><td></td></tr>`;
     const subs = open ? P.map(p => { const f = p.frames, b = f.length ? f.reduce((x, y) => x.snr > y.snr ? x : y) : null, v = verdict(p.product);
       return `<tr class="run ${sel === p.product ? "sel" : ""}" data-id="${esc(p.product)}">
         <td><input type="checkbox" aria-label="compare ${esc(p.product)}" ${cmpSel.has(p.product) ? "checked" : ""} ${p.data || p.movie ? "" : "disabled"}></td>
         <td>${p.frames.length ? thumbCell(p, 56) : ""}</td>
         <td class="mono sub">↳ ${esc(p.label)}</td><td></td><td></td><td></td>
         <td class="mono">ch ${esc(p.ch)} · ${mhz(p)}${p.note ? ` <span title="${esc(p.note)}">⚠</span>` : ""}</td>
-        <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(calTxt(p))}</td>
+        <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(calTxt(p))}</td><td class="mono">${esc(runTxt(p))}</td>
         <td><span class="pill s-${esc(p.state)}">${esc(p.state)}</span></td><td class="num">${f.length}</td>
         <td class="num">${b ? b.snr.toFixed(0) : "—"}</td><td class="num mono">${b ? `(${b.x}, ${b.y})` : "—"}</td>
         <td><span class="pill ${v ? "v-" + v : "v-none"}">${v || "—"}</span></td><td class="muted">${esc((judg[p.product]?.note || "").slice(0, 40))}</td></tr>`; }).join("") : "";
@@ -291,6 +295,11 @@ function rows() {
 
 // small images in the table: movie poster, or the brightest frame drawn like the viewer
 function thumbCell(p, size) {
+  const href = p.movie ? p.movie.mp4 : p.full;
+  const inner = thumbInner(p, size);
+  return href ? `<a href="${esc(href)}" target="_blank" rel="noopener" title="full resolution">${inner}</a>` : inner;
+}
+function thumbInner(p, size) {
   return p.movie && p.movie.poster
     ? `<img class="thumb" src="${esc(p.movie.poster)}" width="${size * 1.6}" height="${size}" alt="">`
     : `<canvas class="thumb" data-p="${esc(p.product)}" width="${size}" height="${size}"></canvas>`;
@@ -322,6 +331,8 @@ function detail() {
         ${p.movie ? `<video class="movie" src="${esc(p.movie.mp4)}" poster="${esc(p.movie.poster)}" controls loop playsinline preload="metadata"></video>
         <p class="note">${p.frames.length} frames, ${esc(p.tres)} s steps: movie with full Sun and a zoom on the source; the poster is the brightest frame.</p>
         ${peakSvg(p)}` : `<canvas class="img" id="cv" width="520" height="520" aria-label="MWA image"></canvas>`}
+        ${p.full && !p.movie ? `<a class="note" href="${esc(p.full)}" target="_blank" rel="noopener">Brightest frame at full resolution (PNG)</a>` : ""}
+        ${p.movie ? `<a class="note" href="${esc(p.movie.mp4)}" target="_blank" rel="noopener">Open the movie on its own</a>` : ""}
         <div class="controls" ${p.movie ? "hidden" : ""}>
           <label>Scale <select id="scale"><option value="own">linear, own peak</option><option value="log">log</option></select></label>
           <label><input type="checkbox" id="grid" checked> grid</label>
@@ -338,10 +349,11 @@ function detail() {
           <dt>position</dt><dd class="mono">(${f.x}″, ${f.y}″), ${f.r_rsun.toFixed(2)} R☉</dd>
           <dt>beam, T_B</dt><dd>${f.bmaj}″ × ${f.bmin}″; ${f.tb_rj.toExponential(1)} K (Rayleigh–Jeans)</dd>` : ""}
           <dt>event</dt><dd>${esc([e.phase && "phase " + e.phase, e.project, e.tier && "tier " + e.tier, e.flare].filter(Boolean).join(" · "))}</dd>
-          <dt>attempts</dt><dd>${(p.attempts || []).length || 1} · last: ${esc((p.log_tail || []).slice(-1)[0] || "")}</dd>
+          <dt>run</dt><dd class="mono">${esc(runTxt(p))}</dd>
+          <dt>last log</dt><dd>${esc((p.log_tail || []).slice(-1)[0] || "")}</dd>
           ${p.note || e.note ? `<dt>notes</dt><dd>${esc([p.note, e.note].filter(Boolean).join(" "))}</dd>` : ""}
         </dl>
-        <figure class="fig"><img src="img/${esc(p.sun)}_spectrum.png" alt="e-Callisto dynamic spectrum" onerror="this.parentNode.hidden=true">
+        <figure class="fig"><a href="img/${esc(p.sun)}_spectrum.png" target="_blank" rel="noopener"><img src="img/${esc(p.sun)}_spectrum.png" alt="e-Callisto dynamic spectrum" onerror="this.closest('figure').hidden=true"></a>
           <figcaption class="note">e-Callisto dynamic spectrum: MWA observation (orange), image windows and channels of all runs (red), GOES peaks (dashed)</figcaption></figure>
         ${p.euv ? `<figure class="fig"><a href="${esc(p.euv)}" target="_blank" rel="noopener"><img src="${esc(p.euv)}" alt="MWA contours on AIA 193 with PFSS lines"></a>
           <figcaption class="note">MWA contours (cyan) on AIA 193 Å with NOAA regions and PFSS field lines (open green, closed white)</figcaption></figure>` : ""}
@@ -423,6 +435,7 @@ function reqList() {
 function render() { stats(); rows(); detail(); if (!$("#tab-compare").hidden) compare(); reqList(); }
 
 $("#rows").addEventListener("click", ev2 => {
+  if (ev2.target.closest("a")) return;
   const tr = ev2.target.closest("tr"); if (!tr) return;
   if (tr.dataset.ev) { fold.has(tr.dataset.ev) ? fold.delete(tr.dataset.ev) : fold.add(tr.dataset.ev); rows(); return; }
   const id = tr.dataset.id;

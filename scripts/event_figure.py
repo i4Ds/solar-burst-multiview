@@ -23,6 +23,7 @@ ap.add_argument("fits")
 ap.add_argument("out")
 ap.add_argument("--title", default="")
 ap.add_argument("--mark", action="append", default=[], help="x,y,label in arcsec (Earth view)")
+ap.add_argument("--dpi", type=int, default=110)
 a = ap.parse_args()
 
 h = fits.getheader(a.fits)
@@ -63,4 +64,4 @@ ax.set_title((a.title + "\n" if a.title else "") +
              "contours 30/50/70/90 % of peak; Stonyhurst grid every 15°", fontsize=9, loc="left")
 if a.mark:
     ax.legend(loc="upper right", fontsize=8)
-fig.savefig(a.out, dpi=110)
+fig.savefig(a.out, dpi=a.dpi)

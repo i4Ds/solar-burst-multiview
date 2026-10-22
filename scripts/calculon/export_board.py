@@ -10,7 +10,8 @@ P-AIRCARS images, the MWA light curves (dynspec npz) and the metafits, and write
                     base64 (artifact pages do not serve raw binary files)
   movies/<prod>.mp4 series with more than MAX_FRAMES frames (burst_movie_mwa.py: full Sun and
                     zoom on the source, Stonyhurst grid, peak curve), <prod>_peak.png poster
-  img/              context figures; <prod>_euv.png: MWA contours on AIA 193 A with NOAA
+  img/              context figures; <prod>_full.png: brightest frame at full resolution
+                    (event_figure.py); <prod>_euv.png: MWA contours on AIA 193 A with NOAA
                     regions and PFSS lines (euv_context.py, brightest frame)
   events: GOES flares during the observation (HEK, cached in events.json);
   products: calibration method, calibrator source (metafits CALIBSRC) and obsid
@@ -33,6 +34,7 @@ H = os.path.expanduser("~")
 PR, EV, OUT = f"{H}/mwa/products", f"{H}/mwa/events", f"{H}/mwa/board"
 SCR = f"/scratch/{os.environ.get('USER', 'andre_csillaghy')}"
 HALF = 1500.0   # arcsec
+EVENTS = {}     # events.json, for markers in the full figures
 MAX_FRAMES = 10  # more frames: a movie (burst_movie_mwa.py) instead of frames drawn by the page
 
 
@@ -46,9 +48,14 @@ def legacy_state(p):
              else "failed" if "FAILED" in lastl else "waiting" if not last else "running")
     m = re.search(r"window (\S+)", txt)
     p.update(state=state, trange=m.group(1) if m else p.get("trange", ""), log_tail=last[-3:])
-    starts = re.findall(r"started (\d{4}-\d\d-\d\d \d\d:\d\d)", txt)
-    if not p["attempts"]:
-        p["attempts"] = [{"start": s} for s in starts]
+    # event_image.sh rewrote its status file at every attempt: only the last attempt is known
+    start = re.findall(r"started (\d{4}-\d\d-\d\d \d\d:\d\d)", txt)
+    ends = [l for l in last if re.search(r"DONE|FAILED", l)]
+    if start:
+        a = {"start": start[-1]}
+        if ends:
+            a.update(end=ends[-1][2:18], result="done" if "DONE" in ends[-1] else "failed")
+        p["attempts"] = [a]
     return p
 
 
@@ -194,6 +201,25 @@ def calibration(p):
                 selfcal=p.get("selfcal", True))
 
 
+def full_png(p, fn):
+    """Full-resolution figure of one frame (event_figure.py: grid, contours, beam, 160 dpi), cached."""
+    out = f"{OUT}/img/{p['product']}_full.png"
+    stamp = f"{fn} {os.path.getmtime(fn):.0f}"
+    sf = f"{out}.stamp"
+    if os.path.exists(out) and os.path.exists(sf) and open(sf).read() == stamp:
+        return f"img/{p['product']}_full.png"
+    h = fits.getheader(fn)
+    title = f"MWA {p['sun']}, ch {p['ch']}, Stokes I, {p.get('tres', '')} s from {h.get('DATE-OBS', '')[11:21]} UTC; {p['label']}"
+    marks = sum([["--mark", f"{x},{y},{lab}"] for x, y, lab in EVENTS.get(p["sun"], {}).get("marks", [])], [])
+    r = subprocess.run([f"{H}/mwa/tools-venv/bin/python", f"{H}/mwa/events/event_figure.py", fn, out,
+                        "--title", title, "--dpi", "160"] + marks, capture_output=True, text=True)
+    if r.returncode or not os.path.exists(out):
+        print(f"full figure for {p['product']} failed: {r.stderr[-300:]}")
+        return None
+    open(sf, "w").write(stamp)
+    return f"img/{p['product']}_full.png"
+
+
 def euv(p, fn):
     """MWA contours over AIA 193 A with NOAA regions and PFSS lines (euv_context.py), cached."""
     out = f"{OUT}/img/{p['product']}_euv.png"
@@ -214,6 +240,7 @@ def main():
     os.makedirs(f"{OUT}/data", exist_ok=True)
     os.makedirs(f"{OUT}/img", exist_ok=True)
     events = json.load(open(f"{PR}/events.json")) if os.path.exists(f"{PR}/events.json") else {}
+    EVENTS.update(events)
     prods = []
     for f in sorted(glob.glob(f"{PR}/*.json")):
         if os.path.basename(f) == "events.json":
@@ -245,8 +272,10 @@ def main():
                 p["state"] = "done"
         p["lc"] = lightcurve(p["sun"], p["ch"])
         p["calibration"] = calibration(p)
-        if fns:   # EUV context of the brightest frame
-            p["euv"] = euv(p, fns[int(np.argmax([fr["peak"] for fr in frames]))])
+        if fns:   # brightest frame: full-resolution figure and EUV context
+            best = fns[int(np.argmax([fr["peak"] for fr in frames]))]
+            p["full"] = full_png(p, best)
+            p["euv"] = euv(p, best)
         prods.append(p)
 
     evs = []
