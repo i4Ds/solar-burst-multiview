@@ -79,6 +79,7 @@ textarea { width: 100%; min-height: 54px; resize: vertical; box-sizing: border-b
 .fig { margin: 0; display: grid; gap: 4px; }
 tr.evrow { background: var(--sunk); cursor: pointer; } tr.evrow td { border-top: 2px solid var(--line); }
 td.sub { padding-left: 18px; color: var(--muted); }
+canvas.thumb, img.thumb { display: block; border-radius: 3px; background: #000; object-fit: cover; }
 .cmpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
 .cmpgrid figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
 .cmpgrid figcaption { font-size: .8rem; }
@@ -104,7 +105,7 @@ td.sub { padding-left: 18px; color: var(--muted); }
 
   <section id="tab-board">
     <div class="tablewrap"><table>
-      <thead><tr><th title="select for Compare">cmp</th><th>event · run</th><th>type</th><th>GOES</th><th>phase</th><th>channel</th>
+      <thead><tr><th title="select for Compare">cmp</th><th>image</th><th>event · run</th><th>type</th><th>GOES</th><th>phase</th><th>channel</th>
       <th>window UTC</th><th>Δt s</th><th>calibration</th><th>state</th><th>frames</th><th>peak/rms</th>
       <th>position ″</th><th>verdict</th><th>note</th></tr></thead>
       <tbody id="rows"></tbody>
@@ -155,7 +156,7 @@ async function load(p) {
   return cache[p.product];
 }
 
-function draw(canvas, p, ix, mode, vmaxCommon, showGrid) {
+function draw(canvas, p, ix, mode, vmaxCommon, showGrid, bare = false) {
   const ctx = canvas.getContext("2d"), W = canvas.width = 520, H = canvas.height = 520;
   ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
   return load(p).then(arr => {
@@ -203,6 +204,7 @@ function draw(canvas, p, ix, mode, vmaxCommon, showGrid) {
     }
     ctx.strokeStyle = "#5ff"; ctx.lineWidth = 1; ctx.beginPath();     // restoring beam
     ctx.ellipse(X(-1300), Y(-1300), fr.bmaj / 2 / 3000 * W, fr.bmin / 2 / 3000 * W, (90 - fr.bpa) * Math.PI / 180, 0, 2 * Math.PI); ctx.stroke();
+    if (bare) return;
     ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "12px IBM Plex Mono, monospace";
     ctx.fillText(`${(fr.t || "").slice(11, 21)} UTC  ${fr.freq_mhz.toFixed(1)} MHz`, 10, 18);
     ctx.fillText(`max ${(vmax / 1e3).toFixed(0)} kJy/beam ${mode === "log" ? "(log, 3 decades)" : ""}`, 10, 34);
@@ -266,7 +268,9 @@ function rows() {
   const suns = [...new Set(B.products.map(p => p.sun))].sort((a, b) => (ev(a).date || "").localeCompare(ev(b).date || "") || a.localeCompare(b));
   $("#rows").innerHTML = suns.map(sun => { const e = ev(sun), P = B.products.filter(p => p.sun === sun).sort((a, b) => a.product.localeCompare(b.product));
     const best = P.flatMap(p => p.frames).reduce((a, b) => (!a || b.snr > a.snr) ? b : a, null), open = !fold.has(sun);
+    const bestRun = P.filter(p => p.frames.length).sort((a, b) => Math.max(...b.frames.map(f => f.snr)) - Math.max(...a.frames.map(f => f.snr)))[0];
     const head = `<tr class="evrow" data-ev="${esc(sun)}"><td>${open ? "▾" : "▸"}</td>
+      <td>${bestRun ? thumbCell(bestRun, 96) : ""}</td>
       <td><b class="mono">${esc(e.date)}</b> <span class="muted mono">${esc(sun)}</span></td><td>${esc(e.burst_type || "")}</td>
       <td class="mono" title="${esc((e.goes || []).map(g => `${g.cls} ${g.start.slice(11, 16)}–${g.end.slice(11, 16)} peak ${g.peak.slice(11, 16)} AR${g.ar}`).join("; "))}">${esc(goesTxt(e))}</td>
       <td>${esc(e.phase || "")}</td><td colspan="4" class="muted">${esc([e.project, e.tier && "tier " + e.tier].filter(Boolean).join(" · "))} · ${P.length} run${P.length > 1 ? "s" : ""}</td>
@@ -274,6 +278,7 @@ function rows() {
     const subs = open ? P.map(p => { const f = p.frames, b = f.length ? f.reduce((x, y) => x.snr > y.snr ? x : y) : null, v = verdict(p.product);
       return `<tr class="run ${sel === p.product ? "sel" : ""}" data-id="${esc(p.product)}">
         <td><input type="checkbox" aria-label="compare ${esc(p.product)}" ${cmpSel.has(p.product) ? "checked" : ""} ${p.data || p.movie ? "" : "disabled"}></td>
+        <td>${p.frames.length ? thumbCell(p, 56) : ""}</td>
         <td class="mono sub">↳ ${esc(p.label)}</td><td></td><td></td><td></td>
         <td class="mono">ch ${esc(p.ch)} · ${mhz(p)}${p.note ? ` <span title="${esc(p.note)}">⚠</span>` : ""}</td>
         <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(calTxt(p))}</td>
@@ -281,6 +286,26 @@ function rows() {
         <td class="num">${b ? b.snr.toFixed(0) : "—"}</td><td class="num mono">${b ? `(${b.x}, ${b.y})` : "—"}</td>
         <td><span class="pill ${v ? "v-" + v : "v-none"}">${v || "—"}</span></td><td class="muted">${esc((judg[p.product]?.note || "").slice(0, 40))}</td></tr>`; }).join("") : "";
     return head + subs; }).join("");
+  document.querySelectorAll("canvas.thumb").forEach(c => thumb(c));
+}
+
+// small images in the table: movie poster, or the brightest frame drawn like the viewer
+function thumbCell(p, size) {
+  return p.movie && p.movie.poster
+    ? `<img class="thumb" src="${esc(p.movie.poster)}" width="${size * 1.6}" height="${size}" alt="">`
+    : `<canvas class="thumb" data-p="${esc(p.product)}" width="${size}" height="${size}"></canvas>`;
+}
+const thumbDone = new Map();
+async function thumb(c) {
+  const p = B.products.find(q => q.product === c.dataset.p);
+  if (!p || !p.data) return;
+  if (!thumbDone.has(p.product)) {
+    const tmp = document.createElement("canvas");
+    const ix = p.frames.reduce((bi, f, i, F) => f.peak > F[bi].peak ? i : bi, 0);
+    thumbDone.set(p.product, draw(tmp, p, ix, "own", 0, true, true).then(() => tmp));
+  }
+  const tmp = await thumbDone.get(p.product);
+  c.getContext("2d").drawImage(tmp, 0, 0, c.width, c.height);
 }
 
 function detail() {
