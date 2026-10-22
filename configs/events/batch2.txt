@@ -3,6 +3,8 @@
 # 04:24 requests (1115547-1115551) lost their parameters in sbatch --export (comma split) and were
 # converted with AOFlagger at 80 kHz; not used. Three obs have no channel 127: nearest channel
 # (CH=) with a contiguous Ch121 calibrator (channels 109-132) that contains it.
+# 22 Oct: 1449551392 was rerun at CH=132, not CH=126 (calculon ~/mwa/events/rerun3.txt:
+# "ch132_archive_has_12_of_24_channels"); the line below is the first attempt.
 # SUN SUN_JOB CAL CAL_JOB DATEDIR [CH=nnn] LOGARGS (log_event_mlflow.py options, no spaces in values)
 1450835520 1114413 1450817864 1115658 20251227 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B
 1449551392 1114412 1449573328 1115661 20251212 CH=126 --tag burst_type=untyped --tag phase=IIIb --tag project=G0002 --tag tier=B --tag channel_note=ch126_obs_has_no_ch127
