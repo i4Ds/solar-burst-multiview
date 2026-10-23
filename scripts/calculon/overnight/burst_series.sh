@@ -73,6 +73,9 @@ done
 res=$(grep -oE "execution is finished: [A-Za-z]+" "$mlog" | tail -1)
 log "P-AIRCARS: ${res:-ended without a result line}"
 img=$(ls -d "$T"/imagedir_*_w_briggs_0.0 2>/dev/null | head -1)
+# an earlier ${img}_$LABEL (e.g. an empty failed attempt) goes aside first: mv would put the new
+# image dir inside it (23 Oct, 1449551392 ch 132)
+[[ -n $img && -d ${img}_$LABEL ]] && mv "${img}_$LABEL" "${img}_${LABEL}_prev_$(date +%Y%m%d%H%M)"
 [[ -n $img ]] && mv "$img" "${img}_$LABEL" && img="${img}_$LABEL"
 n=$(ls "$img"/pbcor_hpcs/*.fits 2>/dev/null | wc -l)
 log "$n images in $img/pbcor_hpcs"
