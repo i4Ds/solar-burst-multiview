@@ -150,3 +150,5 @@ André asked for every channel. The archive holds 12 of the 24 channels of this 
   - after that, three product runs at a time.
 - The drift movie `1449551392_ch161-158_drift_h` is built from two full-obs runs, ch 161 before 05:10:16 and ch 158 after. Composite parts can now carry a time span (`{"product", "from", "to"}`).
 - Gpubox files are named with zero-padded channels (`_ch097_`), and `raw-birli.sbatch` and `product_run.sh` now pad the channel number.
+- The first try (01:28) used the nominal obs span 05:09:34–05:11:34 and made no image. The calibrated MS covers only 05:09:39.5–05:11:29.1, and P-AIRCARS rejects a time range outside it ("Please provide valid time range"). The runs restarted at 04:45 use 05:09:40–05:11:28, which gives 55 frames of 2 s.
+- A killed `product_run.sh` used to leave its `sleep 600` holding the product lock, so a restart skipped that product. The sleeps now run with the lock fd closed.

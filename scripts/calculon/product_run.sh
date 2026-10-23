@@ -31,7 +31,7 @@ TAG=${SUN}_ch${CH}_c${CAL}
 CHP=$(printf %03d $((10#$CH)))   # gpubox names are zero-padded: _ch097_
 ST=$PR/$PRODUCT.md
 log() { echo "- $(date '+%F %H:%M') $*" | tee -a "$ST"; }
-waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60; done; }
+waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60 9>&-; done; }
 sub() { sbatch -M calc-cpu --parsable "$@" | cut -d';' -f1; }
 ondisk() { grep -qE "^ *$1 .*on NAS" ~/mwa/asvo-watch.status 2>/dev/null; }
 # SUN_JOB/CAL_JOB=auto: the newest ASVO job of that obsid and kind that asvo-watch reports on the NAS
@@ -52,6 +52,7 @@ EOF
 fail() { log "FAILED: $*"; reg state=failed "result=failed: $*"; exit 1; }
 
 mkdir -p "$W" "$PR/logs"
+# the lock fd is closed for the sleeps, so a killed run leaves no orphan holding it (23 Oct)
 exec 9>"$PR/logs/$PRODUCT.lock"; flock -n 9 || { echo "product $PRODUCT is already running"; exit 1; }
 echo -e "\n## attempt $(date '+%F %H:%M'): ch $CH, calibrator $CAL, ${TRANGE:-window from light curve}, $TRES s" >> "$ST"
 reg new_attempt=1 product=$PRODUCT sun=$SUN sun_job=$SUN_JOB cal=$CAL cal_job=$CAL_JOB ch=$CH \
@@ -60,11 +61,11 @@ reg new_attempt=1 product=$PRODUCT sun=$SUN sun_job=$SUN_JOB cal=$CAL cal_job=$C
 while [[ $SUN_JOB == auto || $CAL_JOB == auto ]]; do
   [[ $SUN_JOB == auto ]] && j=$(jobof "$SUN" vis) && [[ -n $j ]] && SUN_JOB=$j
   [[ $CAL_JOB == auto ]] && j=$(jobof "$CAL" ms) && [[ -n $j ]] && CAL_JOB=$j
-  [[ $SUN_JOB == auto || $CAL_JOB == auto ]] && sleep 600
+  [[ $SUN_JOB == auto || $CAL_JOB == auto ]] && sleep 600 9>&-
 done
 CALDIR=$P/data/${CAL}_${CAL_JOB}
 reg sun_job=$SUN_JOB cal_job=$CAL_JOB
-until ondisk "$SUN_JOB" && ondisk "$CAL_JOB"; do sleep 600; done
+until ondisk "$SUN_JOB" && ondisk "$CAL_JOB"; do sleep 600 9>&-; done
 log "tars on the NAS (ASVO jobs $SUN_JOB, $CAL_JOB)"; reg state=preparing
 
 j1= j2=
