@@ -56,19 +56,31 @@ for d in "$T"/imagedir_*_w_briggs_0.0; do
   [[ -d $d ]] && mv "$d" "${d}_prev_$(date +%Y%m%d%H%M)" && log "moved existing $d aside"
 done
 source ~/paircars/env.sh >/dev/null 2>&1
-run-mwa-paircars $D --target_metafits $D/$(basename "$METAFITS") \
-  --cal_datadir $CALDIR --cal_metafits $CALDIR/${CAL}.metafits \
-  --workdir $P/work/$TAG --outdir $P/out/$TAG \
-  --do_forcereset_weightflag --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
-  --cpu_frac 0.05 --mem_frac $MEMFRAC --cluster --partition cpu-daily --max_worker 1 --walltime $WALL ${EXTRA:-} \
-  > "$SUB" 2>&1
-pid=$(grep -oE "Job ID: [0-9]+" "$SUB" | head -1 | awk '{print $3}')
-[[ -n $pid ]] || { notify "P-AIRCARS submission failed"; exit 1; }
-log "P-AIRCARS job $pid submitted"
-mlog=$P/work/$TAG/main_paircars_$pid.log
-until grep -q "P-AIRCARS execution is finished" "$mlog" 2>/dev/null; do
-  squeue -M calc-cpu -h -n "paircars_$pid" | grep -q . || { sleep 120; grep -q "execution is finished" "$mlog" 2>/dev/null || break; }
-  sleep 120
+# Watchdog (24 Oct): a Dask worker sometimes segfaults (signal 11) in "Spliting target" and P-AIRCARS
+# then hangs until the wall time (1449551392 ch 146/167/173, all on calc-c-005). When the main log
+# is silent for SILENT_MIN minutes the jobs are cancelled and P-AIRCARS is started once more.
+SILENT_MIN=${SILENT_MIN:-120}
+for try in 1 2; do
+  run-mwa-paircars $D --target_metafits $D/$(basename "$METAFITS") \
+    --cal_datadir $CALDIR --cal_metafits $CALDIR/${CAL}.metafits \
+    --workdir $P/work/$TAG --outdir $P/out/$TAG \
+    --do_forcereset_weightflag --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
+    --cpu_frac 0.05 --mem_frac $MEMFRAC --cluster --partition cpu-daily --max_worker 1 --walltime $WALL ${EXTRA:-} \
+    > "$SUB" 2>&1
+  pid=$(grep -oE "Job ID: [0-9]+" "$SUB" | head -1 | awk '{print $3}')
+  [[ -n $pid ]] || { notify "P-AIRCARS submission failed"; exit 1; }
+  log "P-AIRCARS job $pid submitted (try $try)"
+  mlog=$P/work/$TAG/main_paircars_$pid.log
+  hung=
+  until grep -q "P-AIRCARS execution is finished" "$mlog" 2>/dev/null; do
+    squeue -M calc-cpu -h -n "paircars_$pid" | grep -q . || { sleep 120; grep -q "execution is finished" "$mlog" 2>/dev/null || break; }
+    if [[ -f $mlog && -n $(find "$mlog" -mmin +"$SILENT_MIN") ]]; then
+      hung=1; log "P-AIRCARS log silent for $SILENT_MIN min (hung worker?): cancelling job $pid"
+      scancel -M calc-cpu -n "paircars_$pid"; sleep 60; break
+    fi
+    sleep 120
+  done
+  [[ -z $hung ]] && break
 done
 res=$(grep -oE "execution is finished: [A-Za-z]+" "$mlog" | tail -1)
 log "P-AIRCARS: ${res:-ended without a result line}"
