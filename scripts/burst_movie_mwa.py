@@ -41,6 +41,8 @@ def main() -> None:
     d = np.load(a.cube)
     cube, freqs, times, ext = d["data"], d["freqs"], d["times"], d["extent"]
     k = 0 if a.freq is None else int(np.argmin(np.abs(freqs - a.freq)))
+    # frequency of each frame: differs within a composite along a burst drift (export_board.py)
+    ffreq = d["frame_freqs"] if "frame_freqs" in d.files else np.full(len(times), freqs[k])
     imgs = np.nan_to_num(cube[:, k], nan=0.0)
     gmax = float(np.max(imgs))
     peaks = imgs.reshape(len(imgs), -1).max(axis=1)
@@ -104,7 +106,7 @@ def main() -> None:
                 contours.append(ax.contour(imgs[i], levels=peaks[i] * np.array([0.3, 0.5, 0.7, 0.9]),
                                            colors="cyan", linewidths=0.6))
         marker.set_xdata([i, i])
-        title.set_text(f"MWA {freqs[k]:.1f} MHz, P-AIRCARS {step:g} s, {labels[i]} UTC; Stonyhurst grid {a.grid:g}°, cyan: optical limb and contours 30/50/70/90 %")
+        title.set_text(f"MWA {ffreq[i]:.1f} MHz, P-AIRCARS {step:g} s, {labels[i]} UTC; Stonyhurst grid {a.grid:g}°, cyan: optical limb and contours 30/50/70/90 %")
         return ims
 
     draw(ip)

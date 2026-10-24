@@ -141,7 +141,7 @@ def movie(p, frames, crops, extent, fns):
     Remade only when the frames changed (count or newest FITS)."""
     os.makedirs(f"{OUT}/movies", exist_ok=True)
     base = f"{OUT}/movies/{p['product']}"
-    stamp = f"{len(fns)} {max(os.path.getmtime(f) for f in fns):.0f}"
+    stamp = f"{len(fns)} {max(os.path.getmtime(f) for f in fns):.0f} perframe-freq"
     if os.path.exists(f"{base}.mp4") and os.path.exists(f"{base}.stamp") and open(f"{base}.stamp").read() == stamp:
         return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
     n = min(min(c.shape) for c in crops)
@@ -149,6 +149,7 @@ def movie(p, frames, crops, extent, fns):
     times = np.array([re.sub(r"[-T:]", "", fr["t"])[:16] for fr in frames])
     ip = int(np.argmax([fr["peak"] for fr in frames]))
     np.savez_compressed(f"{base}_cube.npz", data=cube, times=times, freqs=np.array([frames[0]["freq_mhz"]]),
+                        frame_freqs=np.array([fr["freq_mhz"] for fr in frames]),   # composites change channel
                         extent=np.array(extent))
     fps = float(min(10, max(2, len(frames) / 20)))
     r = subprocess.run([f"{H}/mwa/tools-venv/bin/python", f"{H}/mwa/events/burst_movie_mwa.py", f"{base}_cube.npz",
