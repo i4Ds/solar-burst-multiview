@@ -62,7 +62,34 @@ class Handler(SimpleHTTPRequestHandler):
             d = self.directory
             return self._json(200, {"judgements": load(f"{d}/judgements.json", {}),
                                     "requests": load(f"{d}/requests.json", [])})
+        rng = self.headers.get("Range", "")
+        if rng.startswith("bytes=") and self.path.split("?")[0].endswith(".mp4"):
+            return self._range(rng)
         return super().do_GET()
+
+    def _range(self, rng):
+        """Byte ranges for the movies, so the player can jump to any frame."""
+        path = self.translate_path(self.path.split("?")[0])
+        try:
+            size = os.path.getsize(path)
+            first, _, last = rng[6:].split(",")[0].partition("-")
+            start = int(first) if first else max(0, size - int(last))
+            end = min(int(last), size - 1) if first and last else size - 1
+        except (OSError, ValueError):
+            return self.send_error(416)
+        if start >= size or start > end:
+            self.send_response(416)
+            self.send_header("Content-Range", f"bytes */{size}")
+            return self.end_headers()
+        self.send_response(206)
+        self.send_header("Content-Type", "video/mp4")
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Content-Length", str(end - start + 1))
+        self.end_headers()
+        with open(path, "rb") as f:
+            f.seek(start)
+            self.wfile.write(f.read(end - start + 1))
 
     def do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
