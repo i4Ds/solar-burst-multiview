@@ -1,0 +1,83 @@
+{
+ "1347335176": {
+  "burst_type": "III",
+  "phase": "II Extended",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2022-09-16T03:45:58",
+  "obs_end": "2022-09-16T03:49:58",
+  "t_peak_ecallisto": "2022-09-16 03:47:05"
+ },
+ "1416884416": {
+  "burst_type": "III",
+  "phase": "III",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2024-11-29T02:59:58",
+  "obs_end": "2024-11-29T03:02:54",
+  "t_peak_ecallisto": "2024-11-29 03:00:16"
+ },
+ "1419477136": {
+  "burst_type": "VI",
+  "phase": "III",
+  "project": "OA004",
+  "tier": "A",
+  "obs_start": "2024-12-29T03:11:58",
+  "obs_end": "2024-12-29T03:15:58",
+  "t_peak_ecallisto": "2024-12-29 03:12:23"
+ },
+ "1407292216": {
+  "burst_type": "RSP",
+  "phase": "II Extended",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2024-08-10T02:29:58",
+  "obs_end": "2024-08-10T02:31:58",
+  "t_peak_ecallisto": "2024-08-10 02:31:06"
+ },
+ "1347594008": {
+  "burst_type": "III/V",
+  "phase": "II Extended",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2022-09-19T03:39:50",
+  "obs_end": "2022-09-19T03:44:46",
+  "t_peak_ecallisto": "2022-09-19 03:41:21"
+ },
+ "1339475176": {
+  "burst_type": "III",
+  "phase": "II Extended",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2022-06-17T04:25:58",
+  "obs_end": "2022-06-17T04:29:58",
+  "t_peak_ecallisto": "2022-06-17 04:27:53"
+ },
+ "1406167216": {
+  "burst_type": "II",
+  "phase": "II Extended",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2024-07-28T01:59:58",
+  "obs_end": "2024-07-28T02:01:58",
+  "t_peak_ecallisto": "2024-07-28 02:01:44"
+ },
+ "1419137056": {
+  "burst_type": "III",
+  "phase": "III",
+  "project": "OA004",
+  "tier": "A",
+  "obs_start": "2024-12-25T04:43:58",
+  "obs_end": "2024-12-25T04:47:58",
+  "t_peak_ecallisto": "2024-12-25 04:47:39"
+ },
+ "1387165944": {
+  "burst_type": "III",
+  "phase": "II Compact",
+  "project": "G0002",
+  "tier": "A",
+  "obs_start": "2023-12-21T03:52:06",
+  "obs_end": "2023-12-21T03:56:06",
+  "t_peak_ecallisto": "2023-12-21 03:53:23"
+ }
+}

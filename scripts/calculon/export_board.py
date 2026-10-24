@@ -306,11 +306,17 @@ def main():
             mf = f"{SCR}/mwa/events/{sun}/{sun}.metafits"
             if os.path.exists(mf):
                 t = fits.getheader(mf).get("DATE-OBS", "")
-        e["date"] = t[:10]
-        e["obs_start"], e["obs_end"] = obs_window(sun)
-        if "goes" not in events.get(sun, {}) and e["obs_start"]:
+        # before the metafits is unpacked: date and window from the event table (candidate list)
+        e["date"] = t[:10] or e.get("obs_start", "")[:10]
+        w = obs_window(sun)
+        if w[0]:
+            e["obs_start"], e["obs_end"] = w
+        e.setdefault("obs_start", ""); e.setdefault("obs_end", "")
+        cached = events.get(sun, {})   # an empty list cached without a window was never really queried
+        if ("goes" not in cached or (not cached["goes"] and not cached.get("goes_window"))) and e["obs_start"]:
             try:
                 events.setdefault(sun, {})["goes"] = goes_flares(e["obs_start"], e["obs_end"])
+                events[sun]["goes_window"] = [e["obs_start"], e["obs_end"]]
             except Exception as err:
                 print(f"GOES query for {sun} failed: {err}")
         e["goes"] = events.get(sun, {}).get("goes")

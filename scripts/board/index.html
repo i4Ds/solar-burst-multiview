@@ -77,8 +77,17 @@ textarea { width: 100%; min-height: 54px; resize: vertical; box-sizing: border-b
 .note { font-size: .82rem; color: var(--muted); }
 .ctx img, .fig img { width: 100%; height: auto; border-radius: 4px; background: #fff; display: block; }
 .fig { margin: 0; display: grid; gap: 4px; }
-tr.evrow { background: var(--sunk); cursor: pointer; } tr.evrow td { border-top: 2px solid var(--line); }
-td.sub { padding-left: 18px; color: var(--muted); }
+/* one block per observation: the observation row, then its runs indented behind a bracket */
+tr.evrow { background: var(--sunk); cursor: pointer; } tr.evrow td { border-top: 10px solid var(--bg); }
+tr.evrow td:first-child, tr.run td:first-child { border-left: 4px solid var(--accent); }
+tr.run td { background-color: var(--surface); }
+tr.run td:first-child { padding-left: 44px;   /* tree line linking the runs to their observation */
+  background-image: linear-gradient(to right, transparent 20px, var(--accent) 20px, var(--accent) 22px, transparent 22px),
+    linear-gradient(to bottom, transparent calc(50% - 1px), var(--accent) calc(50% - 1px), var(--accent) calc(50% + 1px), transparent calc(50% + 1px));
+  background-size: 100% 100%, 16px 100%; background-position: 0 0, 22px 0; background-repeat: no-repeat; }
+tr.run td:nth-child(2) { padding-left: 30px; }
+tr.run:hover td, tr.run.sel td { background-color: var(--sunk); }
+td.sub { padding-left: 26px; color: var(--muted); }
 canvas.thumb, img.thumb { display: block; border-radius: 3px; background: #000; object-fit: cover; }
 .cmpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
 .cmpgrid figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
@@ -146,7 +155,9 @@ const LUT = Array.from({ length: 256 }, (_, i) => { const t = i / 255; let k = 1
 const ev = sun => B.events.find(e => e.sun === sun) || {};
 const fmtT = s => (s || "").replace(/^\d{4}\/\d\d\/\d\d\//, "").replace("~", "–").replace(/\/\d{4}\/\d\d\/\d\d\//, "");
 const winOf = p => { const m = (p.trange || "").match(/(\d\d:\d\d:\d\d(?:\.\d+)?)~\d{4}\/\d\d\/\d\d\/(\d\d:\d\d:\d\d(?:\.\d+)?)/); return m ? `${m[1]}–${m[2]}` : "—"; };
-const mhz = p => (p.frames[0]?.freq_mhz ?? +p.ch * 1.28).toFixed(1);
+const mhz = p => String(p.ch).includes(">") ? String(p.ch).split(">").map(c => (+c * 1.28).toFixed(1)).join("→")
+  : (p.frames[0]?.freq_mhz ?? +p.ch * 1.28).toFixed(1);
+const chNum = p => parseInt(String(p.ch), 10) || 0;
 const verdict = id => judg[id]?.status || "";
 
 async function load(p) {
@@ -270,7 +281,8 @@ const calTxt = p => { const c = p.calibration || {}; return `${c.method || "P-AI
 
 function rows() {
   const suns = [...new Set(B.products.map(p => p.sun))].sort((a, b) => (ev(a).date || "").localeCompare(ev(b).date || "") || a.localeCompare(b));
-  $("#rows").innerHTML = suns.map(sun => { const e = ev(sun), P = B.products.filter(p => p.sun === sun).sort((a, b) => a.product.localeCompare(b.product));
+  $("#rows").innerHTML = suns.map(sun => { const e = ev(sun), P = B.products.filter(p => p.sun === sun)
+      .sort((a, b) => (!!a.parts - !!b.parts) || chNum(a) - chNum(b) || a.label.localeCompare(b.label));
     const best = P.flatMap(p => p.frames).reduce((a, b) => (!a || b.snr > a.snr) ? b : a, null), open = !fold.has(sun);
     const bestRun = P.filter(p => p.frames.length).sort((a, b) => Math.max(...b.frames.map(f => f.snr)) - Math.max(...a.frames.map(f => f.snr)))[0];
     const head = `<tr class="evrow" data-ev="${esc(sun)}"><td>${open ? "▾" : "▸"}</td>
