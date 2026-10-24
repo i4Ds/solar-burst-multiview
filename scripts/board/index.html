@@ -87,7 +87,8 @@ tr.run td:first-child { padding-left: 44px;   /* tree line linking the runs to t
   background-size: 100% 100%, 16px 100%; background-position: 0 0, 22px 0; background-repeat: no-repeat; }
 tr.run td:nth-child(2) { padding-left: 30px; }
 tr.run:hover td, tr.run.sel td { background-color: var(--sunk); }
-td.sub { padding-left: 26px; color: var(--muted); }
+td.sub { padding-left: 26px; color: var(--muted); white-space: nowrap; }
+.runat { color: var(--fg); margin-left: 10px; }
 canvas.thumb, img.thumb { display: block; border-radius: 3px; background: #000; object-fit: cover; }
 .cmpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
 .cmpgrid figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
@@ -114,8 +115,8 @@ canvas.thumb, img.thumb { display: block; border-radius: 3px; background: #000; 
 
   <section id="tab-board">
     <div class="tablewrap"><table>
-      <thead><tr><th title="select for Compare">cmp</th><th>image</th><th>event · run</th><th>type</th><th>GOES</th><th>phase</th><th>channel</th>
-      <th>window UTC</th><th>Δt s</th><th>calibration</th><th>run</th><th>state</th><th>frames</th><th>peak/rms</th>
+      <thead><tr><th title="select for Compare">cmp</th><th>image</th><th>event · run (when it ran)</th><th>type</th><th>GOES</th><th>phase</th><th>channel</th>
+      <th>window UTC</th><th>Δt s</th><th>calibration</th><th>state</th><th>frames</th><th>peak/rms</th>
       <th>position ″</th><th>verdict</th><th>note</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
@@ -290,14 +291,14 @@ function rows() {
       <td><b class="mono">${esc(e.date)}</b> <span class="muted mono">${esc(sun)}</span></td><td>${esc(e.burst_type || "")}</td>
       <td class="mono" title="${esc((e.goes || []).map(g => `${g.cls} ${g.start.slice(11, 16)}–${g.end.slice(11, 16)} peak ${g.peak.slice(11, 16)} AR${g.ar}`).join("; "))}">${esc(goesTxt(e))}</td>
       <td>${esc(e.phase || "")}</td><td colspan="4" class="muted">${esc([e.project, e.tier && "tier " + e.tier].filter(Boolean).join(" · "))} · ${P.length} run${P.length > 1 ? "s" : ""}</td>
-      <td></td><td></td><td></td><td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td></td><td></td><td></td></tr>`;
+      <td></td><td></td><td class="num">${best ? best.snr.toFixed(0) : "—"}</td><td></td><td></td><td></td></tr>`;
     const subs = open ? P.map(p => { const f = p.frames, b = f.length ? f.reduce((x, y) => x.snr > y.snr ? x : y) : null, v = verdict(p.product);
       return `<tr class="run ${sel === p.product ? "sel" : ""}" data-id="${esc(p.product)}">
         <td><input type="checkbox" aria-label="compare ${esc(p.product)}" ${cmpSel.has(p.product) ? "checked" : ""} ${p.data || p.movie ? "" : "disabled"}></td>
         <td>${p.frames.length ? thumbCell(p, 56) : ""}</td>
-        <td class="mono sub">↳ ${esc(p.label)}</td><td></td><td></td><td></td>
+        <td class="mono sub" colspan="4">↳ ${esc(p.label)} <span class="runat">run ${esc(runTxt(p))}</span></td>
         <td class="mono">ch ${esc(p.ch)} · ${mhz(p)}${p.note ? ` <span title="${esc(p.note)}">⚠</span>` : ""}</td>
-        <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(calTxt(p))}</td><td class="mono">${esc(runTxt(p))}</td>
+        <td class="mono">${esc(winOf(p))}</td><td class="num">${esc(p.tres)}</td><td class="mono">${esc(calTxt(p))}</td>
         <td><span class="pill s-${esc(p.state)}">${esc(p.state)}</span></td><td class="num">${f.length}</td>
         <td class="num">${b ? b.snr.toFixed(0) : "—"}</td><td class="num mono">${b ? `(${b.x}, ${b.y})` : "—"}</td>
         <td><span class="pill ${v ? "v-" + v : "v-none"}">${v || "—"}</span></td><td class="muted">${esc((judg[p.product]?.note || "").slice(0, 40))}</td></tr>`; }).join("") : "";
