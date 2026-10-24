@@ -163,6 +163,39 @@ def movie(p, frames, crops, extent, fns):
     return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
 
 
+def grid_movie(p, frames, crops, exts, fns):
+    """MP4 + peak PNG with one panel per channel (burst_movie_grid.py), for composites with
+    layout "grid" (e.g. every channel of 1449551392). Remade only when the frames changed."""
+    os.makedirs(f"{OUT}/movies", exist_ok=True)
+    base = f"{OUT}/movies/{p['product']}"
+    stamp = f"{len(fns)} {max(os.path.getmtime(f) for f in fns):.0f} grid"
+    if os.path.exists(f"{base}.mp4") and os.path.exists(f"{base}.stamp") and open(f"{base}.stamp").read() == stamp:
+        return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
+    times = sorted({fr["t"][:21] for fr in frames})
+    ti = {t: i for i, t in enumerate(times)}
+    freqs = sorted({round(fr["freq_mhz"], 1) for fr in frames})
+    arrays = {}
+    for k, f in enumerate(freqs):
+        idx = [i for i, fr in enumerate(frames) if round(fr["freq_mhz"], 1) == f]
+        n = min(min(crops[i].shape) for i in idx)
+        cube = np.full((len(times), n, n), np.nan, dtype="f4")
+        for i in idx:
+            cube[ti[frames[i]["t"][:21]]] = crops[i][:n, :n]
+        c = round(f / 1.28)
+        arrays[f"data_{c}"] = cube
+        arrays[f"extent_{c}"] = np.array(exts[idx[0]])
+    chans = np.array([round(f / 1.28) for f in freqs])
+    np.savez_compressed(f"{base}_cube.npz", times=np.array(times), freqs=np.array(freqs), chans=chans, **arrays)
+    r = subprocess.run([f"{H}/mwa/tools-venv/bin/python", f"{H}/mwa/events/burst_movie_grid.py", f"{base}_cube.npz",
+                        "--out", base], capture_output=True, text=True)
+    os.remove(f"{base}_cube.npz")
+    if r.returncode or not os.path.exists(f"{base}.mp4"):
+        print(f"grid movie for {p['product']} failed: {r.stderr[-500:]}")
+        return None
+    open(f"{base}.stamp", "w").write(stamp)
+    return {"mp4": f"movies/{p['product']}.mp4", "poster": f"movies/{p['product']}_peak.png"}
+
+
 def obs_window(sun):
     """Start and end of the MWA observation (metafits DATE-OBS + EXPOSURE), ISO strings."""
     mf = f"{SCR}/mwa/events/{sun}/{sun}.metafits"
@@ -272,13 +305,16 @@ def main():
         else:
             d = image_dir(p)
             fns = sorted(glob.glob(f"{d}/*.fits")) if d else []
-        frames, crops, extent = [], [], None
+        frames, crops, extent, exts = [], [], None, []
         for fn in fns:
             meta, crop, extent = frame(fn)
             frames.append(meta)
             crops.append(crop)
+            exts.append(extent)
         p["frames"] = frames
-        if len(crops) > MAX_FRAMES:   # series: a movie instead of frames drawn by the page
+        if p.get("layout") == "grid" and crops:   # all channels side by side, one panel each
+            p["movie"] = grid_movie(p, frames, crops, exts, fns)
+        elif len(crops) > MAX_FRAMES:   # series: a movie instead of frames drawn by the page
             p["movie"] = movie(p, frames, crops, extent, fns)
             if p.get("state") in (None, "running", "waiting", "imaging") and p.get("legacy"):
                 p["state"] = "done"

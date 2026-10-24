@@ -157,6 +157,7 @@ const ev = sun => B.events.find(e => e.sun === sun) || {};
 const fmtT = s => (s || "").replace(/^\d{4}\/\d\d\/\d\d\//, "").replace("~", "–").replace(/\/\d{4}\/\d\d\/\d\d\//, "");
 const winOf = p => { const m = (p.trange || "").match(/(\d\d:\d\d:\d\d(?:\.\d+)?)~\d{4}\/\d\d\/\d\d\/(\d\d:\d\d:\d\d(?:\.\d+)?)/); return m ? `${m[1]}–${m[2]}` : "—"; };
 const mhz = p => String(p.ch).includes(">") ? String(p.ch).split(">").map(c => (+c * 1.28).toFixed(1)).join("→")
+  : p.layout === "grid" && p.frames.length ? `${Math.min(...p.frames.map(f => f.freq_mhz)).toFixed(0)}–${Math.max(...p.frames.map(f => f.freq_mhz)).toFixed(0)}`
   : (p.frames[0]?.freq_mhz ?? +p.ch * 1.28).toFixed(1);
 const chNum = p => parseInt(String(p.ch), 10) || 0;
 const verdict = id => judg[id]?.status || "";
@@ -366,8 +367,10 @@ function detail() {
           <dt>last log</dt><dd>${esc((p.log_tail || []).slice(-1)[0] || "")}</dd>
           ${p.note || e.note ? `<dt>notes</dt><dd>${esc([p.note, e.note].filter(Boolean).join(" "))}</dd>` : ""}
         </dl>
+        <figure class="fig"><a href="img/${esc(p.product)}_spectrum.png" target="_blank" rel="noopener"><img src="img/${esc(p.product)}_spectrum.png" alt="e-Callisto dynamic spectrum with this run's images" onerror="this.closest('figure').hidden=true"></a>
+          <figcaption class="note">e-Callisto dynamic spectrum during the MWA observation: one red box per image of this run (start time to start + Δt, its 1.28 MHz channel)</figcaption></figure>
         <figure class="fig"><a href="img/${esc(p.sun)}_spectrum.png" target="_blank" rel="noopener"><img src="img/${esc(p.sun)}_spectrum.png" alt="e-Callisto dynamic spectrum" onerror="this.closest('figure').hidden=true"></a>
-          <figcaption class="note">e-Callisto dynamic spectrum: MWA observation (orange), image windows and channels of all runs (red), GOES peaks (dashed)</figcaption></figure>
+          <figcaption class="note">e-Callisto dynamic spectrum ±5 min: MWA observation (orange), image windows and channels of all runs (red), GOES peaks (dashed)</figcaption></figure>
         ${p.euv ? `<figure class="fig"><a href="${esc(p.euv)}" target="_blank" rel="noopener"><img src="${esc(p.euv)}" alt="MWA contours on AIA 193 with PFSS lines"></a>
           <figcaption class="note">MWA contours (cyan) on AIA 193 Å with NOAA regions and PFSS field lines (open green, closed white)</figcaption></figure>` : ""}
         ${e.context_png ? `<details class="ctx"><summary class="note">GOES, STIX, e-Callisto, MWA</summary><img src="${esc(e.context_png)}" alt="context light curves"></details>` : ""}
