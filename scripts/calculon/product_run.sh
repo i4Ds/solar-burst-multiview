@@ -33,7 +33,9 @@ ST=$PR/$PRODUCT.md
 log() { echo "- $(date '+%F %H:%M') $*" | tee -a "$ST"; }
 waitjob() { while squeue -M calc-cpu -h -j "$1" 2>/dev/null | grep -q .; do sleep 60 9>&-; done; }
 sub() { sbatch -M calc-cpu --parsable "$@" | cut -d';' -f1; }
-ondisk() { grep -qE "^ *$1 .*on NAS" ~/mwa/asvo-watch.status 2>/dev/null; }
+# on the NAS: asvo-watch says so, or the job is older than the watcher (not in its list) and its tar exists
+ondisk() { grep -qE "^ *$1 .*on NAS" ~/mwa/asvo-watch.status 2>/dev/null && return 0
+  ! grep -qE "^ *$1 " ~/mwa/asvo-watch.status 2>/dev/null && compgen -G "$NAS/*_$1_*.tar" >/dev/null; }
 # SUN_JOB/CAL_JOB=auto: the newest ASVO job of that obsid and kind that asvo-watch reports on the NAS
 jobof() { awk -v o="$1" -v k="$2" '$2 == o && $3 == k && /on NAS/ {j = $1} END {print j}' ~/mwa/asvo-watch.status 2>/dev/null; }
 reg() {  # update the registry entry: reg key=value ...
