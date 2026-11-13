@@ -44,6 +44,18 @@ python scripts/sharma2020_pipeline.py --reuse
 
 Writes `figures/sharma2020/fig4_paper.png`. Does not touch `fig4.png`.
 
+## Pictures (his vs ours)
+
+```bash
+python scripts/sharma2020_fig4_visuals.py
+```
+
+That writes the comparison PNGs under `figures/sharma2020/fig4_his_vs_ours*.png`.
+The notebook `notebooks/05_sharma2020_fig4_compare.ipynb` is the picture book:
+his Figure 4, his vs our remake on the paper colour scale, the same pair
+stretched to shape, the difference, then a strip of our half-second frames.
+Re-run the script after more SuperUniform frames land.
+
 ## Re-image from visibilities (calculon)
 
 No CASA on the laptop. Same `clean` numbers, one mid-scan 0.5 s first,

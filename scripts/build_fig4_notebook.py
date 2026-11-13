@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Write a short Figure 4 walk-through. No side plots, no leftover rows."""
+"""Figure 4 notebook: a picture book of his maps vs our remake."""
 
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 
 from solarburst.config import REPO_ROOT
@@ -13,13 +14,19 @@ OUT = REPO_ROOT / "notebooks" / "05_sharma2020_fig4_compare.ipynb"
 
 def md(text: str) -> dict:
     text = text.strip("\n") + "\n"
-    return {"cell_type": "markdown", "metadata": {}, "source": [text]}
+    return {
+        "cell_type": "markdown",
+        "id": uuid.uuid4().hex[:8],
+        "metadata": {},
+        "source": [text],
+    }
 
 
 def code(text: str) -> dict:
     text = text.strip("\n") + "\n"
     return {
         "cell_type": "code",
+        "id": uuid.uuid4().hex[:8],
         "metadata": {},
         "execution_count": None,
         "outputs": [],
@@ -30,187 +37,152 @@ def code(text: str) -> dict:
 cells = [
     md(
         """\
-# Sharma & Oberoi 2020, Figure 4
+# Sharma & Oberoi 2020, Figure 4 — pictures
 
-Quiet Sun, 3 December 2015, 03:39–03:44 UT. Four minutes, one picture per frequency.
+Quiet Sun, 3 December 2015, 03:39–03:44 UT.
 
-The paper’s picture is the **mean of ~570 half-second maps**, then converted to million K. A single frame is not Figure 4.
-
-| | 108 MHz | 162 MHz | 217 MHz |
-|---|---|---|---|
-| Caption | 0.92 million K | 1.20 | 1.50 |
-| His maps, paper flux | **0.89** | 1.00 | 1.06 |
+Figure 4 is the **mean of ~570 half-second maps**. Every comparison below is a map. His row is that 570-frame mean. Ours is the SuperUniform remake of the same visibilities, as many frames as are on disk.
 
 Kernel: `solar-burst-multiview`. Run from the top.
 """
     ),
-    md("## 1. Setup"),
+    md("## 1. How many of our frames are here?"),
     code(
         """\
 from pathlib import Path
-import json, sys, warnings
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.wcs import FITSFixedWarning
+import json, re, sys
 from IPython.display import Image, display
-from matplotlib.patches import Circle, Ellipse
-
-warnings.filterwarnings("ignore", category=FITSFixedWarning)
-%matplotlib inline
-plt.rcParams.update({"figure.dpi": 110, "font.size": 11})
 
 here = Path.cwd()
 ROOT = here if (here / "src" / "solarburst").exists() else here.parent
 sys.path.insert(0, str(ROOT / "src"))
-
-from solarburst.maps import crop_around_sun, frequency_hz, header_cell_arcsec, hpc_extent, jybeam_to_tb, load_casa_2d
-from solarburst.sharma2020 import last_clean_from_history, list_fits, CLEAN
-
-print(ROOT)
-"""
-    ),
-    md("## 2. Files"),
-    code(
-        """\
-PATHS = {
-    "his 4-min figure": ROOT / "figures" / "sharma2020" / "fig4_paper.png",
-    "his kelvin cube": ROOT / "data" / "quiet2015" / "fig4_tb_perframe.npz",
-    "his CASA frames": ROOT / "data" / "sharma2022" / "20151203_MWA" / "new_ms" / "fits",
-    "flux": ROOT / "data" / "quiet2015" / "paper_flux",
-    "our frames": ROOT / "data" / "quiet2015" / "paper_casa_su",
-}
+FIG = ROOT / "figures" / "sharma2020"
+OURS = ROOT / "data" / "quiet2015" / "paper_casa_su"
 BANDS = ("108", "162", "217", "240")
-CHAN = {"108": "084-085", "162": "125-126", "217": "169-170", "240": "187-188"}
-CAPTION = {"108": 0.92, "162": 1.20, "217": 1.50, "240": None}
-RSUN, FOV = 958.0, 2500.0
 
-for k, p in PATHS.items():
-    n = f"  ({len(list(p.glob('*')))} files)" if p.is_dir() and p.exists() else ""
-    print(("ok " if p.exists() else "MISSING"), k, n)
-"""
-    ),
-    md(
-        """\
-## 3. His Figure 4 (mean of 570 frames, paper kelvin)
+def n_ours(lab):
+    rx = re.compile(rf"^{lab}MHz_(\\d{{4}})\\.fits$")
+    return sum(1 for p in OURS.glob(f"{lab}MHz_*.fits") if rx.match(p.name))
 
-This is the map the caption quotes. Western patch, larger radio Sun at 108 MHz. Colour 0–1.7 million K.
-"""
-    ),
-    code(
-        """\
-display(Image(filename=str(PATHS["his 4-min figure"]), width=880))
-"""
-    ),
-    md("## 4. Numbers from that mean"),
-    code(
-        """\
-z = np.load(PATHS["his kelvin cube"])
-print(f"{'MHz':>5s}  {'frames':>6s}  {'peak MK':>8s}  {'caption':>8s}")
 for lab in BANDS:
-    cap = CAPTION[lab]
-    cap_s = f"{cap:8.2f}" if cap else "       —"
-    print(f"{lab:>5s}  {int(z[f'{lab}_n']):6d}  {z[f'{lab}_tb'].max()/1e6:8.3f}  {cap_s}")
+    print(f"{lab} MHz   our remake {n_ours(lab):3d} / 570")
 """
     ),
     md(
         """\
-## 5. How those 570 pictures were made
-
-Read from his FITS, not guessed. CASA 5.3, SuperUniform mix of antenna pairings, 8000 cleaning steps. SuperUniform = count short and long pairings more evenly (tighter blob). Figure 4 is the **average** of the 570, not one of them.
+Rebuild the PNGs if you just copied more frames from the cluster (takes a few minutes):
 """
     ),
     code(
         """\
-fitsdir = PATHS["his CASA frames"]
-for lab in BANDS:
-    files = list_fits(fitsdir, CHAN[lab])
-    rec = last_clean_from_history(files[0])
-    print(f"{lab} MHz   {len(files)} frames   beam {rec['bmaj_arcsec']}″ × {rec['bmin_arcsec']}″")
-    print(f"         {rec['origin']}   {rec.get('niter','')}   {rec.get('weighting','')[:40]}")
-print("remake settings:", CLEAN["weighting"], "niter", CLEAN["niter"])
+# %run ../scripts/sharma2020_fig4_visuals.py
+print("PNGs live in", FIG)
+print("Uncomment the line above to rebuild after a new rsync.")
 """
     ),
     md(
         """\
-## 6. Whole-Sun brightness (no picture)
+## 2. His Figure 4
 
-CASA Jy/beam is on an arbitrary scale. Kelvin needs the true brightness of the whole Sun, measured from the short antenna pairings (Oberoi 2017) with the Galaxy *behind this Sun* (Haslam 1982). Then each frame is stretched so its disk equals that number, converted to kelvin, and the 570 are averaged.
+Mean of his 570 frames, paper kelvin. This is the picture the caption quotes.
 """
     ),
     code(
         """\
-print(f"{'MHz':>5s}  {'S_⊙ SFU':>10s}  {'stretch F(ν)':>12s}")
-z = np.load(PATHS["his kelvin cube"])
-for lab in BANDS:
-    rec = json.loads((PATHS["flux"] / f"{lab}MHz_full.json").read_text())
-    print(f"{lab:>5s}  {rec['s_odot_sfu']:10.3f}  {float(z[f'{lab}_f_nu_mean']):12.2f}")
+display(Image(filename=str(FIG / "fig4_paper.png"), width=980))
+"""
+    ),
+    md("## 3. His four frequencies, same 0–1.7 million K colour as the paper"),
+    code(
+        """\
+display(Image(filename=str(FIG / "fig4_his_mean.png"), width=1100))
 """
     ),
     md(
         """\
-## 7. Our remake of every half-second
+## 4. His vs ours — same colour scale
 
-A single mid-scan frame only checked the settings. Figure 4 needs all 570. This cell counts what is on disk. When a band has 570 frames, it shows our mean next to his (shape, not kelvin yet).
+Top = his 570-frame mean. Bottom = our remake. Brown rings are 1 and 2 solar radii. Black ellipse is the restoring beam.
+
+Ask: is the western patch on the west, and is the disk inside the inner ring?
 """
     ),
     code(
         """\
-ours = PATHS["our frames"]
-print(f"{'MHz':>5s}  {'our frames':>10s}  {'need':>6s}")
-have = {}
-for lab in BANDS:
-    frames = sorted(p for p in ours.glob(f"{lab}MHz_*.fits") if p.name.split("_")[1][:4].isdigit())
-    have[lab] = frames
-    print(f"{lab:>5s}  {len(frames):10d}  {570:6d}")
-
-def mean_tb(paths, npix=100):
-    data0, hdr0 = load_casa_2d(paths[0])
-    crop0, origin, sun = crop_around_sun(data0, hdr0, npix)
-    acc = np.zeros_like(crop0, dtype=np.float64)
-    for p in paths:
-        data, hdr = load_casa_2d(p)
-        acc += data[origin[1]:origin[1]+npix, origin[0]:origin[0]+npix]
-        beam = (float(hdr["BMAJ"]), float(hdr["BMIN"]), float(hdr.get("BPA", 0.0)))
-        nu = frequency_hz(hdr)
-    mean = acc / len(paths)
-    tb = jybeam_to_tb(mean, nu, beam[0], beam[1], scale=1.0)
-    ext = hpc_extent(npix, npix, cell_arcsec=header_cell_arcsec(hdr0), sun_xy=sun, origin=origin)
-    return tb, ext, beam
-
-ready = [lab for lab in ("108", "162") if len(have[lab]) >= 570]
-if not ready:
-    print("\\nNot 570 frames yet — the cluster is still imaging. Come back to this cell.")
-else:
-    z = np.load(PATHS["his kelvin cube"])
-    fig, axes = plt.subplots(2, len(ready), figsize=(5.2 * len(ready), 8.4))
-    if len(ready) == 1:
-        axes = np.array(axes).reshape(2, 1)
-    for j, lab in enumerate(ready):
-        tb, ext, beam = mean_tb(have[lab])
-        his = z[f"{lab}_tb"]
-        his_ext = z[f"{lab}_extent"]
-        his_beam = (float(z[f"{lab}_bmaj_deg"]), float(z[f"{lab}_bmin_deg"]), float(z[f"{lab}_bpa_deg"]))
-        for ax, arr, e, b, title in (
-            (axes[0, j], his, his_ext, his_beam, f"his mean  {lab} MHz"),
-            (axes[1, j], tb, ext, beam, f"our mean  {lab} MHz  ({len(have[lab])} frames)"),
-        ):
-            mk = np.where(arr / 1e6 > 0.2, arr / 1e6, np.nan)
-            ax.imshow(mk, origin="lower", extent=e, cmap="jet", vmin=0, vmax=float(np.nanmax(mk)))
-            ax.add_patch(Circle((0, 0), RSUN, fill=False, color="saddlebrown", lw=1.1))
-            ax.set_xlim(-FOV, FOV); ax.set_ylim(-FOV, FOV); ax.set_aspect("equal")
-            ax.set_title(title)
-    plt.show()
+display(Image(filename=str(FIG / "fig4_his_vs_ours.png"), width=1100))
 """
     ),
     md(
         """\
-## 8. What matches, what does not
+## 5. Same pair, each panel stretched to its own peak
 
-- **108 MHz kelvin** on his maps: 0.89 vs caption 0.92. That is the same.
-- **162 and 217 MHz kelvin** still low (1.00 vs 1.20, 1.06 vs 1.50). Not the imager — the stretch uses a simple 4×4 tile instead of Oberoi’s unpublished antenna simulation (FEKO).
-- **Shape** of one remade frame already matched (correlation 0.999). The mean of all 570 is the test that matters; wait for §7 to fill.
+Ignore the kelvin number. This is the shape comparison.
+"""
+    ),
+    code(
+        """\
+display(Image(filename=str(FIG / "fig4_his_vs_ours_shape.png"), width=1100))
+"""
+    ),
+    md("## 6. Our remake alone (the running mean of frames on disk)"),
+    code(
+        """\
+display(Image(filename=str(FIG / "fig4_ours_mean.png"), width=1100))
+"""
+    ),
+    md(
+        """\
+## 7. Ours minus his
 
-Ask Rohit: FEKO tile files; why 162/217 are brighter in the paper; the text’s per-band UV-range is empty in these FITS.
+Red = we are hotter. Blue = he is hotter. Same sun-centred crop.
+"""
+    ),
+    code(
+        """\
+display(Image(filename=str(FIG / "fig4_diff.png"), width=1100))
+"""
+    ),
+    md(
+        """\
+## 8. A strip of our half-second frames
+
+These are the pictures going into the mean. They should all look like the same quiet Sun, not a burst movie.
+"""
+    ),
+    code(
+        """\
+for lab in BANDS:
+    p = FIG / f"fig4_ours_strip_{lab}.png"
+    if p.exists():
+        display(Image(filename=str(p), width=1100))
+    else:
+        print(f"no strip yet for {lab} MHz")
+"""
+    ),
+    md("## 9. Numbers that go with the pictures"),
+    code(
+        """\
+rows = json.loads((FIG / "fig4_ours_summary.json").read_text())
+print(f"{'MHz':>4}  {'caption':>8}  {'his MK':>7}  {'ours MK':>8}  {'n':>5}  {'his beam':>12}  {'ours beam':>12}")
+for r in rows:
+    cap = "—" if r["caption_mk"] is None else f"{r['caption_mk']:.2f}"
+    ob = "×".join(f"{x:.0f}" for x in r.get("ours_beam_arcsec", [])) or "—"
+    hb = "×".join(f"{x:.0f}" for x in r["his_beam_arcsec"])
+    n = r.get("ours_n", 0)
+    omk = r.get("ours_peak_mk")
+    omk_s = "—" if omk is None else f"{omk:.2f}"
+    print(f"{r['mhz']:>4}  {cap:>8}  {r['his_peak_mk']:7.2f}  {omk_s:>8}  {n:5d}  {hb:>12}  {ob:>12}")
+"""
+    ),
+    md(
+        """\
+## 10. What to look at
+
+- Shape: disk + western patch on both sides. That is the same quiet Sun.
+- 108 MHz kelvin on *his* 570-frame mean is 0.89 against the caption 0.92.
+- 162 and 217 MHz stay low on his maps (1.00 vs 1.20, 1.06 vs 1.50). That leftover is the flux (simple tile vs unpublished FEKO), not a wrong picture.
+- Our restoring beam at 162 and 217 MHz is sharper than his. That is CASA 6.6 `tclean` vs his CASA 5.3 `clean`, and it is visible in the maps.
+- Our mean is still a partial scan. Re-run cell 1’s rebuild after the cluster reaches 570/570.
 """
     ),
 ]
