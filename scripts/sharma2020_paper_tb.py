@@ -1,10 +1,14 @@
 """Sharma & Oberoi 2020 Fig. 4 with the paper flux scale (Oberoi + Mohan).
 
-Time-mean of the staged CASA FITS (same images as fig4.png), then
-F(ν) from Oberoi 2017 S_odot so the disk integral equals S_odot, then
+Prefer ``scripts/sharma2020_fig4_exact.py`` — same work, with the 9.48
+explanation. This module is the implementation that script calls.
+
+Time-mean of Rohit's CASA FITS (the paper's images; we do not re-image),
+then F(ν) from Oberoi 2017 S_odot so the disk integral equals S_odot, then
 T_B with Rayleigh–Jeans (Mohan & Oberoi 2017, scale=1). Writes
 ``figures/sharma2020/fig4_paper.png``; does not touch fig4.png.
 
+    python scripts/sharma2020_fig4_exact.py --reuse
     python scripts/sharma2020_paper_tb.py --flux-dir data/quiet2015/paper_flux
 """
 

@@ -27,8 +27,20 @@ From the paper (arXiv:2009.10604 §3) and the two method papers:
    Sharma 2020 takes C at **5σ** of the off-Sun RMS (the method paper used
    6σ). Then the time-mean of the 0.5 s `T_B` maps.
 
-`imaging.tb_scale: 9.48` is a 2022-pickle vs Rayleigh–Jeans fudge. It is
-**not** this flux scale. Path B uses `scale=1` after `F(ν)`.
+`imaging.tb_scale: 9.48` is a 2022-pickle vs Rayleigh–Jeans ratio
+(measured at 108 MHz on frame 0010 of the burst cubes). CASA Jy/beam is
+not on an absolute flux scale; the pickles already had a stretch of that
+size baked in. Multiplying by 9.48 matches the 2022 stored cubes. It is
+not a calibration, and Sharma & Oberoi 2020 does not use it. The 2020
+stretch is `F(ν)` (Mohan & Oberoi 2017), computed per band from Oberoi
+2017 `S_⊙`. Path B uses `scale=1` after that `F(ν)`.
+
+The script that does Figure 4 that way, on Rohit's already-made CASA
+FITS (the paper's images; no new `tclean`):
+
+```bash
+python scripts/sharma2020_fig4_exact.py --reuse
+```
 
 ## What is implemented vs still approximate
 

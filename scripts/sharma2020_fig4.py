@@ -9,8 +9,11 @@ MWA contours at 108, 162 and 240 MHz.
     python scripts/sharma2020_fig4.py --reuse   # skip re-averaging FITS
 
 Paper caption peaks: MWA 0.92, 1.20, 1.50 MK; FORWARD 1.59, 1.60, 1.61 MK.
-T_B from Jy/beam uses ``imaging.tb_scale`` (9.48), the same factor that
-recovers Sharma's pickled 2022 scale from these CASA FITS.
+
+``imaging.tb_scale`` (9.48) is a 2022 pickle/FITS ratio, not the 2020
+method. It makes these maps match Sharma et al. 2022 stored cubes. For
+Figure 4 as Sharma & Oberoi 2020 made it (Oberoi 2017 flux + Mohan 2017
+F(ν), no 9.48) run ``scripts/sharma2020_fig4_exact.py``.
 """
 
 from __future__ import annotations
@@ -212,6 +215,11 @@ def main(argv: list[str] | None = None) -> int:
 
     cfg = load(args.config)
     scale = float(cfg["imaging"].get("tb_scale", 9.48))
+    print(
+        f"tb_scale={scale:g} matches 2022 pickles, not Sharma & Oberoi 2020. "
+        "Paper method: python scripts/sharma2020_fig4_exact.py",
+        file=sys.stderr,
+    )
     cell = float(cfg["imaging"]["cell_arcsec"])
     fitsdir = _fits_dir(cfg)
     fwd_dir = local_path(cfg, cfg["remote"]["paths"]["forward"])
