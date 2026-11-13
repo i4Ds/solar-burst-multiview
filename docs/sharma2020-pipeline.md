@@ -55,10 +55,19 @@ scp scripts/calculon/sharma2020_casa_snap.py \
 sbatch -M calc-cpu ~/mwa/sharma2020/sharma2020-paper-casa.sbatch
 ```
 
-Compare that FITS to Rohit's matching frame. An earlier remake with
-**Briggs / 2500 / tclean / CASA 6.6** already matches the *shape*
-(correlation 0.998) but not the restoring beam (108 MHz: 291″ vs his
-225″). SuperUniform 8000 is the number that should close the beam.
+One mid-scan 0.5 s remake is on the laptop under
+`data/quiet2015/paper_casa_su/` (CASA 6.6 `tclean`, SuperUniform, 8000).
+Shape matches his frame `.0306` (correlation 0.999). Blob size:
+
+| MHz | Rohit | Briggs 2500 | SuperUniform 8000 |
+|---|---|---|---|
+| 108 | 225″×217″ | 291″×278″ | 217″×205″ (close) |
+| 162 | 198″×185″ | 226″×207″ | 160″×150″ (too sharp) |
+| 217 | 189″×186″ | 158″×146″ | 128″×119″ (too sharp) |
+| 240 | 208″×202″ | 223″×210″ | 183″×157″ |
+
+108 MHz moved the right way. 162/217 overshot. Leftover: CASA 6.6 `tclean`
+vs his 5.3 `clean`.
 
 ## Leftovers versus the letter of the papers (for Rohit)
 
