@@ -29,7 +29,8 @@ read -r LABEL BANDDIR MSNAME <<< "${BANDS[$idx]}"
 
 ROHIT=/mnt/nas05/data02/rohit/20151203_MWA/new_ms
 MS="$ROHIT/$BANDDIR/$MSNAME"
-OUT=/scratch/$USER/mwa/sharma2020/paper/casa
+# SuperUniform / niter 8000, not the earlier Briggs/2500 remake in paper/casa.
+OUT=/scratch/$USER/mwa/sharma2020/paper/casa_su
 CODE="${PAPER_CODE:-$HOME/mwa/sharma2020}"
 N_SNAP="${N_SNAP:-1}"
 mkdir -p "$OUT" "$HOME/mwa/logs" "$OUT/tmp-$LABEL"
