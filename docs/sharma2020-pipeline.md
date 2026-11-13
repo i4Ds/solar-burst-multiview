@@ -55,8 +55,9 @@ scp scripts/calculon/sharma2020_casa_snap.py \
 sbatch -M calc-cpu ~/mwa/sharma2020/sharma2020-paper-casa.sbatch
 ```
 
-One mid-scan 0.5 s remake is on the laptop under
-`data/quiet2015/paper_casa_su/` (CASA 6.6 `tclean`, SuperUniform, 8000).
+All 570 half-second frames (the mean is Figure 4) are being remade on
+calculon under `paper/casa_su/{108,162,217,240}MHz_NNNN.fits`. A single
+mid-scan frame only checked the settings. Empty timeranges are skipped.
 Shape matches his frame `.0306` (correlation 0.999). Blob size:
 
 | MHz | Rohit | Briggs 2500 | SuperUniform 8000 |
