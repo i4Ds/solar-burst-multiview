@@ -8,4 +8,7 @@ archived data and not flagged deleted: 305 days (2013: 42, 2014: 95, 2015: 168).
 
 Calibrator (`cal_*`): the archived calibrator observation with the same channel set
 nearest in time (MWA TAP); `cal_dt_h` in hours. Within 24 h for 238 days; none for the
-42 days of 2013. Planned ASVO conversion: 10 s, 160 kHz, no_rfi=true (no AOFlagger).
+42 days of 2013. First plan was an ASVO conversion (10 s, 160 kHz, no_rfi=true, no
+AOFlagger). On hold since 12 Nov: André brings the data on an external drive instead, so no
+ASVO jobs for this list. When the drive is in, check its format, time and frequency
+resolution and whether AOFlagger was run (MS HISTORY) against this list before use.
