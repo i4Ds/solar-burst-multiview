@@ -46,7 +46,6 @@ Figure 4 is the **mean of ~570 half-second maps**. Every comparison below is a m
 Kernel: `solar-burst-multiview`. Run from the top.
 """
     ),
-    md("## 1. How many of our frames are here?"),
     code(
         """\
 from pathlib import Path
@@ -59,7 +58,45 @@ sys.path.insert(0, str(ROOT / "src"))
 FIG = ROOT / "figures" / "sharma2020"
 OURS = ROOT / "data" / "quiet2015" / "paper_casa_su"
 BANDS = ("108", "162", "217", "240")
+"""
+    ),
+    md("## 1. The pipeline"),
+    md(
+        """\
+Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging of his visibilities. Green is the kelvin stretch, which we ran on both his maps and ours.
 
+```mermaid
+flowchart TD
+  cal["Calibrator scan, 01:02 UT"] --> gains["Bandpass and gain solutions"]
+  gains --> ms["Solar visibilities, 03:39–03:44 UT<br/>CORRECTED_DATA already applied"]
+  ms --> his["His imaging: CASA 5.3 classic clean<br/>SuperUniform, Hogbom, 8000 steps<br/>570 half-second maps"]
+  ms --> ours["Our imaging: CASA 6.6 tclean<br/>same numbers; classic clean is gone<br/>half-second maps on disk"]
+  his --> sodot["Whole-Sun flux: shortest baselines<br/>+ Haslam 1982 sky at this pointing"]
+  ours --> sodot
+  sodot --> mean["Each map × Mohan F(ν) at 5σ<br/>then the time mean"]
+  mean --> fig4["Figure 4, million K"]
+
+  style cal fill:#e8e4dc
+  style gains fill:#e8e4dc
+  style ms fill:#e8e4dc
+  style his fill:#e8e4dc
+  style ours fill:#d6e6f5
+  style sodot fill:#dcecc8
+  style mean fill:#dcecc8
+  style fig4 fill:#dcecc8
+```
+
+Not in this picture: P-AIRCARS, raw correlator files, the unpublished FEKO tile beam.
+"""
+    ),
+    code(
+        """\
+display(Image(filename=str(FIG / "fig4_pipeline.png"), width=980))
+"""
+    ),
+    md("## 2. How many of our frames are here?"),
+    code(
+        """\
 def n_ours(lab):
     rx = re.compile(rf"^{lab}MHz_(\\d{{4}})\\.fits$")
     return sum(1 for p in OURS.glob(f"{lab}MHz_*.fits") if rx.match(p.name))
@@ -82,7 +119,7 @@ print("Uncomment the line above to rebuild after a new rsync.")
     ),
     md(
         """\
-## 2. His Figure 4
+## 3. His Figure 4
 
 Mean of his 570 frames, paper kelvin. This is the picture the caption quotes.
 """
@@ -92,7 +129,7 @@ Mean of his 570 frames, paper kelvin. This is the picture the caption quotes.
 display(Image(filename=str(FIG / "fig4_paper.png"), width=980))
 """
     ),
-    md("## 3. His four frequencies, same 0–1.7 million K colour as the paper"),
+    md("## 4. His four frequencies, same 0–1.7 million K colour as the paper"),
     code(
         """\
 display(Image(filename=str(FIG / "fig4_his_mean.png"), width=1100))
@@ -100,7 +137,7 @@ display(Image(filename=str(FIG / "fig4_his_mean.png"), width=1100))
     ),
     md(
         """\
-## 4. His vs ours — same colour scale
+## 5. His vs ours — same colour scale
 
 Top = his 570-frame mean. Bottom = our remake. Brown rings are 1 and 2 solar radii. Black ellipse is the restoring beam.
 
@@ -114,7 +151,7 @@ display(Image(filename=str(FIG / "fig4_his_vs_ours.png"), width=1100))
     ),
     md(
         """\
-## 5. Same pair, each panel stretched to its own peak
+## 6. Same pair, each panel stretched to its own peak
 
 Ignore the kelvin number. This is the shape comparison.
 """
@@ -124,7 +161,7 @@ Ignore the kelvin number. This is the shape comparison.
 display(Image(filename=str(FIG / "fig4_his_vs_ours_shape.png"), width=1100))
 """
     ),
-    md("## 6. Our remake alone (the running mean of frames on disk)"),
+    md("## 7. Our remake alone (the running mean of frames on disk)"),
     code(
         """\
 display(Image(filename=str(FIG / "fig4_ours_mean.png"), width=1100))
@@ -132,7 +169,7 @@ display(Image(filename=str(FIG / "fig4_ours_mean.png"), width=1100))
     ),
     md(
         """\
-## 7. Ours minus his
+## 8. Ours minus his
 
 Red = we are hotter. Blue = he is hotter. Same sun-centred crop.
 """
@@ -144,7 +181,7 @@ display(Image(filename=str(FIG / "fig4_diff.png"), width=1100))
     ),
     md(
         """\
-## 8. A strip of our half-second frames
+## 9. A strip of our half-second frames
 
 These are the pictures going into the mean. They should all look like the same quiet Sun, not a burst movie.
 """
@@ -159,7 +196,7 @@ for lab in BANDS:
         print(f"no strip yet for {lab} MHz")
 """
     ),
-    md("## 9. Numbers that go with the pictures"),
+    md("## 10. Numbers that go with the pictures"),
     code(
         """\
 rows = json.loads((FIG / "fig4_ours_summary.json").read_text())
@@ -176,13 +213,13 @@ for r in rows:
     ),
     md(
         """\
-## 10. What to look at
+## 11. What to look at
 
 - Shape: disk + western patch on both sides. That is the same quiet Sun.
 - 108 MHz kelvin on *his* 570-frame mean is 0.89 against the caption 0.92.
 - 162 and 217 MHz stay low on his maps (1.00 vs 1.20, 1.06 vs 1.50). That leftover is the flux (simple tile vs unpublished FEKO), not a wrong picture.
 - Our restoring beam at 162 and 217 MHz is sharper than his. That is CASA 6.6 `tclean` vs his CASA 5.3 `clean`, and it is visible in the maps.
-- Our mean is still a partial scan. Re-run cell 1’s rebuild after the cluster reaches 570/570.
+- Our mean is still a partial scan. Re-run the rebuild cell after the cluster reaches 570/570.
 """
     ),
 ]

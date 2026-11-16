@@ -3,6 +3,26 @@
 Forget 2022. This is the 2020 paper (ApJ 903, 126), quiet scan
 `1133149192`, 03:39:36–03:44:32 UT.
 
+Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging
+of his visibilities. Green is the kelvin stretch, which we ran on both
+his maps and ours.
+
+```mermaid
+flowchart TD
+  cal["Calibrator scan, 01:02 UT"] --> gains["Bandpass and gain solutions"]
+  gains --> ms["Solar visibilities, 03:39–03:44 UT<br/>CORRECTED_DATA already applied"]
+  ms --> his["His imaging: CASA 5.3 classic clean<br/>SuperUniform, Hogbom, 8000 steps<br/>570 half-second maps"]
+  ms --> ours["Our imaging: CASA 6.6 tclean<br/>same numbers; classic clean is gone<br/>half-second maps on disk"]
+  his --> sodot["Whole-Sun flux: shortest baselines<br/>+ Haslam 1982 sky at this pointing"]
+  ours --> sodot
+  sodot --> mean["Each map × Mohan F(ν) at 5σ<br/>then the time mean"]
+  mean --> fig4["Figure 4, million K"]
+```
+
+Picture: `figures/sharma2020/fig4_pipeline.png`. Rebuild with
+`python scripts/sharma2020_pipeline_diagram.py`. Not in this picture:
+P-AIRCARS, raw correlator files, the unpublished FEKO tile beam.
+
 ## What actually wrote the published images
 
 Taken from the last `imager::clean()` in the FITS HISTORY (CASA 5.3.0-143,

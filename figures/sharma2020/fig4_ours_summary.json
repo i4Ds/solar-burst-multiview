@@ -41,12 +41,12 @@
       188.3,
       185.5
     ],
-    "ours_n": 48,
+    "ours_n": 183,
     "ours_kind": "mean",
-    "ours_peak_mk": 1.115,
-    "ours_f_nu": 13.15,
+    "ours_peak_mk": 1.112,
+    "ours_f_nu": 13.19,
     "ours_beam_arcsec": [
-      128.1,
+      128.0,
       118.9
     ]
   },
@@ -58,10 +58,10 @@
       208.8,
       202.5
     ],
-    "ours_n": 1,
-    "ours_kind": "snapshot",
-    "ours_peak_mk": 0.636,
-    "ours_f_nu": 13.19,
+    "ours_n": 122,
+    "ours_kind": "mean",
+    "ours_peak_mk": 0.637,
+    "ours_f_nu": 12.91,
     "ours_beam_arcsec": [
       183.3,
       157.0
