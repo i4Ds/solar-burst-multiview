@@ -12,7 +12,7 @@ flowchart TD
   cal["Calibrator scan, 01:02 UT"] --> gains["Bandpass and gain solutions"]
   gains --> ms["Solar visibilities, 03:39–03:44 UT<br/>CORRECTED_DATA already applied"]
   ms --> his["His imaging: CASA 5.3 classic clean<br/>SuperUniform, Hogbom, 8000 steps<br/>570 half-second maps"]
-  ms --> ours["Our imaging: CASA 6.6 tclean<br/>same numbers; classic clean is gone<br/>half-second maps on disk"]
+  ms --> ours["Our imaging: CASA 6.6 tclean<br/>this installation does not include classic clean<br/>half-second maps on disk"]
   his --> sodot["Whole-Sun flux: shortest baselines<br/>+ Haslam 1982 sky at this pointing"]
   ours --> sodot
   sodot --> mean["Each map × Mohan F(ν) at 5σ<br/>then the time mean"]

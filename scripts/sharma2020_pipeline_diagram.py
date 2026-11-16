@@ -110,7 +110,7 @@ def main() -> int:
         4.95,
         4.7,
         1.4,
-        "CASA 6.6  tclean\n(same numbers; classic clean is gone)\nhalf-second maps on disk",
+        "CASA 6.6  tclean\n(this installation does not include classic clean)\nhalf-second maps on disk",
         C_OURS,
         size=9,
         weight="bold",
