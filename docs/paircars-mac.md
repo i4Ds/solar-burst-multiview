@@ -1,9 +1,10 @@
 # P-AIRCARS on an Apple Silicon Mac
 
 P-AIRCARS 3.0.7 calibrates and images MWA solar observations. Upstream
-supports Ubuntu 22.04/24.04 and CentOS 7, Python 3.10 only. There is no
-macOS arm64 wheel for `casatools`, and udocker's proot engine does not run
-under Rosetta. This install hides that: Colima runs an Ubuntu 22.04
+supports Ubuntu 22.04/24.04 and CentOS 7, Python 3.10 only. It pins
+`casatools` 6.6.0.20, which has no macOS arm64 wheel (later 6.6.x and 6.7.x
+do, see issue #6), it starts its tools through udocker, which is Linux only,
+and udocker's proot engine does not run under Rosetta. This install hides that: Colima runs an Ubuntu 22.04
 `linux/amd64` container, and a small patch set forces udocker onto fakechroot
 and PostgreSQL onto TCP.
 
