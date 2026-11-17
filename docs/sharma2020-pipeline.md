@@ -114,5 +114,6 @@ vs his 5.3 `clean`.
 - Re-imaging is not bit-exact with CASA 5.3.0-143 `clean`.
 - Uncalibrated 0.5 s visibilities are not on the NAS. A 4 s conversion of
   this scan cannot make the 570 frames. Cen A visibilities were never
-  downloaded (tables only). Request, not submitted:
+  downloaded (tables only). Archive jobs submitted 17 November 2026:
+  Sun 1124199 (0.5 s), Cen A 1124200 (4 s). See
   `docs/asvo-request-1133149192.md`.

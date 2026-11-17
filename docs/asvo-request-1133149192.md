@@ -1,8 +1,14 @@
 # ASVO request: 0.5 s visibilities for Sharma & Oberoi (2020) Figure 4
 
-Not submitted. Dry runs on 17 November 2026 accepted both parameter
-sets (`no_rfi` included). Conversion jobs, measurement sets, delivery
-acacia. Not gpubox files.
+**Submitted 17 November 2026.** Conversion jobs, measurement sets,
+delivery acacia. Not gpubox files.
+
+| Observation | ASVO job | Parameters | State (17 Nov) |
+|---|---|---|---|
+| Sun `1133149192` | **1124199** | 0.5 s, 160 kHz, `no_rfi` | Queued |
+| Cen A `1133139776` | **1124200** | 4 s, 160 kHz, `no_rfi` | Queued |
+
+Download starts when ASVO marks them Ready.
 
 Quiet scan `1133149192`, 2015-12-03 03:39:35–03:44:31 UT. Start from
 uncalibrated visibilities at 570 × 0.5 s, in the four Figure 4 bands,
@@ -41,7 +47,7 @@ Figure 4 channels are in the archived set. None is deleted.
 
 Rohit's calibrator for this scan is Cen A at 01:02 UT.
 
-## Proposed jobs (not yet submitted)
+## Jobs submitted
 
 ```text
 Sun:  output=ms,avg_time_res=0.5,avg_freq_res=160,flag_edge_width=80,no_rfi=true
@@ -61,8 +67,8 @@ CenA: output=ms,avg_time_res=4,  avg_freq_res=160,flag_edge_width=80,no_rfi=true
 
 ## Commands (key stays in `~/.config/mwa_asvo/api_key` on calculon)
 
-Dry runs 216525 (Sun) and 216526 (Cen A) printed the parameter JSON and
-did not submit. Do not run the submit lines until André says so.
+Submitted 17 November 2026 as ASVO jobs 1124199 (Sun) and 1124200 (Cen A).
+The submit lines below are the record of what was sent.
 
 ```bash
 # Sun, 0.5 s — dry run
