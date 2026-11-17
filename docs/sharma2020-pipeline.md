@@ -4,8 +4,8 @@ Sharma & Oberoi (2020, ApJ 903, 126), quiet scan `1133149192`,
 03:39:36–03:44:32 UT, bands 108, 162, 217 and 240 MHz.
 
 Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging
-of his visibilities. Green is the kelvin stretch, which we ran on both
-his maps and ours.
+of his visibilities. Green is the conversion to brightness temperature,
+applied to both his maps and ours.
 
 ```mermaid
 flowchart TD
@@ -48,7 +48,7 @@ python scripts/sharma2020_fits_history.py
 A previous remake used Briggs robust 0 and 2500 iterations. That is **not**
 what these FITS are.
 
-## Kelvin (paper §4)
+## Brightness temperature (paper §4)
 
 1. Whole-Sun flux `S_⊙` from Oberoi, Sharma & Rogers (2017) on the
    visibilities (short baselines Tile011/021/022/023, Haslam 1982 sky at

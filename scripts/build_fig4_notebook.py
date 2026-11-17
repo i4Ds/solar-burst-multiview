@@ -63,7 +63,7 @@ BANDS = ("108", "162", "217", "240")
     md("## 1. The pipeline"),
     md(
         """\
-Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging of his visibilities. Green is the kelvin stretch, which we ran on both his maps and ours.
+Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging of his visibilities. Green is the conversion to brightness temperature, applied to both his maps and ours.
 
 ```mermaid
 flowchart TD

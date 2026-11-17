@@ -118,7 +118,14 @@ def main() -> int:
     arrow(ax, (m[0] - 1.5, m[1] - m[3] / 2), (h[0], h[1] + h[3] / 2))
     arrow(ax, (m[0] + 1.5, m[1] - m[3] / 2), (o[0], o[1] + o[3] / 2))
 
-    ax.text(6.3, 3.85, "Kelvin  ·  we did this, on both sets of maps", fontsize=9, color="#555555", ha="center")
+    ax.text(
+        6.3,
+        3.85,
+        "Brightness temperature  ·  applied to both sets of maps",
+        fontsize=9,
+        color="#555555",
+        ha="center",
+    )
     s = box(
         ax,
         6.3,

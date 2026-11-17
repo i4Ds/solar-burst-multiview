@@ -454,7 +454,7 @@ def main() -> int:
         ours,
         vmax=None,
         name="fig4_his_vs_ours_shape.png",
-        subtitle="Each panel stretched to its own peak — look at shape, ignore the kelvin number.",
+        subtitle="Each panel scaled to its own peak, so that the spatial structure can be compared.",
     )
     fig, axes = plt.subplots(1, 4, figsize=(14.8, 3.9), constrained_layout=True)
     last = None

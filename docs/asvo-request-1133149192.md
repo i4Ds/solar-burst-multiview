@@ -98,8 +98,9 @@ Leave Rohit's tree untouched.
 
 1. Solve Cen A on those four pairs. Apply to the 0.5 s Sun set.
 2. Image 570 frames per band with the published `clean` settings
-   (CASA 6.6 `tclean` in this installation). Then the Oberoi / Mohan
-   kelvin stretch.
+   (CASA 6.6 `tclean` in this installation). Then convert each map to
+   brightness temperature with Oberoi et al. (2017) and Mohan & Oberoi
+   (2017).
 
 Rohit's `.cal.p` tables stay as a record of *his* solutions, not as
 input to the new measurement sets.

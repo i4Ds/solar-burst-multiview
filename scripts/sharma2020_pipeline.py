@@ -8,13 +8,14 @@ Two pieces, matching §4 of the paper:
    ``python scripts/sharma2020_fits_history.py``. Re-imaging with those
    numbers is ``scripts/calculon/sharma2020_casa_snap.py`` (no CASA here).
 
-2. Kelvin — Oberoi 2017 whole-Sun flux, then Mohan & Oberoi 2017 F(ν) on
-   **each** 0.5 s map (5σ radio Sun), then the time mean of T_B.
+2. Brightness temperature — Oberoi 2017 whole-Sun flux, then Mohan &
+   Oberoi 2017 F(ν) on **each** 0.5 s map (5σ radio Sun), then the time
+   mean of T_B.
 
     python scripts/sharma2020_pipeline.py
     python scripts/sharma2020_pipeline.py --reuse
 
-Does not use the 2022 factor 9.48. Does not overwrite fig4.png.
+Does not overwrite fig4.png.
 """
 
 from __future__ import annotations
@@ -74,7 +75,10 @@ def main(argv: list[str] | None = None) -> int:
     print("Imaging (from published FITS HISTORY, not re-run here):", file=sys.stderr)
     for k, v in CLEAN.items():
         print(f"  {k:14s} {v}", file=sys.stderr)
-    print("Kelvin: per-frame Mohan F(ν) at 5σ, then time mean. No 9.48.", file=sys.stderr)
+    print(
+        "Brightness temperature: per-frame Mohan F(ν) at 5σ, then time mean.",
+        file=sys.stderr,
+    )
 
     cfg = load(args.config)
     fitsdir = local_path(cfg, cfg["remote"]["paths"]["fits"])

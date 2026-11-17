@@ -7,13 +7,13 @@
       225.4,
       217.2
     ],
-    "ours_n": 129,
+    "ours_n": 570,
     "ours_kind": "mean",
-    "ours_peak_mk": 0.884,
-    "ours_f_nu": 10.64,
+    "ours_peak_mk": 0.889,
+    "ours_f_nu": 10.71,
     "ours_beam_arcsec": [
-      217.2,
-      205.2
+      217.1,
+      204.9
     ]
   },
   {
@@ -24,13 +24,13 @@
       198.0,
       185.5
     ],
-    "ours_n": 127,
+    "ours_n": 570,
     "ours_kind": "mean",
-    "ours_peak_mk": 1.017,
-    "ours_f_nu": 12.35,
+    "ours_peak_mk": 1.011,
+    "ours_f_nu": 12.48,
     "ours_beam_arcsec": [
-      160.0,
-      149.7
+      159.9,
+      149.6
     ]
   },
   {
@@ -41,12 +41,12 @@
       188.3,
       185.5
     ],
-    "ours_n": 183,
+    "ours_n": 570,
     "ours_kind": "mean",
-    "ours_peak_mk": 1.112,
-    "ours_f_nu": 13.19,
+    "ours_peak_mk": 1.104,
+    "ours_f_nu": 13.39,
     "ours_beam_arcsec": [
-      128.0,
+      127.9,
       118.9
     ]
   },
@@ -58,12 +58,12 @@
       208.8,
       202.5
     ],
-    "ours_n": 122,
+    "ours_n": 570,
     "ours_kind": "mean",
-    "ours_peak_mk": 0.637,
-    "ours_f_nu": 12.91,
+    "ours_peak_mk": 0.633,
+    "ours_f_nu": 13.2,
     "ours_beam_arcsec": [
-      183.3,
+      183.6,
       157.0
     ]
   }
