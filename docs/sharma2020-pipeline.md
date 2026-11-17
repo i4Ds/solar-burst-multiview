@@ -112,3 +112,6 @@ vs his 5.3 `clean`.
   featureless, so this should be close).
 - Per-band UV-range: not in these FITS.
 - Re-imaging is not bit-exact with CASA 5.3.0-143 `clean`.
+- Uncalibrated 0.5 s visibilities are not on the NAS. The October ASVO
+  Sun tar is 4 s. Cen A visibilities were never downloaded (tables only).
+  Request: `docs/asvo-request-1133149192.md`. Not submitted.
