@@ -18,6 +18,15 @@ one step at a time, so each intermediate product can be inspected. Started
 
 Native arm64 (no Rosetta) is tracked separately in issue #6.
 
+## Notebook
+
+`scripts/paircars-walkthrough/paircars_calibration_walkthrough.ipynb` follows the
+same steps: command per step, then cells that read the products with
+python-casacore and plot them. Run it in the `solar-burst-multiview` env
+(`jupyter lab`); it reads `~/Projects/P-AIRCARS-data` (override with
+`PAIRCARS_DATA`). Regenerate it with `make_notebook.py`. It is committed
+without outputs; an executed copy is in `P-AIRCARS-data/stepwise/`.
+
 ## Shell
 
 ```bash
