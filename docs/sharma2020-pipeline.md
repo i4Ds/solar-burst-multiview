@@ -1,7 +1,7 @@
 # Sharma & Oberoi 2020 Figure 4 pipeline
 
-Forget 2022. This is the 2020 paper (ApJ 903, 126), quiet scan
-`1133149192`, 03:39:36–03:44:32 UT.
+Sharma & Oberoi (2020, ApJ 903, 126), quiet scan `1133149192`,
+03:39:36–03:44:32 UT, bands 108, 162, 217 and 240 MHz.
 
 Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging
 of his visibilities. Green is the kelvin stretch, which we ran on both
@@ -21,7 +21,7 @@ flowchart TD
 
 Picture: `figures/sharma2020/fig4_pipeline.png`. Rebuild with
 `python scripts/sharma2020_pipeline_diagram.py`. Not in this picture:
-P-AIRCARS, raw correlator files, the unpublished FEKO tile beam.
+raw correlator files, the unpublished FEKO tile beam.
 
 ## What actually wrote the published images
 
@@ -112,6 +112,7 @@ vs his 5.3 `clean`.
   featureless, so this should be close).
 - Per-band UV-range: not in these FITS.
 - Re-imaging is not bit-exact with CASA 5.3.0-143 `clean`.
-- Uncalibrated 0.5 s visibilities are not on the NAS. The October ASVO
-  Sun tar is 4 s. Cen A visibilities were never downloaded (tables only).
-  Request: `docs/asvo-request-1133149192.md`. Not submitted.
+- Uncalibrated 0.5 s visibilities are not on the NAS. A 4 s conversion of
+  this scan cannot make the 570 frames. Cen A visibilities were never
+  downloaded (tables only). Request, not submitted:
+  `docs/asvo-request-1133149192.md`.
