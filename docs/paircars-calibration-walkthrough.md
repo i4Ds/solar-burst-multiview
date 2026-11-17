@@ -100,6 +100,14 @@ Result (run 2026-10-19, checked with python-casacore):
 - `FLAG`: Tile103 fully flagged (1.55 %), by `clipzeros`; nothing else.
 - `WEIGHT` = 1, and a `WEIGHT_SPECTRUM` column was added (`initweights`).
 
+**Correction (2026-11-17):** the target data are 2 s (30 timestamps), and
+the pipeline computes the quack from the *target* (`highest_freq_ms` from
+`target_mslist`, master_flow.py 874; `int(4.0 / 2) = 2`, line 926) and passes it
+to the calibrator split. `get_timeranges` then drops 3 timestamps at each end
+of the 11-timestamp calibrator scan, keeping 5. We ran with
+`--quack_timestamps 0` and kept all 11. To match the pipeline exactly, rerun
+A1 with `--quack_timestamps 2`.
+
 ## A2. Flag the calibrator
 
 Pipeline call (flows.py 352–375): `run_flag(..., datacolumn="data",
@@ -186,3 +194,27 @@ run-mwa-import-model \
 ```
 
 Result: _pending_.
+
+## Illustrations of all steps (2026-11-17)
+
+Scripts in `scripts/paircars-walkthrough/` (`fig_A34.py`, `fig_B.py`,
+`fig_C.py`, `fig_D.py`); figures in `P-AIRCARS-data/stepwise/plots/`.
+A3/A4 and B1/B2 are numpy illustrations on the real visibilities (point-source
+model of Pictor A, own StEFCal-type solve, numpy phase rotation), not
+P-AIRCARS products. B4, C4 and D2 use the products of the 29 Sep full run.
+
+Findings from the 29 Sep products:
+
+- B1/C1: the phase-centre move failed on all 6 MSs. The log prints "Moving
+  phasecenter to solarcenter has done successfully" unconditionally and then
+  "Total failure: 6" (results of `move_to_sun`). The Sun is 36.7′ from the
+  metafits phase centre (astropy `get_sun`, as in `sunpos_utils.py`); the
+  images keep `CRVAL1` = 4.966° (the old phase centre) and show the Sun at
+  the image centre.
+- B4: `.gcal` has 14 of 128 tiles flagged: Tile103 and 13 tiles more than
+  1 km from the array centre. `.bcal` has a 1–3 % slope across the coarse
+  channel and phases flat within ±5°.
+- C4: 40 % of the target data flagged = flagdata quack (4 s at each end,
+  flows.py 1788, on top of the 3 timestamps per end the split already dropped,
+  30 → 24) + exactly the 14 tiles without gain solutions.
+- D3: `pbcor_*` folders empty; the phase-shift correction found no images.
