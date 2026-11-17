@@ -90,17 +90,17 @@ ssh calculon 'cd ~/mwa && sbatch -M calc-cpu --time=23:59:00 --export=ALL,JOBID=
 ssh calculon 'cd ~/mwa && sbatch -M calc-cpu --time=23:59:00 --export=ALL,JOBID=<id>,OBSID=1133139776,KIND=ms,BYTES=<n> ~/mwa/asvo-download-retry.sbatch'
 ```
 
-## After delivery (not started)
+## After delivery
 
-Extract the eight Figure 4 coarse channels for the Sun and for Cen A.
-Leave Rohit's tree untouched.
-`scripts/calculon/extract-fig4-channels.sbatch`.
+Unattended chain on the calculon login node:
+`scripts/calculon/overnight/fig4_raw_chain.sh` (installed as
+`~/overnight/bin/fig4_raw_chain.sh`). It waits for the two download jobs,
+extracts the eight Figure 4 coarse channels, then runs P-AIRCARS on Cen A
+and the Sun. Status: `~/overnight/fig4_raw_chain.md`. Mail at each stage.
 
-1. Solve Cen A on those four pairs. Apply to the 0.5 s Sun set.
-2. Image 570 frames per band with the published `clean` settings
-   (CASA 6.6 `tclean` in this installation). Then convert each map to
-   brightness temperature with Oberoi et al. (2017) and Mohan & Oberoi
-   (2017).
+The first P-AIRCARS imaging is one map per coarse channel over the scan,
+and it keeps the calibrated measurement sets. Half-second frames (570 per
+band) are a second run once those solutions exist.
 
 Rohit's `.cal.p` tables stay as a record of *his* solutions, not as
 input to the new measurement sets.
