@@ -108,7 +108,7 @@ run-mwa-paircars "$SUND" \
   --target_metafits "$SUND/${SUN}.metafits" \
   --cal_datadir "$CALD" --cal_metafits "$CALD/${CAL}.metafits" \
   --workdir "$P/work/$TAG" --outdir "$P/out/$TAG" \
-  --do_forcereset_weightflag --keep_calibrated_ms \
+  --do_forcereset_weightflag --keep_calibrated_ms --no_selfcal \
   --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
   --cpu_frac 0.05 --mem_frac 0.05 \
   --cluster --partition cpu-daily --max_worker 4 --walltime "$WALL" \
