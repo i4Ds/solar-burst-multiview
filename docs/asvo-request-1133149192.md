@@ -3,12 +3,12 @@
 **Submitted 17 November 2026.** Conversion jobs, measurement sets,
 delivery acacia. Not gpubox files.
 
-| Observation | ASVO job | Parameters | State (17 Nov) |
-|---|---|---|---|
-| Sun `1133149192` | **1124199** | 0.5 s, 160 kHz, `no_rfi` | Queued |
-| Cen A `1133139776` | **1124200** | 4 s, 160 kHz, `no_rfi` | Queued |
+| Observation | ASVO job | Parameters | Size | State (17 Nov) |
+|---|---|---|---|---|
+| Sun `1133149192` | **1124199** | 0.5 s, 160 kHz, `no_rfi` | 50.9 GiB | Ready; downloading to the NAS on calculon |
+| Cen A `1133139776` | **1124200** | 4 s, 160 kHz, `no_rfi` | 2.4 GiB | Ready; downloading to the NAS on calculon |
 
-Download starts when ASVO marks them Ready.
+Destination: `/mnt/nas05/data02/MWA_data/data/mwa_data2/`. Not the laptop.
 
 Quiet scan `1133149192`, 2015-12-03 03:39:35–03:44:31 UT. Start from
 uncalibrated visibilities at 570 × 0.5 s, in the four Figure 4 bands,
