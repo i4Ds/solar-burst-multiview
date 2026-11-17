@@ -63,30 +63,30 @@ BANDS = ("108", "162", "217", "240")
     md("## 1. The pipeline"),
     md(
         """\
-Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging of his visibilities. Green is the conversion to brightness temperature, applied to both his maps and ours.
+Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber, dashed, is the planned start from uncalibrated visibilities through P-AIRCARS. Green is the conversion to brightness temperature.
 
 ```mermaid
 flowchart TD
-  cal["Calibrator scan, 01:02 UT"] --> gains["Bandpass and gain solutions"]
-  gains --> ms["Solar visibilities, 03:39–03:44 UT<br/>CORRECTED_DATA already applied"]
-  ms --> his["His imaging: CASA 5.3 classic clean<br/>SuperUniform, Hogbom, 8000 steps<br/>570 half-second maps"]
-  ms --> ours["Our imaging: CASA 6.6 tclean<br/>this installation does not include classic clean<br/>half-second maps on disk"]
-  his --> sodot["Whole-Sun flux: shortest baselines<br/>+ Haslam 1982 sky at this pointing"]
+  hisMS["His visibilities, CORRECTED_DATA"] --> his["CASA 5.3 classic clean<br/>570 half-second maps"]
+  hisMS --> ours["CASA 6.6 tclean of the same visibilities"]
+  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] -.-> pair["P-AIRCARS, planned<br/>solve Cen A, image four bands"]
+  his --> sodot["Whole-Sun flux + Haslam 1982 at this pointing"]
   ours --> sodot
-  sodot --> mean["Each map × Mohan F(ν) at 5σ<br/>then the time mean"]
-  mean --> fig4["Figure 4, million K"]
+  pair -.-> sodot
+  sodot --> mean["Each map × Mohan F(ν) at 5σ, then the time mean"]
+  mean --> fig4["Figure 4"]
 
-  style cal fill:#e8e4dc
-  style gains fill:#e8e4dc
-  style ms fill:#e8e4dc
+  style hisMS fill:#e8e4dc
   style his fill:#e8e4dc
   style ours fill:#d6e6f5
+  style raw fill:#f3e2c4,stroke-dasharray: 5 5
+  style pair fill:#f3e2c4,stroke-dasharray: 5 5
   style sodot fill:#dcecc8
   style mean fill:#dcecc8
   style fig4 fill:#dcecc8
 ```
 
-Not in this picture: P-AIRCARS, raw correlator files, the unpublished FEKO tile beam.
+Dashed boxes are planned and have not been run. The unpublished FEKO tile beam is not shown.
 """
     ),
     code(

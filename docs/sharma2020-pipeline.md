@@ -3,25 +3,26 @@
 Sharma & Oberoi (2020, ApJ 903, 126), quiet scan `1133149192`,
 03:39:36–03:44:32 UT, bands 108, 162, 217 and 240 MHz.
 
-Grey is Rohit, 2015. We did not repeat the calibrator. Blue is our imaging
-of his visibilities. Green is the conversion to brightness temperature,
-applied to both his maps and ours.
+Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber, dashed,
+is the planned start from uncalibrated visibilities: archive conversion,
+then P-AIRCARS on Cen A and the Sun. Green is the conversion to brightness
+temperature.
 
 ```mermaid
 flowchart TD
-  cal["Calibrator scan, 01:02 UT"] --> gains["Bandpass and gain solutions"]
-  gains --> ms["Solar visibilities, 03:39–03:44 UT<br/>CORRECTED_DATA already applied"]
-  ms --> his["His imaging: CASA 5.3 classic clean<br/>SuperUniform, Hogbom, 8000 steps<br/>570 half-second maps"]
-  ms --> ours["Our imaging: CASA 6.6 tclean<br/>this installation does not include classic clean<br/>half-second maps on disk"]
-  his --> sodot["Whole-Sun flux: shortest baselines<br/>+ Haslam 1982 sky at this pointing"]
+  hisMS["His visibilities, CORRECTED_DATA"] --> his["CASA 5.3 classic clean<br/>570 half-second maps"]
+  hisMS --> ours["CASA 6.6 tclean of the same visibilities"]
+  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] -.-> pair["P-AIRCARS, planned<br/>solve Cen A, image four bands"]
+  his --> sodot["Whole-Sun flux + Haslam 1982 at this pointing"]
   ours --> sodot
-  sodot --> mean["Each map × Mohan F(ν) at 5σ<br/>then the time mean"]
-  mean --> fig4["Figure 4, million K"]
+  pair -.-> sodot
+  sodot --> mean["Each map × Mohan F(ν) at 5σ, then the time mean"]
+  mean --> fig4["Figure 4"]
 ```
 
 Picture: `figures/sharma2020/fig4_pipeline.png`. Rebuild with
-`python scripts/sharma2020_pipeline_diagram.py`. Not in this picture:
-raw correlator files, the unpublished FEKO tile beam.
+`python scripts/sharma2020_pipeline_diagram.py`. Dashed boxes are planned
+and have not been run. The unpublished FEKO tile beam is not shown.
 
 ## What actually wrote the published images
 
