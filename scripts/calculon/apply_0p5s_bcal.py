@@ -16,7 +16,7 @@ from pathlib import Path
 
 import numpy as np
 from casatasks import applycal, mstransform
-from casatools import msmetadata
+from casatools import msmetadata, table as casa_table
 
 PAIRS = {
     84: "84-85",
@@ -62,6 +62,32 @@ def spw_for(ms: str, ch: int) -> str:
     return f"0:{min(idx)}~{max(idx)}"
 
 
+def inspect(ms: str) -> None:
+    tb = casa_table()
+    tb.open(ms)
+    cols = sorted(tb.colnames())
+    print("columns", cols, flush=True)
+    if "DATA" in cols and "CORRECTED_DATA" in cols:
+        data = tb.getcol("DATA", 0, 64)
+        corr = tb.getcol("CORRECTED_DATA", 0, 64)
+        d = np.abs(data)
+        c = np.abs(corr)
+        print(
+            f"|DATA| median={float(np.nanmedian(d)):.4g}  "
+            f"|CORRECTED_DATA| median={float(np.nanmedian(c)):.4g}  "
+            f"median |C|/|D|={float(np.nanmedian(c / np.maximum(d, 1e-12))):.6g}",
+            flush=True,
+        )
+        print(
+            "DATA equals CORRECTED_DATA",
+            bool(np.allclose(data, corr, equal_nan=True)),
+            flush=True,
+        )
+    elif "CORRECTED_DATA" not in cols:
+        print("no CORRECTED_DATA column", flush=True)
+    tb.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("channel", type=int, choices=sorted(PAIRS))
@@ -100,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         calwt=[False],
         flagbackup=False,
     )
+    inspect(str(dest))
     print(f"APPLY_0P5S_OK ch{ch}", flush=True)
     return 0
 
