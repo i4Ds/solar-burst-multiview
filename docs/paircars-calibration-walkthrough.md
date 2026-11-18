@@ -227,3 +227,24 @@ Findings from the 29 Sep products:
   flows.py 1788, on top of the 3 timestamps per end the split already dropped,
   30 → 24) + exactly the 14 tiles without gain solutions.
 - D3: `pbcor_*` folders empty; the phase-shift correction found no images.
+
+## A3 failure: diagnosis so far (2026-11-18)
+
+- Why the 29 Sep log has no reason: without `--verbose`, `run_hyperdrive`
+  (`utils/udocker_utils.py` 1186–1194) runs udocker with stdout and stderr
+  sent to `/dev/null`.
+- Ruled out, too few sources: hyperdrive errors if fewer than `-n` sources
+  survive the veto (`src/srclist/veto.rs`). The cutoff P-AIRCARS passes is
+  `1.22 λ/D` with D = 4 m (MS `DISH_DIAMETER`) = 36.32° at 144.235 MHz; GGSM
+  has 66,264 of its 386,409 sources within 36.32° of Pictor A.
+- Ruled out, no GPU: the container's hyperdrive was built with
+  `cargo install mwa_hyperdrive --locked` (image history), default features,
+  no CUDA library in the binary, so it runs on the CPU without `--cpu`.
+- Argument units match hyperdrive (`--middle-freq` MHz, `--freq-res` kHz,
+  `--time-res` s; `src/cli/vis_utils/simulate/mod.rs`).
+- Side finding, not the failure: P-AIRCARS passes no `--time-offset`, so the
+  model always starts at the obsid (07:20:40). With the pipeline's quack
+  (5 of 11 calibrator timestamps kept) the model timestamps would not match the
+  data timestamps; `putcol` copies them by row without checking.
+- Next: run hyperdrive directly in the udocker container with the exact
+  arguments, output to `/data/stepwise/a3_hyperdrive_direct.log`.
