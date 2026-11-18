@@ -1,12 +1,14 @@
 # ASVO request: 0.5 s visibilities for Sharma & Oberoi (2020) Figure 4
 
-**Submitted 17 November 2026.** Conversion jobs, measurement sets,
-delivery acacia. Not gpubox files.
+**Submitted 17 November 2026** (160 kHz) and **18 November 2026** (40 kHz).
+Conversion jobs, measurement sets, delivery acacia. Not gpubox files.
 
-| Observation | ASVO job | Parameters | Size | State (17 Nov) |
+| Observation | ASVO job | Parameters | Size | State |
 |---|---|---|---|---|
-| Sun `1133149192` | **1124199** | 0.5 s, 160 kHz, `no_rfi` | 50.9 GiB | Ready; downloading to the NAS on calculon |
-| Cen A `1133139776` | **1124200** | 4 s, 160 kHz, `no_rfi` | 2.4 GiB | Ready; downloading to the NAS on calculon |
+| Sun `1133149192` | **1124199** | 0.5 s, 160 kHz, `no_rfi` | 50.9 GiB | Ready (17 Nov) |
+| Cen A `1133139776` | **1124200** | 4 s, 160 kHz, `no_rfi` | 2.4 GiB | Ready (17 Nov) |
+| Sun `1133149192` | **1124500** | 0.5 s, **40 kHz**, `no_rfi` | ~4× the 160 kHz tar | Submitted 18 Nov |
+| Cen A `1133139776` | **1124501** | 4 s, **40 kHz**, `no_rfi` | ~4× the 160 kHz tar | Submitted 18 Nov |
 
 Destination: `/mnt/nas05/data02/MWA_data/data/mwa_data2/`. Not the laptop.
 
@@ -68,7 +70,16 @@ CenA: output=ms,avg_time_res=4,  avg_freq_res=160,flag_edge_width=80,no_rfi=true
 ## Commands (key stays in `~/.config/mwa_asvo/api_key` on calculon)
 
 Submitted 17 November 2026 as ASVO jobs 1124199 (Sun) and 1124200 (Cen A).
-The submit lines below are the record of what was sent.
+The 160 kHz choice was an agent default, not a match to Rohit's 40 kHz
+sets. Native channelization is the 18 November request (jobs 1124500 and
+1124501):
+
+```text
+Sun:  output=ms,avg_time_res=0.5,avg_freq_res=40,flag_edge_width=80,no_rfi=true
+CenA: output=ms,avg_time_res=4,  avg_freq_res=40,flag_edge_width=80,no_rfi=true
+```
+
+The submit lines below are the record of the 17 November 160 kHz jobs.
 
 ```bash
 # Sun, 0.5 s — dry run
