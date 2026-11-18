@@ -98,9 +98,11 @@ Unattended chain on the calculon login node:
 extracts the eight Figure 4 coarse channels, then runs P-AIRCARS on Cen A
 and the Sun. Status: `~/overnight/fig4_raw_chain.md`. Mail at each stage.
 
-The first P-AIRCARS imaging is one map per coarse channel over the scan,
-and it keeps the calibrated measurement sets. Half-second frames (570 per
-band) are a second run once those solutions exist.
+P-AIRCARS here is the calibration step: Cen A solutions applied to the
+Sun, keeping the calibrated measurement sets. Those visibilities should
+match Rohit's `CORRECTED_DATA`. CASA SuperUniform imaging follows, as
+for his measurement sets. Half-second frames (570 per band) are a second
+CASA run once those solutions exist. P-AIRCARS does not replace CASA.
 
 Rohit's `.cal.p` tables stay as a record of *his* solutions, not as
 input to the new measurement sets.

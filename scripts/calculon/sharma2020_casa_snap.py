@@ -102,7 +102,7 @@ def image_clean(ms: str, prefix: str, timerange: str, niter: int) -> None:
 
 
 def image_tclean(ms: str, prefix: str, timerange: str, niter: int) -> None:
-    """Fallback if this CASA build dropped the classic clean task."""
+    """Fallback when this CASA installation does not provide classic clean."""
     tclean(
         vis=ms,
         imagename=prefix,

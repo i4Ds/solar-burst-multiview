@@ -63,30 +63,35 @@ BANDS = ("108", "162", "217", "240")
     md("## 1. The pipeline"),
     md(
         """\
-Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber, dashed, is the planned start from uncalibrated visibilities through P-AIRCARS. Green is the conversion to brightness temperature.
+Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber is the start from uncalibrated archive visibilities: P-AIRCARS calibrates them to `CORRECTED_DATA`, which should match Rohit's, then CASA images them with the same SuperUniform settings as the remake. Green is the conversion to brightness temperature.
 
 ```mermaid
 flowchart TD
+  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] --> pair["P-AIRCARS calibration<br/>Cen A solutions applied to the Sun"]
+  pair --> rawMS["CORRECTED_DATA"]
   hisMS["His visibilities, CORRECTED_DATA"] --> his["CASA 5.3 classic clean<br/>570 half-second maps"]
   hisMS --> ours["CASA 6.6 tclean of the same visibilities"]
-  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] -.-> pair["P-AIRCARS, planned<br/>solve Cen A, image four bands"]
+  rawMS -.-> oursRaw["CASA 6.6 tclean<br/>same SuperUniform settings"]
+  pair -.->|should match| hisMS
   his --> sodot["Whole-Sun flux + Haslam 1982 at this pointing"]
   ours --> sodot
-  pair -.-> sodot
+  oursRaw -.-> sodot
   sodot --> mean["Each map × Mohan F(ν) at 5σ, then the time mean"]
   mean --> fig4["Figure 4"]
 
   style hisMS fill:#e8e4dc
   style his fill:#e8e4dc
   style ours fill:#d6e6f5
-  style raw fill:#f3e2c4,stroke-dasharray: 5 5
-  style pair fill:#f3e2c4,stroke-dasharray: 5 5
+  style raw fill:#f3e2c4
+  style pair fill:#f3e2c4
+  style rawMS fill:#f3e2c4
+  style oursRaw fill:#f3e2c4,stroke-dasharray: 5 5
   style sodot fill:#dcecc8
   style mean fill:#dcecc8
   style fig4 fill:#dcecc8
 ```
 
-Dashed boxes are planned and have not been run. The unpublished FEKO tile beam is not shown.
+P-AIRCARS writes `CORRECTED_DATA`; it does not replace CASA imaging. Dashed CASA is that path, not yet in the comparison figures. The unpublished FEKO tile beam is not shown.
 """
     ),
     code(

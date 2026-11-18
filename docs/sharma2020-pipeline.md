@@ -3,26 +3,31 @@
 Sharma & Oberoi (2020, ApJ 903, 126), quiet scan `1133149192`,
 03:39:36–03:44:32 UT, bands 108, 162, 217 and 240 MHz.
 
-Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber, dashed,
-is the planned start from uncalibrated visibilities: archive conversion,
-then P-AIRCARS on Cen A and the Sun. Green is the conversion to brightness
-temperature.
+Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber is the
+start from uncalibrated archive visibilities. P-AIRCARS is the calibration
+step: it should write the same `CORRECTED_DATA` as Rohit's measurement sets.
+CASA SuperUniform imaging then follows, as in the remake. Green is the
+conversion to brightness temperature. P-AIRCARS does not replace CASA.
 
 ```mermaid
 flowchart TD
+  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] --> pair["P-AIRCARS calibration<br/>Cen A solutions applied to the Sun"]
+  pair --> rawMS["CORRECTED_DATA"]
   hisMS["His visibilities, CORRECTED_DATA"] --> his["CASA 5.3 classic clean<br/>570 half-second maps"]
   hisMS --> ours["CASA 6.6 tclean of the same visibilities"]
-  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] -.-> pair["P-AIRCARS, planned<br/>solve Cen A, image four bands"]
+  rawMS -.-> oursRaw["CASA 6.6 tclean<br/>same SuperUniform settings"]
+  pair -.->|should match| hisMS
   his --> sodot["Whole-Sun flux + Haslam 1982 at this pointing"]
   ours --> sodot
-  pair -.-> sodot
+  oursRaw -.-> sodot
   sodot --> mean["Each map × Mohan F(ν) at 5σ, then the time mean"]
   mean --> fig4["Figure 4"]
 ```
 
 Picture: `figures/sharma2020/fig4_pipeline.png`. Rebuild with
-`python scripts/sharma2020_pipeline_diagram.py`. Dashed boxes are planned
-and have not been run. The unpublished FEKO tile beam is not shown.
+`python scripts/sharma2020_pipeline_diagram.py`. Dashed CASA is the
+uncalibrated path, not yet in the comparison figures. The unpublished
+FEKO tile beam is not shown.
 
 ## What actually wrote the published images
 
@@ -113,8 +118,9 @@ vs his 5.3 `clean`.
   featureless, so this should be close).
 - Per-band UV-range: not in these FITS.
 - Re-imaging is not bit-exact with CASA 5.3.0-143 `clean`.
-- Uncalibrated 0.5 s visibilities are not on the NAS. A 4 s conversion of
-  this scan cannot make the 570 frames. Cen A visibilities were never
-  downloaded (tables only). Archive jobs submitted 17 November 2026:
-  Sun 1124199 (0.5 s), Cen A 1124200 (4 s). See
-  `docs/asvo-request-1133149192.md`.
+- Uncalibrated 0.5 s Sun and 4 s Cen A visibilities are on the NAS
+  (ASVO 1124199 and 1124200). P-AIRCARS wrote calibrated measurement sets
+  for the eight Figure 4 coarse channels. Its own imaging directory is
+  empty (timerange sat outside the data). CASA SuperUniform of those
+  visibilities is the imaging step, same as the remake of Rohit's
+  `CORRECTED_DATA`. See `docs/asvo-request-1133149192.md`.
