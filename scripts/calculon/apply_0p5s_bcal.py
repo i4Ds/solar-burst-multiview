@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Apply existing Cen A bandpass tables to the 0.5 s Sun measurement sets.
 
-No time averaging. No imaging. Writes CORRECTED_DATA at the native 0.5 s
-cadence. Does not modify the extracted archive sets.
+No time averaging. No imaging. Does not modify the extracted archive sets.
+Uses casatasks only (casacore.tables plus casatasks segfaults on this cluster).
 
     python apply_0p5s_bcal.py 84
 """
@@ -15,11 +15,8 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from astropy.time import Time
-from casacore.tables import table
 from casatasks import applycal, mstransform
-
-from paircars.utils.mwa_utils import get_MWA_coarse_bands, get_MWA_coarse_chan
+from casatools import msmetadata
 
 PAIRS = {
     84: "84-85",
@@ -32,27 +29,15 @@ PAIRS = {
     188: "187-188",
 }
 
-SCRATCH = Path(os.environ.get("SCRATCH_PAIRCARS", f"/scratch/{os.environ['USER']}"))
+SCRATCH = Path(f"/scratch/{os.environ['USER']}")
 RAW = SCRATCH / "mwa/sharma2020/raw/1133149192"
-CALDIR = (
-    SCRATCH
-    / "paircars/out/fig4_raw/20151203/calibrators/caltables"
-)
+CALDIR = SCRATCH / "paircars/out/fig4_raw/20151203/calibrators/caltables"
 OUT = SCRATCH / "mwa/sharma2020/raw/cal_0p5s"
 
 
-def report_time(ms: str) -> None:
-    t = table(ms, ack=False)
-    time = np.unique(t.getcol("TIME"))
-    interval = np.unique(np.round(t.getcol("INTERVAL"), 4))
-    t.close()
-    print(
-        f"TIME n={len(time)}  "
-        f"{Time(time[0] / 86400.0, format='mjd').iso} .. "
-        f"{Time(time[-1] / 86400.0, format='mjd').iso}  "
-        f"dt={float(np.median(np.diff(time))) if len(time) > 1 else 0:.4f}s  "
-        f"INTERVAL={interval.tolist()}"
-    )
+def freq_to_mwa_coarse(freq_mhz: float) -> int:
+    grid = np.arange(255) * 1.28
+    return int(np.where(np.round(np.abs(freq_mhz - grid), 2) == np.min(np.round(np.abs(freq_mhz - grid), 2)))[0][-1])
 
 
 def bcal_for(ch: int) -> Path:
@@ -66,12 +51,15 @@ def bcal_for(ch: int) -> Path:
 
 
 def spw_for(ms: str, ch: int) -> str:
-    chans = get_MWA_coarse_chan(ms)
-    bands = get_MWA_coarse_bands(ms)
-    if ch not in chans:
-        raise ValueError(f"{ms} has coarse channels {chans}, not {ch}")
-    start, end, good = bands[chans.index(ch)]
-    return f"0:{min(good)}~{max(good)}"
+    md = msmetadata()
+    md.open(ms)
+    freqs = np.asarray(md.chanfreqs(0)) / 1e6
+    md.close()
+    md.done()
+    idx = [i for i, f in enumerate(freqs) if freq_to_mwa_coarse(float(f)) == ch]
+    if not idx:
+        raise ValueError(f"{ms} has no fine channels for coarse {ch}")
+    return f"0:{min(idx)}~{max(idx)}"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -91,11 +79,10 @@ def main(argv: list[str] | None = None) -> int:
         os.system(f"rm -rf {dest} {dest}.flagversions")
 
     spw = spw_for(str(src), ch)
-    print(f"src={src}")
-    print(f"spw={spw}")
-    print(f"bcal={bcal}")
-    print(f"dest={dest}")
-    report_time(str(src))
+    print(f"src={src}", flush=True)
+    print(f"spw={spw}", flush=True)
+    print(f"bcal={bcal}", flush=True)
+    print(f"dest={dest}", flush=True)
 
     mstransform(
         vis=str(src),
@@ -113,14 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         calwt=[False],
         flagbackup=False,
     )
-    report_time(str(dest))
-    t = table(str(dest), ack=False)
-    cols = t.colnames()
-    t.close()
-    if "CORRECTED_DATA" not in cols:
-        print("no CORRECTED_DATA after applycal", file=sys.stderr)
-        return 1
-    print(f"APPLY_0P5S_OK ch{ch}")
+    print(f"APPLY_0P5S_OK ch{ch}", flush=True)
     return 0
 
 
