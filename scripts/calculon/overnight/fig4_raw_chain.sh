@@ -18,7 +18,9 @@ P=/scratch/$USER/paircars
 SUN=1133149192; SUNJOB=1124199; SUNBYTES=54632642560; SUNDL=216541
 CAL=1133139776; CALJOB=1124200; CALBYTES=2540001280; CALDL=216542
 CHANS="084 085 125 126 169 170 187 188"
-TRANGE="2015/12/03/03:39:37~2015/12/03/03:44:31"
+# Must sit inside the unflagged data (03:39:41–03:44:25). A range that
+# starts at 03:39:37 produced an empty image directory.
+TRANGE="2015/12/03/03:39:44~2015/12/03/03:44:24"
 TRES=280
 WALL=23:00:00
 ST=$HOME/overnight/fig4_raw_chain.md
@@ -108,7 +110,7 @@ run-mwa-paircars "$SUND" \
   --target_metafits "$SUND/${SUN}.metafits" \
   --cal_datadir "$CALD" --cal_metafits "$CALD/${CAL}.metafits" \
   --workdir "$P/work/$TAG" --outdir "$P/out/$TAG" \
-  --do_forcereset_weightflag --keep_calibrated_ms --no_selfcal \
+  --do_forcereset_weightflag --keep_calibrated_ms --no_selfcal --no_apply_selfcal \
   --timerange "$TRANGE" --image_timeres "$TRES" --pol I --no_polcal \
   --cpu_frac 0.05 --mem_frac 0.05 \
   --cluster --partition cpu-daily --max_worker 4 --walltime "$WALL" \
