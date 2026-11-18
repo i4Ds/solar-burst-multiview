@@ -92,17 +92,19 @@ ssh calculon 'cd ~/mwa && sbatch -M calc-cpu --time=23:59:00 --export=ALL,JOBID=
 
 ## After delivery
 
-Unattended chain on the calculon login node:
-`scripts/calculon/overnight/fig4_raw_chain.sh` (installed as
-`~/overnight/bin/fig4_raw_chain.sh`). It waits for the two download jobs,
-extracts the eight Figure 4 coarse channels, then runs P-AIRCARS on Cen A
-and the Sun. Status: `~/overnight/fig4_raw_chain.md`. Mail at each stage.
+The extracts sit under `/scratch/$USER/mwa/sharma2020/raw/`. Calibration
+is CASA `applycal` of Rohit's Cen A bandpass tables
+(`1133139776-%b*.cal.p` on the NAS), with `applymode=calonly` and
+`calwt=False`, as in his `applycal.last`. Those tables are B Jones with
+amplitude identically 1. P-AIRCARS is not used.
 
-P-AIRCARS here is the calibration step: Cen A solutions applied to the
-Sun, keeping the calibrated measurement sets. Those visibilities should
-match Rohit's `CORRECTED_DATA`. CASA SuperUniform imaging follows, as
-for his measurement sets. Half-second frames (570 per band) are a second
-CASA run once those solutions exist. P-AIRCARS does not replace CASA.
+```bash
+scp scripts/calculon/apply_0p5s_rohit_cal.py \
+    scripts/calculon/sharma2020-apply-0p5s-rohit.sbatch \
+    calculon:~/mwa/sharma2020/
+sbatch -M calc-cpu ~/mwa/sharma2020/sharma2020-apply-0p5s-rohit.sbatch
+```
 
-Rohit's `.cal.p` tables stay as a record of *his* solutions, not as
-input to the new measurement sets.
+Products: `/scratch/$USER/mwa/sharma2020/raw/cal_0p5s_casa/`. A 0.5 s
+SuperUniform snapshot of the 108 MHz pair versus Rohit is
+`scripts/calculon/compare_0p5s_snap.py`.

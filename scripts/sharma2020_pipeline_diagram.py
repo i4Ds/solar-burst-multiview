@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Pipeline diagram for Sharma 2020 Figure 4.
 
-P-AIRCARS is the calibration step from uncalibrated archive visibilities.
-It should write the same CORRECTED_DATA as Rohit's measurement sets.
-CASA imaging follows on every path; P-AIRCARS does not replace it.
+Calibration from uncalibrated archive visibilities is CASA applycal of
+Rohit's Cen A bandpass tables, the same step as in his applycal.last.
+P-AIRCARS is not on this path.
 
     python scripts/sharma2020_pipeline_diagram.py
 """
@@ -117,7 +117,7 @@ def main() -> int:
         8.55,
         4.55,
         1.45,
-        "P-AIRCARS calibration\nsolve Cen A, apply to the Sun\nwrites CORRECTED_DATA",
+        "CASA applycal of his Cen A\nbandpass  (B Jones, |g| = 1)\nwrites CORRECTED_DATA",
         C_PLAN,
         size=8.5,
         weight="bold",
@@ -237,9 +237,9 @@ def main() -> int:
     ax.text(
         7.7,
         0.28,
-        "P-AIRCARS writes CORRECTED_DATA; it does not replace CASA imaging. "
-        "Dashed CASA is that path, not yet in the comparison figures. "
-        "The unpublished FEKO tile beam is not shown.",
+        "Calibration is CASA applycal of Rohit's Cen A bandpass tables. "
+        "P-AIRCARS is not used. Dashed CASA is that path, not yet in the "
+        "comparison figures. The unpublished FEKO tile beam is not shown.",
         fontsize=8,
         color="#555555",
         ha="center",

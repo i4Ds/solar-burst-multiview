@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Apply existing Cen A bandpass tables to the 0.5 s Sun measurement sets.
+"""Deprecated: P-AIRCARS bandpass path. Do not use for Figure 4.
 
-No time averaging. No imaging. Does not modify the extracted archive sets.
-Uses casatasks only (casacore.tables plus casatasks segfaults on this cluster).
+The pipeline applies Rohit's CASA ``.cal.p`` tables instead:
+``apply_0p5s_rohit_cal.py``. Kept only so old cluster jobs still resolve.
 
     python apply_0p5s_bcal.py 84
 """

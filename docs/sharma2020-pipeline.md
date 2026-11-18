@@ -4,14 +4,16 @@ Sharma & Oberoi (2020, ApJ 903, 126), quiet scan `1133149192`,
 03:39:36–03:44:32 UT, bands 108, 162, 217 and 240 MHz.
 
 Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber is the
-start from uncalibrated archive visibilities. P-AIRCARS is the calibration
-step: it should write the same `CORRECTED_DATA` as Rohit's measurement sets.
-CASA SuperUniform imaging then follows, as in the remake. Green is the
-conversion to brightness temperature. P-AIRCARS does not replace CASA.
+start from uncalibrated archive visibilities. Calibration is CASA
+`applycal` of his Cen A bandpass tables (`1133139776-%b*.cal.p`), with
+`applymode=calonly` and `calwt=False`, as in his `applycal.last`. Those
+tables are B Jones with amplitude identically 1. CASA SuperUniform
+imaging then follows. Green is the conversion to brightness temperature.
+P-AIRCARS is not on this path.
 
 ```mermaid
 flowchart TD
-  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] --> pair["P-AIRCARS calibration<br/>Cen A solutions applied to the Sun"]
+  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] --> pair["CASA applycal of his Cen A bandpass"]
   pair --> rawMS["CORRECTED_DATA"]
   hisMS["His visibilities, CORRECTED_DATA"] --> his["CASA 5.3 classic clean<br/>570 half-second maps"]
   hisMS --> ours["CASA 6.6 tclean of the same visibilities"]
@@ -119,8 +121,6 @@ vs his 5.3 `clean`.
 - Per-band UV-range: not in these FITS.
 - Re-imaging is not bit-exact with CASA 5.3.0-143 `clean`.
 - Uncalibrated 0.5 s Sun and 4 s Cen A visibilities are on the NAS
-  (ASVO 1124199 and 1124200). P-AIRCARS wrote calibrated measurement sets
-  for the eight Figure 4 coarse channels. Its own imaging directory is
-  empty (timerange sat outside the data). CASA SuperUniform of those
-  visibilities is the imaging step, same as the remake of Rohit's
-  `CORRECTED_DATA`. See `docs/asvo-request-1133149192.md`.
+  (ASVO 1124199 and 1124200). Calibration of those extracts is CASA
+  `applycal` of Rohit's Cen A `.cal.p` tables, not P-AIRCARS. See
+  `docs/asvo-request-1133149192.md`.

@@ -63,11 +63,11 @@ BANDS = ("108", "162", "217", "240")
     md("## 1. The pipeline"),
     md(
         """\
-Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber is the start from uncalibrated archive visibilities: P-AIRCARS calibrates them to `CORRECTED_DATA`, which should match Rohit's, then CASA images them with the same SuperUniform settings as the remake. Green is the conversion to brightness temperature.
+Grey is Rohit, 2015. Blue is our remake of his visibilities. Amber is the start from uncalibrated archive visibilities: CASA `applycal` of his Cen A bandpass tables writes `CORRECTED_DATA`, which should match Rohit's, then CASA images them with the same SuperUniform settings as the remake. Green is the conversion to brightness temperature. P-AIRCARS is not on this path.
 
 ```mermaid
 flowchart TD
-  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] --> pair["P-AIRCARS calibration<br/>Cen A solutions applied to the Sun"]
+  raw["Uncalibrated visibilities<br/>Sun 0.5 s, Cen A 4 s"] --> pair["CASA applycal of his Cen A bandpass"]
   pair --> rawMS["CORRECTED_DATA"]
   hisMS["His visibilities, CORRECTED_DATA"] --> his["CASA 5.3 classic clean<br/>570 half-second maps"]
   hisMS --> ours["CASA 6.6 tclean of the same visibilities"]
@@ -91,7 +91,7 @@ flowchart TD
   style fig4 fill:#dcecc8
 ```
 
-P-AIRCARS writes `CORRECTED_DATA`; it does not replace CASA imaging. Dashed CASA is that path, not yet in the comparison figures. The unpublished FEKO tile beam is not shown.
+Calibration is CASA applycal of Rohit's Cen A bandpass tables. P-AIRCARS is not used. Dashed CASA is that path, not yet in the comparison figures. The unpublished FEKO tile beam is not shown.
 """
     ),
     code(
