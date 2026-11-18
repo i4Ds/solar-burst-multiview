@@ -9,6 +9,7 @@ Re-run after more frames land in data/quiet2015/paper_casa_su/.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -432,9 +433,61 @@ def write_summary(his: dict, ours: dict) -> None:
     SUMMARY.write_text(json.dumps(rows, indent=2) + "\n")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(
+        "--ours-dir",
+        type=Path,
+        default=None,
+        help="FITS frames for the bottom row (default: remake of his visibilities)",
+    )
+    p.add_argument(
+        "--flux-dir",
+        type=Path,
+        default=None,
+        help="Oberoi S_odot JSON directory (default: paper_flux from his MS)",
+    )
+    p.add_argument("--cache", type=Path, default=None)
+    p.add_argument(
+        "--tag",
+        default="",
+        help="If set, write fig4_his_vs_<tag>.png and fig4_his_vs_<tag>_shape.png only",
+    )
+    args = p.parse_args(argv)
+    global OURS_DIR, FLUX_DIR, CACHE
+    if args.ours_dir is not None:
+        OURS_DIR = args.ours_dir
+    if args.flux_dir is not None:
+        FLUX_DIR = args.flux_dir
+    if args.cache is not None:
+        CACHE = args.cache
+
     his = load_his()
     ours = load_ours()
+    if args.tag:
+        two_row(
+            his,
+            ours,
+            vmax=VMAX,
+            name=f"fig4_his_vs_{args.tag}.png",
+            subtitle=(
+                "Same colour scale as the paper (0–1.7 million K). "
+                "Top = his 570-frame mean. Bottom = archive visibilities, "
+                "CASA applycal of his Cen A bandpass, then the same SuperUniform mean."
+            ),
+        )
+        two_row(
+            his,
+            ours,
+            vmax=None,
+            name=f"fig4_his_vs_{args.tag}_shape.png",
+            subtitle=(
+                "Each panel scaled to its own peak, so that the spatial structure "
+                "can be compared. Bottom row starts from the archive visibilities."
+            ),
+        )
+        return 0
+
     write_summary(his, ours)
     panel_his_row(
         his,
