@@ -15,11 +15,11 @@ import re
 import sys
 from pathlib import Path
 
+import numpy as np
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 from astropy.wcs import FITSFixedWarning
 from matplotlib.patches import Circle, Ellipse
 import warnings
@@ -63,8 +63,16 @@ def s_odot_jy(lab: str) -> float:
     return float(rec["s_odot_jy"])
 
 
+def _first_live_frame(paths: list[Path]) -> tuple[Path, object, object]:
+    for path in paths:
+        data, hdr = load_casa_2d(path)
+        if float(np.nanmax(np.abs(data))) > 0:
+            return path, data, hdr
+    raise RuntimeError("no frame with finite emission")
+
+
 def mean_tb_paths(paths: list[Path], s_jy: float) -> dict:
-    data0, hdr0 = load_casa_2d(paths[0])
+    _, data0, hdr0 = _first_live_frame(paths)
     crop0, origin, sun = crop_around_sun(data0, hdr0, NPIX)
     y0, x0 = origin[1], origin[0]
     extent = hpc_extent(
@@ -74,25 +82,34 @@ def mean_tb_paths(paths: list[Path], s_jy: float) -> dict:
     f_nu: list[float] = []
     beams: list[tuple[float, float, float]] = []
     freq = frequency_hz(hdr0)
+    n_used = 0
     for i, path in enumerate(paths):
         data, hdr = load_casa_2d(path)
         crop = data[y0 : y0 + NPIX, x0 : x0 + NPIX]
-        rec = scale_image(
-            crop, _crop_header(hdr, NPIX), s_jy, nsig=NSIG, freq_hz=frequency_hz(hdr)
-        )
+        if crop.size == 0 or float(np.nanmax(np.abs(crop))) == 0.0:
+            continue
+        try:
+            rec = scale_image(
+                crop, _crop_header(hdr, NPIX), s_jy, nsig=NSIG, freq_hz=frequency_hz(hdr)
+            )
+        except ValueError:
+            continue
         acc += rec["tb_K"]
         f_nu.append(float(rec["f_nu"]))
         beams.append((float(hdr["BMAJ"]), float(hdr["BMIN"]), float(hdr.get("BPA", 0.0))))
-        if (i + 1) % 50 == 0 or i + 1 == len(paths):
-            print(f"  {path.name[:3]}  {i + 1}/{len(paths)}  F(ν)={f_nu[-1]:.2f}", flush=True)
-    mean = acc / len(paths)
+        n_used += 1
+        if n_used % 50 == 0 or i + 1 == len(paths):
+            print(f"  {path.name[:3]}  {n_used}/{len(paths)}  F(ν)={f_nu[-1]:.2f}", flush=True)
+    if n_used == 0:
+        raise RuntimeError("no frame passed the Mohan 5σ integral")
+    mean = acc / n_used
     bmaj, bmin, bpa = np.median(np.asarray(beams), axis=0)
     f = np.asarray(f_nu, dtype=np.float64)
     return {
         "tb": mean.astype(np.float32),
         "extent": np.asarray(extent, dtype=np.float64),
         "beam": (float(bmaj), float(bmin), float(bpa)),
-        "n": len(paths),
+        "n": n_used,
         "freq_hz": float(freq),
         "f_nu_mean": float(np.mean(f)),
         "f_nu_std": float(np.std(f)),
