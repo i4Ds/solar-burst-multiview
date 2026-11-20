@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Rohit's 162 MHz Figure 4 map beside P-AIRCARS at 145.9 MHz, one colour scale.
+"""Rohit, our remake, and P-AIRCARS of the 2015 quiet scan, all solar north.
 
-Rohit's CASA maps are RA/Dec (celestial north). P-AIRCARS writes HPLN/HPLT
-(solar north). They differ by the solar P-angle. This figure keeps Rohit's
-map as he plotted it and rotates P-AIRCARS by −P onto that frame.
+Rohit's CASA maps and our SuperUniform remake are RA/Dec (celestial north).
+P-AIRCARS writes HPLN/HPLT (solar north). They differ by the solar P-angle.
+This figure rotates Rohit and our remake by +P onto solar north and leaves
+P-AIRCARS as written.
 
     python scripts/fig4_vs_paircars_146.py
 """
@@ -42,6 +43,8 @@ def p_angle_deg() -> float:
 
 def rotate_map(tb: np.ndarray, angle_deg: float) -> np.ndarray:
     """Rotate a sun-centred map. Positive angle is counter-clockwise."""
+    if not angle_deg:
+        return np.asarray(tb, dtype=np.float64)
     return rotate(
         np.nan_to_num(np.asarray(tb, dtype=np.float64), nan=0.0),
         angle_deg,
@@ -51,7 +54,7 @@ def rotate_map(tb: np.ndarray, angle_deg: float) -> np.ndarray:
     )
 
 
-def paircars_tb(path: Path, chan: int = 1, rotate_deg: float = 0.0) -> dict:
+def paircars_tb(path: Path, chan: int = 1) -> dict:
     d = np.load(path)
     img = np.nanmean(d["data"][:, chan], axis=0)
     nu = float(d["freqs"][chan]) * 1e6
@@ -59,29 +62,27 @@ def paircars_tb(path: Path, chan: int = 1, rotate_deg: float = 0.0) -> dict:
     bpa = float(d["beams"][chan][2]) if len(d["beams"][chan]) > 2 else 0.0
     omega = np.pi * np.radians(bmaj / 3600.0) * np.radians(bmin / 3600.0) / (4 * np.log(2))
     tb_mk = img * 1e-26 * C**2 / (2 * K_B * nu**2 * omega) / 1e6
-    if rotate_deg:
-        tb_mk = rotate_map(tb_mk, rotate_deg)
     return {
         "tb": tb_mk,
         "extent": d["extent"],
         "beam_arcsec": (bmaj, bmin, bpa),
         "freq_mhz": nu / 1e6,
-        "rotate_deg": rotate_deg,
+        "rotate_deg": 0.0,
     }
 
 
-def rohit_162() -> dict:
-    z = np.load(ROOT / "data" / "quiet2015" / "fig4_tb_perframe.npz")
+def casa_tb(path: Path, prefix: str, rotate_deg: float) -> dict:
+    z = np.load(path)
+    bmaj = float(z[f"{prefix}_bmaj_deg"])
+    bmin = float(z[f"{prefix}_bmin_deg"])
+    bpa = float(z[f"{prefix}_bpa_deg"])
     return {
-        "tb": z["162_tb"] / 1e6,
-        "extent": z["162_extent"],
-        "beam_arcsec": (
-            float(z["162_bmaj_deg"]) * 3600.0,
-            float(z["162_bmin_deg"]) * 3600.0,
-            float(z["162_bpa_deg"]),
-        ),
+        "tb": rotate_map(z[f"{prefix}_tb"] / 1e6, rotate_deg),
+        "extent": z[f"{prefix}_extent"],
+        "beam_arcsec": (bmaj * 3600.0, bmin * 3600.0, bpa),
         "freq_mhz": 162.0,
-        "rotate_deg": 0.0,
+        "rotate_deg": rotate_deg,
+        "n": int(z[f"{prefix}_n"]) if f"{prefix}_n" in z.files else 570,
     }
 
 
@@ -151,16 +152,12 @@ def show(ax, rec: dict, title: str, vmax: float, overlay: dict | None = None):
 
 def main() -> None:
     p_deg = p_angle_deg()
-    # P-AIRCARS is solar north. Figure 4 is celestial north. −P puts P-AIRCARS
-    # on Rohit's axes. Confirmed against radec_to_hpc on his CASA FITS.
-    pc_to_rohit = -p_deg
-    his = rohit_162()
-    pc = paircars_tb(
-        ROOT / "data" / "quiet2015" / "1133149192_ch113_quiet.npz", 1, pc_to_rohit
-    )
-    ns = paircars_tb(
-        ROOT / "data" / "quiet2015" / "1133149192_ch113_noself.npz", 1, pc_to_rohit
-    )
+    # Celestial north → solar north. Sign checked against radec_to_hpc.
+    to_solar = p_deg
+    his = casa_tb(ROOT / "data" / "quiet2015" / "fig4_tb_perframe.npz", "162", to_solar)
+    ours = casa_tb(ROOT / "data" / "quiet2015" / "fig4_ours_tb.npz", "162", to_solar)
+    pc = paircars_tb(ROOT / "data" / "quiet2015" / "1133149192_ch113_quiet.npz", 1)
+    ns = paircars_tb(ROOT / "data" / "quiet2015" / "1133149192_ch113_noself.npz", 1)
     panels = [
         (
             his,
@@ -168,18 +165,24 @@ def main() -> None:
             None,
         ),
         (
+            ours,
+            f"Ours  ·  {ours['freq_mhz']:.0f} MHz\n"
+            f"SuperUniform remake, {ours['n']} × 0.5 s",
+            his,
+        ),
+        (
             pc,
-            f"P-AIRCARS  ·  {pc['freq_mhz']:.1f} MHz\nself-cal, onto Rohit's north",
+            f"P-AIRCARS  ·  {pc['freq_mhz']:.1f} MHz\nself-cal, one map over the scan",
             his,
         ),
         (
             ns,
-            f"P-AIRCARS  ·  {ns['freq_mhz']:.1f} MHz\ncalibrator only, onto Rohit's north",
+            f"P-AIRCARS  ·  {ns['freq_mhz']:.1f} MHz\ncalibrator only, one map over the scan",
             his,
         ),
     ]
     vmax = 1.10
-    fig, axes = plt.subplots(1, 3, figsize=(14.0, 5.2))
+    fig, axes = plt.subplots(1, 4, figsize=(18.2, 5.2))
     last = None
     for i, (ax, (rec, title, overlay)) in enumerate(zip(axes, panels)):
         last = show(ax, rec, title, vmax, overlay)
@@ -187,20 +190,21 @@ def main() -> None:
             ax.set_ylabel("Solar Y (arcsec)")
         else:
             ax.set_yticklabels([])
-    fig.subplots_adjust(left=0.06, right=0.90, top=0.82, bottom=0.16, wspace=0.08)
-    cb = fig.colorbar(last, ax=axes, fraction=0.035, pad=0.02)
+    fig.subplots_adjust(left=0.045, right=0.93, top=0.82, bottom=0.16, wspace=0.06)
+    cb = fig.colorbar(last, ax=axes, fraction=0.025, pad=0.015)
     cb.set_label("brightness temperature (million K)")
     fig.suptitle(
-        "3 December 2015, observation 1133149192. Same colour scale (0–1.10 million K).",
+        "3 December 2015, observation 1133149192. "
+        "Solar north up. Same colour scale (0–1.10 million K).",
         fontsize=12,
         y=0.98,
     )
     fig.text(
         0.48,
         0.02,
-        f"Rohit's maps are celestial north; P-AIRCARS is solar north "
-        f"(P = {p_deg:.1f}° that day). P-AIRCARS is rotated by {pc_to_rohit:+.1f}° "
-        "onto Rohit's axes. White contours are Rohit's 50 % and 80 %.",
+        f"Rohit and our remake were celestial north; both are rotated by "
+        f"+{p_deg:.1f}° (the P-angle that day) onto solar north. "
+        "P-AIRCARS is already solar north. White contours are Rohit's 50 % and 80 %.",
         ha="center",
         va="bottom",
         fontsize=9,
@@ -209,7 +213,7 @@ def main() -> None:
     fig.savefig(OUT, dpi=140)
     plt.close(fig)
     print(f"wrote {OUT}")
-    print(f"P = {p_deg:.3f} deg; P-AIRCARS rotated by {pc_to_rohit:+.3f} deg")
+    print(f"P = {p_deg:.3f} deg; CASA maps rotated by {to_solar:+.3f} deg to solar north")
     for rec, title, _ in panels:
         print(f"  peak {float(np.nanmax(rec['tb'])):.3f} MK   {title.split(chr(10))[0]}")
 
