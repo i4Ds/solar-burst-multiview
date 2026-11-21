@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build the quiet-Sun comparison site from the 2013–2015 noon catalogue.
 
-Writes static HTML under site/quiet-sun/. A day is mapped only when a
+Writes static HTML under site/quiet-sun/. Published at i4Ds/mwa-quiet-sun
+(https://i4ds.github.io/mwa-quiet-sun/). A day is mapped only when a
 figure already exists on disk. Does not invent maps.
 """
 
@@ -10,7 +11,7 @@ from __future__ import annotations
 import csv
 import html
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,8 +110,8 @@ def nav(*, root: str = ".", current: str = "") -> str:
     return f"""<nav class="top wrap-wide">
   <div>{item("index.html", "Quiet Sun", "index")} · MWA 2013–2015</div>
   <div>
-    {item("compare.html", "Comparisons", "compare")}
-    &ensp;{item("about.html", "About", "about")}
+    {item("images.html", "Images", "images")}
+    &ensp;{item("runs.html", "Runs", "runs")}
   </div>
 </nav>
 """
@@ -118,8 +119,7 @@ def nav(*, root: str = ".", current: str = "") -> str:
 
 def foot() -> str:
     return """<footer class="wrap-wide">
-  Sharma &amp; Oberoi 2020 quiet-Sun catalogue. Brightness temperature in million K.
-  Maps are shown only when they exist; empty days are waiting, not missing science.
+  Brightness temperature in million K. Sharma &amp; Oberoi 2020.
 </footer>
 </body>
 </html>
@@ -131,21 +131,46 @@ def write(path: Path, text: str) -> None:
     path.write_text(text)
 
 
+MEDIA_FILES = {
+    "fig4_vs_paircars.png": "quiet2015/fig4_vs_paircars.png",
+    "fig4_162_vs_paircars.png": "quiet2015/fig4_162_vs_paircars.png",
+    "fig4_his_mean.png": "sharma2020/fig4_his_mean.png",
+    "fig4_ours_mean.png": "sharma2020/fig4_ours_mean.png",
+    "fig4_his_vs_ours.png": "sharma2020/fig4_his_vs_ours.png",
+    "fig4_diff.png": "sharma2020/fig4_diff.png",
+    "fig4_paper.png": "sharma2020/fig4_paper.png",
+    "fig4_ours_strip_108.png": "sharma2020/fig4_ours_strip_108.png",
+    "fig4_ours_strip_162.png": "sharma2020/fig4_ours_strip_162.png",
+    "fig4_ours_strip_217.png": "sharma2020/fig4_ours_strip_217.png",
+    "fig4_ours_strip_240.png": "sharma2020/fig4_ours_strip_240.png",
+    "haslam_sky.png": "sharma2020/haslam_sky.png",
+    "compare_flux.png": "sharma2020/compare_flux.png",
+    "fig4_raw_scanmean.png": "sharma2020/fig4_raw_scanmean.png",
+    "fig4_snap_rohit_vs_casa.png": "sharma2020/fig4_snap_rohit_vs_casa.png",
+    "uv_amp.png": "sharma2020/uv_amp.png",
+    "snap_data_vs_corrected.png": "sharma2020/snap_data_vs_corrected.png",
+}
+
+
 def copy_media() -> dict[str, str]:
     MEDIA.mkdir(parents=True, exist_ok=True)
-    files = {
-        "fig4_vs_paircars.png": FIG / "quiet2015/fig4_vs_paircars.png",
-        "fig4_his_vs_ours.png": FIG / "sharma2020/fig4_his_vs_ours.png",
-        "fig4_his_mean.png": FIG / "sharma2020/fig4_his_mean.png",
-        "fig4_ours_mean.png": FIG / "sharma2020/fig4_ours_mean.png",
-    }
     out = {}
-    for name, src in files.items():
+    for name, rel in MEDIA_FILES.items():
+        src = FIG / rel
         if src.is_file():
-            dest = MEDIA / name
-            shutil.copy2(src, dest)
+            shutil.copy2(src, MEDIA / name)
             out[name] = f"media/{name}"
     return out
+
+
+def figure(media: dict[str, str], name: str, alt: str, caption: str, *, prefix: str = "") -> str:
+    src = media.get(name)
+    if not src:
+        return ""
+    return (
+        f'<div class="figure"><img src="{prefix}{src}" alt="{e(alt)}"></div>\n'
+        f'<p class="caption">{caption}</p>\n'
+    )
 
 
 def facts(d: dict) -> str:
@@ -234,36 +259,33 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
   <p class="kicker">Murchison Widefield Array</p>
   <h1>Quiet Sun at local noon</h1>
   <p class="lede">
-    Every MWA solar pointing within 30 minutes of local noon on a GOES-quiet
-    day, 2013–2015. The catalogue is the starting point. Maps appear only
-    after a day is imaged; most pages are empty on purpose.
+    GOES-quiet days, Sun within 30 minutes of local noon, 2013–2015.
   </p>
   <div class="stats">
     <div><b>{n}</b><span>quiet noon days</span></div>
     <div><b>{n_cal}</b><span>calibrator within 24 h</span></div>
-    <div><b>{n_map}</b><span>with maps on this site</span></div>
+    <div><b>{n_map}</b><span>with maps</span></div>
     <div><b>{n_wait}</b><span>imaging in progress</span></div>
   </div>
 
-  <p class="kicker">Now on the table</p>
   <div class="featured">
     <a href="o/{FIG4_OBSID}.html">
       <p class="kicker">3 December 2015 · 03:39 UT</p>
-      <h2>Figure 4, four ways</h2>
-      <p>Rohit, our remake, P-AIRCARS with self-cal, P-AIRCARS from the calibrator only. Solar north up.</p>
-      <img src="{thumb}" alt="">
+      <h2>1133149192</h2>
+      <p>Rohit, our remake, P-AIRCARS. 108 / 162 / 217 / 240 MHz. Solar north up.</p>
+      <img src="{thumb}" alt="3 December 2015, four pipelines, four frequencies">
     </a>
     <a href="o/1133236216.html">
-      <p class="kicker">4 December 2015</p>
-      <h2>One day later</h2>
-      <p>Same local time. A co-rotating blob should move west by about one beam. Mean maps are running.</p>
-      <div class="waiting">In progress</div>
+      <p class="kicker">4 December 2015 · 03:50 UT</p>
+      <h2>1133236216</h2>
+      <p>24.2 h later. CASA SuperUniform 0.5 s. Mean T_B running.</p>
+      <div class="waiting">Mean running</div>
     </a>
     <a href="o/1111376776.html">
-      <p class="kicker">26 March 2015</p>
-      <h2>A different season</h2>
-      <p>Same CASA recipe, P-angle near zero. Archive download submitted; this page stays empty until the maps exist.</p>
-      <div class="waiting">Queued</div>
+      <p class="kicker">26 March 2015 · 03:46 UT</p>
+      <h2>1111376776</h2>
+      <p>3C444, 2.45 h earlier. P-angle near 0°. ASVO 0.5 s / 4 s.</p>
+      <div class="waiting">ASVO</div>
     </a>
   </div>
 
@@ -301,45 +323,39 @@ def pager_html(prev: dict | None, nxt: dict | None) -> str:
 def day_body(d: dict, media: dict[str, str]) -> str:
     if d["obsid"] == FIG4_NOON:
         return f"""
-<p class="kicker">{e(fmt_date(d["date"]))} · local-noon pick</p>
-<h1>Not Figure 4</h1>
+<p class="kicker">{e(fmt_date(d["date"]))} · local noon</p>
+<h1>{e(d["obsid"])}</h1>
 {facts(d)}
 <p class="note">
-  Sharma &amp; Oberoi 2020 Figure 4 is a different scan the same morning:
-  {FIG4_OBSID} at 03:39–03:44 UT, ten minutes earlier. The maps live on
-  <a href="{FIG4_OBSID}.html">that page</a>, not here.
+  Figure 4 is <a href="{FIG4_OBSID}.html">{FIG4_OBSID}</a>, 03:39–03:44 UT,
+  ten minutes earlier.
 </p>
 """
     if d["obsid"] == "1133236216":
         return f"""
-<p class="kicker">{e(fmt_date(d["date"]))} · one day after Figure 4</p>
-<h1>The co-rotation test</h1>
+<p class="kicker">{e(fmt_date(d["date"]))} · 24.2 h after Figure 4</p>
+<h1>{e(d["obsid"])}</h1>
 {facts(d)}
 <p>
-  Same local time as Figure 4, 24.2 hours later. A compact feature that
-  co-rotates with the Sun should shift about 150–200 arcsec westward.
-  If it sits in the same place, it is the beam and the disk, not a source.
+  A co-rotating compact feature should shift 150–200 arcsec west.
+  CASA SuperUniform 0.5 s frames are on the cluster. Mean T_B is running.
 </p>
-<div class="empty">CASA SuperUniform frames exist on the cluster. Mean brightness-temperature maps are running. They will appear here when the mean is on disk; nothing is shown until then.</div>
-<p class="note"><a href="{FIG4_OBSID}.html">3 December, Figure 4 scan</a></p>
+<p class="note"><a href="{FIG4_OBSID}.html">3 December 03:39 UT</a></p>
 """
     if d["obsid"] == "1111376776":
         return f"""
-<p class="kicker">{e(fmt_date(d["date"]))} · a different season</p>
-<h1>March, not December</h1>
+<p class="kicker">{e(fmt_date(d["date"]))}</p>
+<h1>{e(d["obsid"])}</h1>
 {facts(d)}
 <p>
-  Same CASA recipe as Figure 4: 0.5 s Sun, 4 s 3C444, SuperUniform, Mohan
-  conversion, mean of the scan. The P-angle is near zero this day, so solar
-  north and celestial north almost coincide.
+  CASA SuperUniform, 0.5 s Sun, 4 s 3C444. P-angle near 0°.
+  ASVO jobs 1125020 (Sun) and 1125021 (3C444).
 </p>
-<div class="empty">Archive download submitted. Imaging starts when the measurement sets are Ready. This page stays empty until the maps exist.</div>
 """
     return f"""
 <p class="kicker">{e(fmt_date(d["date"]))}</p>
-<h1>Local noon</h1>
+<h1>{e(d["obsid"])}</h1>
 {facts(d)}
-<div class="empty">Not imaged yet. This page is a place in the catalogue, not a map.</div>
 """
 
 
@@ -353,124 +369,281 @@ def day_page(d: dict, prev: dict | None, nxt: dict | None, media: dict[str, str]
 
 
 def fig4_page(media: dict[str, str], noon: dict | None) -> str:
-    img = media.get("fig4_vs_paircars.png", "")
-    img2 = media.get("fig4_his_vs_ours.png", "")
-    back = f'o/{noon["obsid"]}.html' if noon else "index.html"
-    return (
-        head("3 December 2015 · Figure 4", root="..")
-        + nav(root="..")
-        + f"""<main class="wrap">
-<p class="kicker">3 December 2015 · 03:39–03:44 UT</p>
-<h1>Figure 4</h1>
+    p = "../"
+    back = f'{noon["obsid"]}.html' if noon else "../index.html"
+    body = [
+        f"""<p class="kicker">3 December 2015 · 03:39–03:44 UT</p>
+<h1>{FIG4_OBSID}</h1>
 <dl class="facts">
-  <div><dt>Observation</dt><dd>{FIG4_OBSID}</dd></div>
   <div><dt>Start</dt><dd>{e(fmt_time(FIG4_START))}</dd></div>
   <div><dt>Length</dt><dd>296 s</dd></div>
-  <div><dt>Noon pick that day</dt><dd><a href="{FIG4_NOON}.html">{FIG4_NOON}</a>, ten minutes later</dd></div>
-  <div><dt>Calibrator</dt><dd>3C444 · 1133161488, for the P-AIRCARS column</dd></div>
+  <div><dt>Noon pick</dt><dd><a href="{FIG4_NOON}.html">{FIG4_NOON}</a></dd></div>
+  <div><dt>P-angle</dt><dd>+15.4°</dd></div>
+  <div><dt>CASA</dt><dd>SuperUniform, 570 × 0.5 s</dd></div>
+  <div><dt>P-AIRCARS cal</dt><dd>3C444 · 1133161488</dd></div>
 </dl>
-<p>
-  All panels solar north up. Rohit’s CASA maps were celestial north; they
-  are rotated by +15.4° (the P-angle that morning). P-AIRCARS is already
-  solar north. Brightness temperature in million K.
-</p>
-<div class="figure"><img src="../{img}" alt="Rohit, our remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only, four frequencies"></div>
-<p class="caption">
-  108 and 162 MHz: the disk is recovered in all four columns. Peak
-  brightness temperatures at 108 MHz are 0.89, 0.89, 0.82 and 0.83 million K.
-  At 162 MHz they are 0.99, 1.01, 0.88 and 0.90. At 217 and 240 MHz
-  P-AIRCARS did not recover the disk; those panels are noise, not a
-  quiet-Sun map.
-</p>
-<div class="figure"><img src="../{img2}" alt="Rohit versus our remake only"></div>
-<p class="caption">
-  Rohit’s maps and our remake of his CASA SuperUniform frames, same
-  conversion, celestial north as in the FITS. This is the pair for Figure 4
-  itself. P-AIRCARS is a different pipeline and is not mixed into that remake.
-</p>
-<div class="pager">
-  <a href="../{back}">Noon pick that morning</a>
-  <a href="../compare.html">All comparisons</a>
-</div>
-</main>
-"""
+""",
+        figure(
+            media, "fig4_vs_paircars.png",
+            "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only",
+            "Solar north up. Peaks at 108 MHz: 0.89 / 0.89 / 0.82 / 0.83 million K. "
+            "At 162 MHz: 0.99 / 1.01 / 0.88 / 0.90. At 217 and 240 MHz P-AIRCARS is noise.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_his_mean.png",
+            "Rohit mean of 570 frames",
+            "Rohit, mean of 570 frames. Peaks 0.89 / 1.00 / 1.06 / 0.62 million K "
+            "(paper captions 0.92 / 1.20 / 1.50 at 108 / 162 / 217 MHz).",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_ours_mean.png",
+            "Our remake, mean of 570 frames",
+            "Our remake, mean of 570 SuperUniform frames. Peaks 0.89 / 1.01 / 1.10 / 0.63 million K. "
+            "Each panel scaled to its own peak.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_his_vs_ours.png",
+            "Rohit and our remake, same colour scale",
+            "Rohit (top) and our remake (bottom), 0–1.7 million K, celestial north as in the FITS.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_diff.png",
+            "Ours minus Rohit",
+            "Ours minus Rohit. Peak |Δ| 0.01 / 0.03 / 0.05 / 0.02 million K. Red: we are hotter.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_paper.png",
+            "MWA, FORWARD, AIA 193",
+            "MWA (Rohit’s frames, Mohan then mean), FORWARD, AIA 193. MWA peaks 0.89 / 1.00 / 1.06 million K; "
+            "FORWARD 1.66 / 1.69 / 1.70 million K.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_ours_strip_108.png",
+            "108 MHz half-second frames",
+            "108 MHz, sample of the 570 half-second frames. Peak about 0.90 million K on each.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_ours_strip_162.png",
+            "162 MHz half-second frames",
+            "162 MHz, sample of the 570 half-second frames.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_ours_strip_217.png",
+            "217 MHz half-second frames",
+            "217 MHz, sample of the 570 half-second frames.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_ours_strip_240.png",
+            "240 MHz half-second frames",
+            "240 MHz, sample of the 570 half-second frames.",
+            prefix=p,
+        ),
+        figure(
+            media, "haslam_sky.png",
+            "Haslam 1982 sky at the 3 December 2015 pointing",
+            "Haslam et al. 1982 at this pointing, 3 December 2015 03:42 UT. Galactic plane is close; "
+            "Sun marked on the right.",
+            prefix=p,
+        ),
+        figure(
+            media, "compare_flux.png",
+            "Whole-Sun flux at four frequencies",
+            "Whole-Sun flux at this pointing: 2.9 / 6.5 / 11.7 / 8.2 solar flux units "
+            "at 108 / 162 / 217 / 240 MHz (Haslam 1982 sky). Grey: Oberoi 2013 table, a different day.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_162_vs_paircars.png",
+            "162 MHz versus P-AIRCARS at 145.9 MHz",
+            "162 MHz (Rohit, remake) against P-AIRCARS at 145.9 MHz (pair 113–114). Solar north up.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_raw_scanmean.png",
+            "P-AIRCARS visibilities, 280 s CASA mean",
+            "P-AIRCARS-calibrated visibilities, CASA SuperUniform, 280 s mean, Jy/beam. Not the 570-frame T_B mean.",
+            prefix=p,
+        ),
+        figure(
+            media, "fig4_snap_rohit_vs_casa.png",
+            "One 0.5 s snapshot, Rohit versus applycal of Cen A",
+            "One 0.5 s snapshot, 03:42:04 UT, 108 MHz, same Jy/beam scale. "
+            "Rohit CORRECTED_DATA 36 Jy/beam; CASA applycal of his Cen A table 12 Jy/beam.",
+            prefix=p,
+        ),
+        f'<div class="pager"><a href="{back}">Noon pick {FIG4_NOON}</a>'
+        f'<a href="../images.html">All images</a></div>',
+    ]
+    return (
+        head("3 December 2015 · 1133149192", root="..")
+        + nav(root="..")
+        + f'<main class="wrap">{"".join(body)}</main>'
         + foot()
     )
 
 
-def compare_page(media: dict[str, str]) -> str:
-    img = media.get("fig4_vs_paircars.png", "")
-    img2 = media.get("fig4_his_vs_ours.png", "")
+def images_page(media: dict[str, str]) -> str:
+    blocks = [
+        """<p class="kicker">3 December 2015 · 03:39 UT · 1133149192</p>
+<h1>Images</h1>
+""",
+        figure(
+            media, "fig4_vs_paircars.png",
+            "Four pipelines, four frequencies",
+            "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only. Solar north up. "
+            "Peaks at 108 MHz: 0.89 / 0.89 / 0.82 / 0.83 million K. At 217 and 240 MHz P-AIRCARS is noise.",
+        ),
+        figure(
+            media, "fig4_his_mean.png",
+            "Rohit mean of 570 frames",
+            "Rohit, mean of 570 frames. 0.89 / 1.00 / 1.06 / 0.62 million K.",
+        ),
+        figure(
+            media, "fig4_ours_mean.png",
+            "Remake mean of 570 frames",
+            "Remake, mean of 570 SuperUniform frames. 0.89 / 1.01 / 1.10 / 0.63 million K.",
+        ),
+        figure(
+            media, "fig4_his_vs_ours.png",
+            "Rohit and remake, same scale",
+            "Rohit (top) and remake (bottom), 0–1.7 million K.",
+        ),
+        figure(
+            media, "fig4_diff.png",
+            "Remake minus Rohit",
+            "Remake minus Rohit. Peak |Δ| 0.01 / 0.03 / 0.05 / 0.02 million K.",
+        ),
+        figure(
+            media, "fig4_paper.png",
+            "MWA, FORWARD, AIA 193",
+            "MWA, FORWARD, AIA 193. MWA 0.89 / 1.00 / 1.06 million K; FORWARD 1.66 / 1.69 / 1.70 million K.",
+        ),
+        figure(
+            media, "fig4_ours_strip_108.png",
+            "108 MHz half-second frames",
+            "108 MHz, sample of 570 × 0.5 s.",
+        ),
+        figure(
+            media, "fig4_ours_strip_162.png",
+            "162 MHz half-second frames",
+            "162 MHz, sample of 570 × 0.5 s.",
+        ),
+        figure(
+            media, "fig4_ours_strip_217.png",
+            "217 MHz half-second frames",
+            "217 MHz, sample of 570 × 0.5 s.",
+        ),
+        figure(
+            media, "fig4_ours_strip_240.png",
+            "240 MHz half-second frames",
+            "240 MHz, sample of 570 × 0.5 s.",
+        ),
+        figure(
+            media, "haslam_sky.png",
+            "Haslam 1982 at this pointing",
+            "Haslam et al. 1982, 3 December 2015 03:42 UT.",
+        ),
+        figure(
+            media, "compare_flux.png",
+            "Whole-Sun flux",
+            "2.9 / 6.5 / 11.7 / 8.2 solar flux units at 108 / 162 / 217 / 240 MHz.",
+        ),
+        figure(
+            media, "fig4_162_vs_paircars.png",
+            "162 MHz versus P-AIRCARS 145.9 MHz",
+            "162 MHz against P-AIRCARS pair 113–114 (145.9 MHz).",
+        ),
+        figure(
+            media, "fig4_raw_scanmean.png",
+            "280 s mean, Jy/beam",
+            "P-AIRCARS visibilities, CASA SuperUniform, 280 s mean, Jy/beam.",
+        ),
+        figure(
+            media, "fig4_snap_rohit_vs_casa.png",
+            "One 0.5 s snapshot, 108 MHz",
+            "03:42:04 UT. Rohit 36 Jy/beam; applycal of his Cen A table 12 Jy/beam.",
+        ),
+        figure(
+            media, "uv_amp.png",
+            "Visibility amplitude versus baseline",
+            "Channel 84, 0.5 s, 8000 rows near mid-scan. DATA and CORRECTED_DATA.",
+        ),
+        figure(
+            media, "snap_data_vs_corrected.png",
+            "DATA versus CORRECTED_DATA snapshot",
+            "One snapshot, DATA against CORRECTED_DATA.",
+        ),
+        f'<p class="note"><a href="o/{FIG4_OBSID}.html">{FIG4_OBSID}</a></p>',
+    ]
     return (
-        head("Comparisons · Quiet Sun")
-        + nav(current="compare")
-        + f"""<main class="wrap">
-<p class="kicker">What we can show</p>
-<h1>Comparisons</h1>
-<p class="lede">
-  One quiet morning is fully mapped. The next day is on the cluster. A
-  different season is still in the archive queue. That is the whole list.
-</p>
+        head("Images · Quiet Sun")
+        + nav(current="images")
+        + f'<main class="wrap">{"".join(blocks)}</main>'
+        + foot()
+    )
 
-<p class="kicker">3 December 2015 · 03:39 UT</p>
-<h2 class="section">Figure 4, four ways</h2>
-<p class="meta">
-  Observation {FIG4_OBSID}, not the noon-catalogue pick that day.
-  All panels solar north up. Brightness temperature, million K.
-</p>
-<div class="figure"><img src="{img}" alt="Rohit, our remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only"></div>
-<p class="caption">
-  108 and 162 MHz: Rohit, our remake, and P-AIRCARS all recover the disk.
-  Peak brightness temperatures agree to about ten percent at 108 MHz.
-  At 162 MHz P-AIRCARS is fainter (0.88 against 0.99 million K).
-  217 and 240 MHz: P-AIRCARS did not recover the disk. Those columns are
-  shown because that is what the pipeline produced, not because they are
-  quiet-Sun maps.
-</p>
-<div class="figure"><img src="{img2}" alt="Rohit versus our remake only"></div>
-<p class="caption">
-  Rohit’s maps and our remake of his CASA SuperUniform frames, same
-  conversion. This is the honest pair for Figure 4 itself. P-AIRCARS is a
-  different pipeline and is not mixed into that remake.
-</p>
+
+def runs_page() -> str:
+    return (
+        head("Runs · Quiet Sun")
+        + nav(current="runs")
+        + """<main class="wrap-wide">
+<p class="kicker">MWA</p>
+<h1>Runs</h1>
+<table class="days">
+<thead><tr><th>Day</th><th>Observation</th><th>What</th><th>Result</th></tr></thead>
+<tbody>
+<tr>
+  <td>3 Dec 2015 03:39</td>
+  <td class="mono">1133149192</td>
+  <td>CASA SuperUniform, Hogbom niter 8000, 570 × 0.5 s, Mohan 5σ, scan mean</td>
+  <td>0.89 / 1.01 / 1.10 / 0.63 million K</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:39</td>
+  <td class="mono">1133149192</td>
+  <td>P-AIRCARS, 4 s, 3C444 1133161488, pairs 84–85, 125–126, 169–170, 187–188</td>
+  <td>Disk at 108 and 162 MHz. Noise at 217 and 240 MHz.</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:39</td>
+  <td class="mono">1133149192</td>
+  <td>P-AIRCARS pair 113–114, 145.9 MHz, same 4 s recipe</td>
+  <td>Disk. Peak 1.04 million K (self-cal), 0.82 (calibrator only).</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:42</td>
+  <td class="mono">1133149192</td>
+  <td>Haslam 1982 sky at this pointing, 4×4 array factor</td>
+  <td>2.9 / 6.5 / 11.7 / 8.2 solar flux units</td>
+</tr>
+<tr>
+  <td>4 Dec 2015 03:50</td>
+  <td class="mono">1133236216</td>
+  <td>CASA SuperUniform 0.5 s, Cen A 1133236576, same channels as Figure 4</td>
+  <td>Frames on cluster. Mean T_B running (qn-mean 230745).</td>
+</tr>
+<tr>
+  <td>26 Mar 2015 03:46</td>
+  <td class="mono">1111376776</td>
+  <td>ASVO Sun 0.5 s 160 kHz no_rfi (1125020), 3C444 4 s (1125021)</td>
+  <td>Download watching (qm-asvo-watch 230744).</td>
+</tr>
+</tbody>
+</table>
 <p class="note">
-  <a href="o/{FIG4_OBSID}.html">Figure 4 scan</a>
-  · <a href="o/{FIG4_NOON}.html">3 December noon pick</a>
-  · <a href="o/1133236216.html">4 December, co-rotation test</a>
-  · <a href="o/1111376776.html">26 March 2015</a>
+  Weighting SuperUniform, not Briggs. Conversion Mohan &amp; Oberoi 2017, not a 2022 scale factor.
+  P-AIRCARS is a separate column, not inside the CASA remake.
 </p>
-</main>
-"""
-        + foot()
-    )
-
-
-def about_page() -> str:
-    now = datetime.now(timezone.utc).strftime("%-d %B %Y")
-    return (
-        head("About · Quiet Sun")
-        + nav(current="about")
-        + f"""<main class="wrap">
-<p class="kicker">Catalogue</p>
-<h1>What this site is</h1>
-<p class="lede">
-  A reading room for quiet-Sun maps from the Murchison Widefield Array,
-  built from the 2013–2015 local-noon list. It is not a burst catalogue.
-</p>
-<p>
-  A day is listed if GOES was quiet and the MWA observed the Sun within
-  30 minutes of local noon. 238 of 305 days have a compact calibrator
-  within 24 hours. Figure 4 of Sharma &amp; Oberoi (2020) is the 3 December
-  2015 scan at 03:39 UT. That scan is not the noon pick in the table; the
-  noon pick that day is ten minutes later.
-</p>
-<p>
-  Brightness temperature is given in million K. We do not quote a 2022
-  scale factor on these maps. The CASA path is SuperUniform snapshots,
-  then the Mohan &amp; Oberoi conversion, then the mean of the scan.
-  P-AIRCARS is shown beside that path, not inside it.
-</p>
-<p class="note">Pages generated {e(now)}. Empty days are waiting for maps, not errors.</p>
 </main>
 """
         + foot()
@@ -532,10 +705,18 @@ def main() -> None:
     days = load_days()
     SITE.mkdir(parents=True, exist_ok=True)
     media = copy_media()
+    write(SITE / ".nojekyll", "")
+    about = SITE / "about.html"
+    if about.exists():
+        about.unlink()
     write(SITE / "js/catalogue.js", catalogue_js())
     write(SITE / "index.html", index_page(days, media))
-    write(SITE / "compare.html", compare_page(media))
-    write(SITE / "about.html", about_page())
+    write(SITE / "images.html", images_page(media))
+    write(SITE / "runs.html", runs_page())
+    write(
+        SITE / "compare.html",
+        '<!DOCTYPE html><meta http-equiv="refresh" content="0; url=images.html">',
+    )
     noon = next((d for d in days if d["obsid"] == FIG4_NOON), None)
     write(SITE / "o" / f"{FIG4_OBSID}.html", fig4_page(media, noon))
     for i, d in enumerate(days):

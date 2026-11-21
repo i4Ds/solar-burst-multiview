@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3 December 2015 · Figure 4</title>
+<title>3 December 2015 · 1133149192</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
@@ -13,47 +13,52 @@
 <nav class="top wrap-wide">
   <div><a href="../index.html">Quiet Sun</a> · MWA 2013–2015</div>
   <div>
-    <a href="../compare.html">Comparisons</a>
-    &ensp;<a href="../about.html">About</a>
+    <a href="../images.html">Images</a>
+    &ensp;<a href="../runs.html">Runs</a>
   </div>
 </nav>
-<main class="wrap">
-<p class="kicker">3 December 2015 · 03:39–03:44 UT</p>
-<h1>Figure 4</h1>
+<main class="wrap"><p class="kicker">3 December 2015 · 03:39–03:44 UT</p>
+<h1>1133149192</h1>
 <dl class="facts">
-  <div><dt>Observation</dt><dd>1133149192</dd></div>
   <div><dt>Start</dt><dd>2015-12-03 03:39:44 UT</dd></div>
   <div><dt>Length</dt><dd>296 s</dd></div>
-  <div><dt>Noon pick that day</dt><dd><a href="1133149792.html">1133149792</a>, ten minutes later</dd></div>
-  <div><dt>Calibrator</dt><dd>3C444 · 1133161488, for the P-AIRCARS column</dd></div>
+  <div><dt>Noon pick</dt><dd><a href="1133149792.html">1133149792</a></dd></div>
+  <div><dt>P-angle</dt><dd>+15.4°</dd></div>
+  <div><dt>CASA</dt><dd>SuperUniform, 570 × 0.5 s</dd></div>
+  <div><dt>P-AIRCARS cal</dt><dd>3C444 · 1133161488</dd></div>
 </dl>
-<p>
-  All panels solar north up. Rohit’s CASA maps were celestial north; they
-  are rotated by +15.4° (the P-angle that morning). P-AIRCARS is already
-  solar north. Brightness temperature in million K.
-</p>
-<div class="figure"><img src="../media/fig4_vs_paircars.png" alt="Rohit, our remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only, four frequencies"></div>
-<p class="caption">
-  108 and 162 MHz: the disk is recovered in all four columns. Peak
-  brightness temperatures at 108 MHz are 0.89, 0.89, 0.82 and 0.83 million K.
-  At 162 MHz they are 0.99, 1.01, 0.88 and 0.90. At 217 and 240 MHz
-  P-AIRCARS did not recover the disk; those panels are noise, not a
-  quiet-Sun map.
-</p>
-<div class="figure"><img src="../media/fig4_his_vs_ours.png" alt="Rohit versus our remake only"></div>
-<p class="caption">
-  Rohit’s maps and our remake of his CASA SuperUniform frames, same
-  conversion, celestial north as in the FITS. This is the pair for Figure 4
-  itself. P-AIRCARS is a different pipeline and is not mixed into that remake.
-</p>
-<div class="pager">
-  <a href="../o/1133149792.html">Noon pick that morning</a>
-  <a href="../compare.html">All comparisons</a>
-</div>
-</main>
-<footer class="wrap-wide">
-  Sharma &amp; Oberoi 2020 quiet-Sun catalogue. Brightness temperature in million K.
-  Maps are shown only when they exist; empty days are waiting, not missing science.
+<div class="figure"><img src="../media/fig4_vs_paircars.png" alt="Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only"></div>
+<p class="caption">Solar north up. Peaks at 108 MHz: 0.89 / 0.89 / 0.82 / 0.83 million K. At 162 MHz: 0.99 / 1.01 / 0.88 / 0.90. At 217 and 240 MHz P-AIRCARS is noise.</p>
+<div class="figure"><img src="../media/fig4_his_mean.png" alt="Rohit mean of 570 frames"></div>
+<p class="caption">Rohit, mean of 570 frames. Peaks 0.89 / 1.00 / 1.06 / 0.62 million K (paper captions 0.92 / 1.20 / 1.50 at 108 / 162 / 217 MHz).</p>
+<div class="figure"><img src="../media/fig4_ours_mean.png" alt="Our remake, mean of 570 frames"></div>
+<p class="caption">Our remake, mean of 570 SuperUniform frames. Peaks 0.89 / 1.01 / 1.10 / 0.63 million K. Each panel scaled to its own peak.</p>
+<div class="figure"><img src="../media/fig4_his_vs_ours.png" alt="Rohit and our remake, same colour scale"></div>
+<p class="caption">Rohit (top) and our remake (bottom), 0–1.7 million K, celestial north as in the FITS.</p>
+<div class="figure"><img src="../media/fig4_diff.png" alt="Ours minus Rohit"></div>
+<p class="caption">Ours minus Rohit. Peak |Δ| 0.01 / 0.03 / 0.05 / 0.02 million K. Red: we are hotter.</p>
+<div class="figure"><img src="../media/fig4_paper.png" alt="MWA, FORWARD, AIA 193"></div>
+<p class="caption">MWA (Rohit’s frames, Mohan then mean), FORWARD, AIA 193. MWA peaks 0.89 / 1.00 / 1.06 million K; FORWARD 1.66 / 1.69 / 1.70 million K.</p>
+<div class="figure"><img src="../media/fig4_ours_strip_108.png" alt="108 MHz half-second frames"></div>
+<p class="caption">108 MHz, sample of the 570 half-second frames. Peak about 0.90 million K on each.</p>
+<div class="figure"><img src="../media/fig4_ours_strip_162.png" alt="162 MHz half-second frames"></div>
+<p class="caption">162 MHz, sample of the 570 half-second frames.</p>
+<div class="figure"><img src="../media/fig4_ours_strip_217.png" alt="217 MHz half-second frames"></div>
+<p class="caption">217 MHz, sample of the 570 half-second frames.</p>
+<div class="figure"><img src="../media/fig4_ours_strip_240.png" alt="240 MHz half-second frames"></div>
+<p class="caption">240 MHz, sample of the 570 half-second frames.</p>
+<div class="figure"><img src="../media/haslam_sky.png" alt="Haslam 1982 sky at the 3 December 2015 pointing"></div>
+<p class="caption">Haslam et al. 1982 at this pointing, 3 December 2015 03:42 UT. Galactic plane is close; Sun marked on the right.</p>
+<div class="figure"><img src="../media/compare_flux.png" alt="Whole-Sun flux at four frequencies"></div>
+<p class="caption">Whole-Sun flux at this pointing: 2.9 / 6.5 / 11.7 / 8.2 solar flux units at 108 / 162 / 217 / 240 MHz (Haslam 1982 sky). Grey: Oberoi 2013 table, a different day.</p>
+<div class="figure"><img src="../media/fig4_162_vs_paircars.png" alt="162 MHz versus P-AIRCARS at 145.9 MHz"></div>
+<p class="caption">162 MHz (Rohit, remake) against P-AIRCARS at 145.9 MHz (pair 113–114). Solar north up.</p>
+<div class="figure"><img src="../media/fig4_raw_scanmean.png" alt="P-AIRCARS visibilities, 280 s CASA mean"></div>
+<p class="caption">P-AIRCARS-calibrated visibilities, CASA SuperUniform, 280 s mean, Jy/beam. Not the 570-frame T_B mean.</p>
+<div class="figure"><img src="../media/fig4_snap_rohit_vs_casa.png" alt="One 0.5 s snapshot, Rohit versus applycal of Cen A"></div>
+<p class="caption">One 0.5 s snapshot, 03:42:04 UT, 108 MHz, same Jy/beam scale. Rohit CORRECTED_DATA 36 Jy/beam; CASA applycal of his Cen A table 12 Jy/beam.</p>
+<div class="pager"><a href="1133149792.html">Noon pick 1133149792</a><a href="../images.html">All images</a></div></main><footer class="wrap-wide">
+  Brightness temperature in million K. Sharma &amp; Oberoi 2020.
 </footer>
 </body>
 </html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runs · Quiet Sun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/site.css">
+</head>
+<body>
+<nav class="top wrap-wide">
+  <div><a href="./index.html">Quiet Sun</a> · MWA 2013–2015</div>
+  <div>
+    <a href="./images.html">Images</a>
+    &ensp;<strong>Runs</strong>
+  </div>
+</nav>
+<main class="wrap-wide">
+<p class="kicker">MWA</p>
+<h1>Runs</h1>
+<table class="days">
+<thead><tr><th>Day</th><th>Observation</th><th>What</th><th>Result</th></tr></thead>
+<tbody>
+<tr>
+  <td>3 Dec 2015 03:39</td>
+  <td class="mono">1133149192</td>
+  <td>CASA SuperUniform, Hogbom niter 8000, 570 × 0.5 s, Mohan 5σ, scan mean</td>
+  <td>0.89 / 1.01 / 1.10 / 0.63 million K</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:39</td>
+  <td class="mono">1133149192</td>
+  <td>P-AIRCARS, 4 s, 3C444 1133161488, pairs 84–85, 125–126, 169–170, 187–188</td>
+  <td>Disk at 108 and 162 MHz. Noise at 217 and 240 MHz.</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:39</td>
+  <td class="mono">1133149192</td>
+  <td>P-AIRCARS pair 113–114, 145.9 MHz, same 4 s recipe</td>
+  <td>Disk. Peak 1.04 million K (self-cal), 0.82 (calibrator only).</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:42</td>
+  <td class="mono">1133149192</td>
+  <td>Haslam 1982 sky at this pointing, 4×4 array factor</td>
+  <td>2.9 / 6.5 / 11.7 / 8.2 solar flux units</td>
+</tr>
+<tr>
+  <td>4 Dec 2015 03:50</td>
+  <td class="mono">1133236216</td>
+  <td>CASA SuperUniform 0.5 s, Cen A 1133236576, same channels as Figure 4</td>
+  <td>Frames on cluster. Mean T_B running (qn-mean 230745).</td>
+</tr>
+<tr>
+  <td>26 Mar 2015 03:46</td>
+  <td class="mono">1111376776</td>
+  <td>ASVO Sun 0.5 s 160 kHz no_rfi (1125020), 3C444 4 s (1125021)</td>
+  <td>Download watching (qm-asvo-watch 230744).</td>
+</tr>
+</tbody>
+</table>
+<p class="note">
+  Weighting SuperUniform, not Briggs. Conversion Mohan &amp; Oberoi 2017, not a 2022 scale factor.
+  P-AIRCARS is a separate column, not inside the CASA remake.
+</p>
+</main>
+<footer class="wrap-wide">
+  Brightness temperature in million K. Sharma &amp; Oberoi 2020.
+</footer>
+</body>
+</html>
