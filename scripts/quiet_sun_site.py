@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build the quiet-Sun comparison site from the 2013–2015 noon catalogue.
 
-Writes static HTML under site/quiet-sun/. Published at i4Ds/mwa-quiet-sun
-(https://i4ds.github.io/mwa-quiet-sun/). A day is mapped only when a
-figure already exists on disk. Does not invent maps.
+Writes static HTML under site/quiet-sun/. Published as the private
+i4Ds/mwa-quiet-sun repo. A day is mapped only when a figure already
+exists on disk. Does not invent maps.
 """
 
 from __future__ import annotations
@@ -120,6 +120,8 @@ def nav(*, root: str = ".", current: str = "") -> str:
 def foot() -> str:
     return """<footer class="wrap-wide">
   Brightness temperature in million K. Sharma &amp; Oberoi 2020.
+  <a href="https://github.com/i4Ds/mwa-quiet-sun">Quiet Sun</a> ·
+  <a href="https://github.com/i4Ds/mwa-flares">Flares</a>
 </footer>
 </body>
 </html>
