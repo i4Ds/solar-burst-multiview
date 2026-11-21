@@ -26,8 +26,8 @@ FIG4_NOON = "1133149792"
 FIG4_START = "2015-12-03T03:39:44"
 
 # Days with work already started. Status is only what we can show.
+# Figure 4 is 1133149192 (03:39 UT), not the noon pick 1133149792 (03:49 UT).
 WORK = {
-    FIG4_NOON: "mapped",  # maps are the 03:39 scan, not this noon pick
     "1133236216": "waiting",  # 4 Dec 2015: CASA frames exist, mean T_B running
     "1111376776": "waiting",  # 26 Mar 2015: ASVO download submitted
 }
@@ -228,8 +228,6 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
                 "waiting": ("waiting", "In progress"),
                 "none": ("none", "Not yet"),
             }[d["status"]]
-            if d["obsid"] == FIG4_NOON:
-                st = ("mapped", "See Figure 4")
             href = f'o/{d["obsid"]}.html'
             rows.append(
                 f'<tr data-year="{d["year"]}" data-cal="{1 if d["cal_within_24h"] else 0}" '
