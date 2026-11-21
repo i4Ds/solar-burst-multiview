@@ -1,0 +1,44 @@
+# Sharma & Oberoi 2020 (ApJ 903, 126) Figure 4.
+#
+# Imaging parameters are taken from the HISTORY of Rohit's published
+# CASA FITS (CASA 5.3.0-143, 2020-05-15/16, imager::clean). This is not
+# the 2022 burst paper and it does not use imaging.tb_scale.
+#
+# The FITS and MS live in Rohit's 2015 tree, staged under data/sharma2022/.
+
+event:
+  name: sharma2020
+  date: 2015-12-03
+  obsid: "1133149192"
+  start_utc: "2015-12-03T03:39:36"
+  end_utc: "2015-12-03T03:44:32"
+  reference: "Sharma & Oberoi 2020, ApJ 903, 126 (arXiv:2009.10604)"
+
+# Last clean() that wrote 1133149192-084-085.0010.image_image.FITS
+# (and the matching 162/217/240 MHz frames):
+imaging:
+  casa_version: "5.3.0-143"
+  casa_task: clean          # imager::clean, not tclean
+  npix: 1024
+  cell_arcsec: 50.0
+  stokes: I
+  mode: mfs
+  weighting: superuniform   # HISTORY: "square cell spanning [-3, 3] in the uv plane"
+  npixels: 0                # CASA default → that [-3, 3] cell
+  psfmode: hogbom           # HISTORY: "Using multifield Hogbom clean"
+  imagermode: ""
+  niter: 8000
+  gain: 0.1
+  threshold: "0mJy"
+  uvrange: ""               # paper text says per-band UV-range; these FITS have none
+  phasecenter: "J2000 16h40m55.28s -19d40m25.38s"
+  nsig: 5.0                 # Sharma 2020; Mohan 2017 used 6σ
+
+# Same Rohit tree as the 2022 staging (do not duplicate 265 GB).
+stage_config: sharma2022
+
+bands:
+  - {channels: "084-085", label: 108, freq_mhz: 108.14, caption_mk: 0.92}
+  - {channels: "125-126", label: 162, freq_mhz: 160.62, caption_mk: 1.20}
+  - {channels: "169-170", label: 217, freq_mhz: 216.94, caption_mk: 1.50}
+  - {channels: "187-188", label: 240, freq_mhz: 239.98, caption_mk: null}

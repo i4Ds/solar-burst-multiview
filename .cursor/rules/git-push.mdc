@@ -1,0 +1,16 @@
+---
+description: Commit and push this repo without asking first
+alwaysApply: true
+---
+
+# Git for this repo
+
+`i4Ds/solar-burst-multiview` is André's. Commit and push finished work here without asking permission first.
+
+Ask before committing or pushing only in repositories that are not his.
+
+Still follow `AGENTS.md`:
+
+- Branch `cursor/<topic>`. Never push to `main`. Open a pull request; André merges.
+- Do not commit secrets, credentials, or `data/` products.
+- Do not sweep unrelated uncommitted files into a commit.

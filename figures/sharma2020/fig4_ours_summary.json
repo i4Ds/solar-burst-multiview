@@ -1,0 +1,70 @@
+[
+  {
+    "mhz": "108",
+    "caption_mk": 0.92,
+    "his_peak_mk": 0.892,
+    "his_beam_arcsec": [
+      225.4,
+      217.2
+    ],
+    "ours_n": 570,
+    "ours_kind": "mean",
+    "ours_peak_mk": 0.889,
+    "ours_f_nu": 10.71,
+    "ours_beam_arcsec": [
+      217.1,
+      204.9
+    ]
+  },
+  {
+    "mhz": "162",
+    "caption_mk": 1.2,
+    "his_peak_mk": 0.996,
+    "his_beam_arcsec": [
+      198.0,
+      185.5
+    ],
+    "ours_n": 570,
+    "ours_kind": "mean",
+    "ours_peak_mk": 1.011,
+    "ours_f_nu": 12.48,
+    "ours_beam_arcsec": [
+      159.9,
+      149.6
+    ]
+  },
+  {
+    "mhz": "217",
+    "caption_mk": 1.5,
+    "his_peak_mk": 1.064,
+    "his_beam_arcsec": [
+      188.3,
+      185.5
+    ],
+    "ours_n": 570,
+    "ours_kind": "mean",
+    "ours_peak_mk": 1.104,
+    "ours_f_nu": 13.39,
+    "ours_beam_arcsec": [
+      127.9,
+      118.9
+    ]
+  },
+  {
+    "mhz": "240",
+    "caption_mk": null,
+    "his_peak_mk": 0.621,
+    "his_beam_arcsec": [
+      208.8,
+      202.5
+    ],
+    "ours_n": 570,
+    "ours_kind": "mean",
+    "ours_peak_mk": 0.633,
+    "ours_f_nu": 13.2,
+    "ours_beam_arcsec": [
+      183.6,
+      157.0
+    ]
+  }
+]

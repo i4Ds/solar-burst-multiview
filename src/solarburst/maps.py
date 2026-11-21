@@ -9,7 +9,9 @@ with Ω_beam the Gaussian synthesized-beam solid angle. Using the CASA FITS
 (and pickled) T_B by a nearly frequency-independent factor of ~9.5. The
 pickles in ``Tb_new/`` already have the published scale; FITS input needs
 ``imaging.tb_scale`` (default 9.48, measured at 108 MHz against those
-pickles) to match Figure 3 peaks.
+pickles) to match Figure 3 peaks. That factor is a 2022 shortcut, not
+the 2020 flux method. Sharma & Oberoi 2020 compute a per-band stretch
+``F(ν)`` from Oberoi 2017 ``S_⊙`` (see ``solarburst.mohan2017``).
 
 Helioprojective coordinates are a small-angle offset from the apparent
 solar RA/Dec at ``DATE-OBS``. Full ``sunpy`` reprojection of these SIN
