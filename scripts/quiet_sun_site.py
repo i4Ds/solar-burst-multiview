@@ -25,12 +25,9 @@ FIG4_OBSID = "1133149192"
 FIG4_NOON = "1133149792"
 FIG4_START = "2015-12-03T03:39:44"
 
-# Days with work already started. Status is only what we can show.
-# Figure 4 is 1133149192 (03:39 UT), not the noon pick 1133149792 (03:49 UT).
-WORK = {
-    "1133236216": "waiting",  # 4 Dec 2015: CASA frames exist, mean T_B running
-    "1111376776": "waiting",  # 26 Mar 2015: ASVO download submitted
-}
+# Noon-list status. Figure 4 is 1133149192 (03:39 UT), which is not
+# a noon pick. No other quiet-Sun day has a map on this site yet.
+WORK: dict[str, str] = {}
 
 FONT = (
     "https://fonts.googleapis.com/css2?"
@@ -275,18 +272,6 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
       <p>Rohit, our remake, P-AIRCARS. 108 / 162 / 217 / 240 MHz. Solar north up.</p>
       <img src="{thumb}" alt="3 December 2015, four pipelines, four frequencies">
     </a>
-    <a href="o/1133236216.html">
-      <p class="kicker">4 December 2015 · 03:50 UT</p>
-      <h2>1133236216</h2>
-      <p>24.2 h later. CASA SuperUniform 0.5 s. Mean T_B running.</p>
-      <div class="waiting">Mean running</div>
-    </a>
-    <a href="o/1111376776.html">
-      <p class="kicker">26 March 2015 · 03:46 UT</p>
-      <h2>1111376776</h2>
-      <p>3C444, 2.45 h earlier. P-angle near 0°. ASVO 0.5 s / 4 s.</p>
-      <div class="waiting">ASVO</div>
-    </a>
   </div>
 
   <div class="toolbar">
@@ -336,21 +321,14 @@ def day_body(d: dict, media: dict[str, str]) -> str:
 <p class="kicker">{e(fmt_date(d["date"]))} · 24.2 h after Figure 4</p>
 <h1>{e(d["obsid"])}</h1>
 {facts(d)}
-<p>
-  A co-rotating compact feature should shift 150–200 arcsec west.
-  CASA SuperUniform 0.5 s frames are on the cluster. Mean T_B is running.
-</p>
-<p class="note"><a href="{FIG4_OBSID}.html">3 December 03:39 UT</a></p>
+<p class="note">No map yet. <a href="{FIG4_OBSID}.html">Figure 4 is 3 December 03:39 UT</a>.</p>
 """
     if d["obsid"] == "1111376776":
         return f"""
 <p class="kicker">{e(fmt_date(d["date"]))}</p>
 <h1>{e(d["obsid"])}</h1>
 {facts(d)}
-<p>
-  CASA SuperUniform, 0.5 s Sun, 4 s 3C444. P-angle near 0°.
-  ASVO jobs 1125020 (Sun) and 1125021 (3C444).
-</p>
+<p class="note">No map yet.</p>
 """
     return f"""
 <p class="kicker">{e(fmt_date(d["date"]))}</p>
@@ -625,18 +603,6 @@ def runs_page() -> str:
   <td class="mono">1133149192</td>
   <td>Haslam 1982 sky at this pointing, 4×4 array factor</td>
   <td>2.9 / 6.5 / 11.7 / 8.2 solar flux units</td>
-</tr>
-<tr>
-  <td>4 Dec 2015 03:50</td>
-  <td class="mono">1133236216</td>
-  <td>CASA SuperUniform 0.5 s, Cen A 1133236576, same channels as Figure 4</td>
-  <td>Frames on cluster. Mean T_B running (qn-mean 230745).</td>
-</tr>
-<tr>
-  <td>26 Mar 2015 03:46</td>
-  <td class="mono">1111376776</td>
-  <td>ASVO Sun 0.5 s 160 kHz no_rfi (1125020), 3C444 4 s (1125021)</td>
-  <td>Download watching (qm-asvo-watch 230744).</td>
 </tr>
 </tbody>
 </table>
