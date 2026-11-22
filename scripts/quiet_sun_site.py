@@ -26,8 +26,10 @@ FIG4_NOON = "1133149792"
 FIG4_START = "2015-12-03T03:39:44"
 
 # Noon-list status. Figure 4 is 1133149192 (03:39 UT), which is not
-# a noon pick. No other quiet-Sun day has a map on this site yet.
-WORK: dict[str, str] = {}
+# a noon pick. 4 December 1133236216 has a CASA mean map.
+WORK = {
+    "1133236216": "mapped",
+}
 
 FONT = (
     "https://fonts.googleapis.com/css2?"
@@ -148,6 +150,8 @@ MEDIA_FILES = {
     "fig4_snap_rohit_vs_casa.png": "sharma2020/fig4_snap_rohit_vs_casa.png",
     "uv_amp.png": "sharma2020/uv_amp.png",
     "snap_data_vs_corrected.png": "sharma2020/snap_data_vs_corrected.png",
+    "dec4_ours_mean.png": "quiet2015/dec4_ours_mean.png",
+    "fig4_vs_dec4.png": "quiet2015/fig4_vs_dec4.png",
 }
 
 
@@ -199,6 +203,7 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
     n_wait = sum(1 for d in days if d["status"] == "waiting")
     years = sorted({d["year"] for d in days})
     thumb = media.get("fig4_vs_paircars.png", "")
+    thumb4 = media.get("dec4_ours_mean.png", "")
 
     chips = ['<button type="button" class="chip" data-year="all" aria-pressed="true">All years</button>']
     for y in years:
@@ -272,6 +277,12 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
       <p>Rohit, our remake, P-AIRCARS. 108 / 162 / 217 / 240 MHz. Solar north up.</p>
       <img src="{thumb}" alt="3 December 2015, four pipelines, four frequencies">
     </a>
+    <a href="o/1133236216.html">
+      <p class="kicker">4 December 2015 · 03:50 UT</p>
+      <h2>1133236216</h2>
+      <p>CASA SuperUniform, 579 × 0.5 s. Peaks 0.29 / 0.33 / 0.51 / 0.70 million K.</p>
+      <img src="{thumb4}" alt="4 December 2015, four frequencies">
+    </a>
   </div>
 
   <div class="toolbar">
@@ -321,8 +332,27 @@ def day_body(d: dict, media: dict[str, str]) -> str:
 <p class="kicker">{e(fmt_date(d["date"]))} · 24.2 h after Figure 4</p>
 <h1>{e(d["obsid"])}</h1>
 {facts(d)}
-<p class="note">No map yet. <a href="{FIG4_OBSID}.html">Figure 4 is 3 December 03:39 UT</a>.</p>
-"""
+<dl class="facts">
+  <div><dt>P-angle</dt><dd>+15.0°</dd></div>
+  <div><dt>CASA</dt><dd>SuperUniform, 579 × 0.5 s</dd></div>
+  <div><dt>Calibrator</dt><dd>Cen A · 1133236576 · +1 min</dd></div>
+</dl>
+""" + figure(
+            media, "dec4_ours_mean.png",
+            "4 December 2015, 108 / 162 / 217 / 240 MHz",
+            "CASA SuperUniform, mean of 579 × 0.5 s. Solar north up. "
+            "Peaks 0.29 / 0.33 / 0.51 / 0.70 million K. "
+            "Whole-Sun flux 0.86 / 2.22 / 5.99 / 5.35 solar flux units from "
+            "Oberoi 2017 Table 1 (a 2013 pointing), not Haslam at this pointing. "
+            "240 MHz Mohan F(ν) = 532; that panel is not a disk.",
+            prefix="../",
+        ) + figure(
+            media, "fig4_vs_dec4.png",
+            "3 December remake above, 4 December below",
+            "Each panel scaled to its own peak. Solar north up. "
+            "Top: Figure 4 remake, 3 December 03:39 UT. Bottom: 4 December 03:50 UT.",
+            prefix="../",
+        ) + f'<p class="note"><a href="{FIG4_OBSID}.html">Figure 4 is 3 December 03:39 UT</a></p>'
     if d["obsid"] == "1111376776":
         return f"""
 <p class="kicker">{e(fmt_date(d["date"]))}</p>
@@ -561,6 +591,24 @@ def images_page(media: dict[str, str]) -> str:
             "One snapshot, DATA against CORRECTED_DATA.",
         ),
         f'<p class="note"><a href="o/{FIG4_OBSID}.html">{FIG4_OBSID}</a></p>',
+        """<p class="kicker">4 December 2015 · 03:50 UT · 1133236216</p>
+<h2 class="section">One day later</h2>
+""",
+        figure(
+            media, "dec4_ours_mean.png",
+            "4 December 2015, four frequencies",
+            "CASA SuperUniform, mean of 579 × 0.5 s. Solar north up. "
+            "Peaks 0.29 / 0.33 / 0.51 / 0.70 million K. "
+            "Flux 0.86 / 2.22 / 5.99 / 5.35 solar flux units (Oberoi 2017 Table 1, 2013 pointing). "
+            "240 MHz Mohan F(ν) = 532; that panel is not a disk.",
+        ),
+        figure(
+            media, "fig4_vs_dec4.png",
+            "3 December remake above, 4 December below",
+            "Each panel scaled to its own peak. Solar north up. "
+            "Top: Figure 4 remake. Bottom: 4 December noon scan.",
+        ),
+        '<p class="note"><a href="o/1133236216.html">1133236216</a></p>',
     ]
     return (
         head("Images · Quiet Sun")
@@ -603,6 +651,12 @@ def runs_page() -> str:
   <td class="mono">1133149192</td>
   <td>Haslam 1982 sky at this pointing, 4×4 array factor</td>
   <td>2.9 / 6.5 / 11.7 / 8.2 solar flux units</td>
+</tr>
+<tr>
+  <td>4 Dec 2015 03:50</td>
+  <td class="mono">1133236216</td>
+  <td>CASA SuperUniform, Hogbom niter 8000, 579 × 0.5 s, Mohan 5σ, Oberoi 2017 Table 1 flux</td>
+  <td>0.29 / 0.33 / 0.51 / 0.70 million K. 240 MHz F(ν) = 532.</td>
 </tr>
 </tbody>
 </table>
