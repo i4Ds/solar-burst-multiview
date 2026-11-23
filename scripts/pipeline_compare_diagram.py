@@ -259,8 +259,7 @@ def main() -> int:
     ax.text(
         mid,
         0.38,
-        "P-AIRCARS polarisation calibration is off by default. "
-        "The Sharma & Oberoi 2020 column is the published method, not a remake.",
+        "P-AIRCARS polarisation calibration is off by default.",
         fontsize=8,
         color="#555555",
         ha="center",
