@@ -480,7 +480,6 @@ def day_body(d: dict, media: dict[str, str]) -> str:
 <h2 class="section">{e(FIG4_INTERVAL)}</h2>
 {facts(FIG4_EVENT, EXTRAS[FIG4_OBSID])}
 """
-            + pointing_figure(media, FIG4_EVENT, prefix="../")
             + figure(
                 media, "fig4_vs_paircars.png",
                 "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only",
@@ -495,12 +494,12 @@ def day_body(d: dict, media: dict[str, str]) -> str:
                 "Each panel scaled to its own peak.",
                 prefix="../",
             )
+            + pointing_figure(media, FIG4_EVENT, prefix="../")
             + f'<p class="note"><a href="{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>\n'
             + f"""
 <h2 class="section" id="noon">{e(d["interval"])}</h2>
 {facts(d, EXTRAS[FIG4_NOON])}
 """
-            + pointing_figure(media, d, prefix="../")
             + figure(
                 media, "dec3_noon_rohit_mean.png",
                 f"{d['heading']}, 108 / 162 / 217 / 240 MHz",
@@ -513,15 +512,13 @@ def day_body(d: dict, media: dict[str, str]) -> str:
                 "the mean is still a disk.",
                 prefix="../",
             )
+            + pointing_figure(media, d, prefix="../")
         )
     extras = EXTRAS.get(d["obsid"])
-    head_block = (
-        f"""
+    head_block = f"""
 {day_intro()}<h1>{e(d["heading"])}</h1>
 {facts(d, extras)}
 """
-        + pointing_figure(media, d, prefix="../")
-    )
     if d["obsid"] == "1133236216":
         return head_block + figure(
             media, "dec4_ours_mean.png",
@@ -538,8 +535,10 @@ def day_body(d: dict, media: dict[str, str]) -> str:
             "Each panel scaled to its own peak. Solar north up. "
             f"Top: {FIG4_HEADING}. Bottom: {d['heading']}.",
             prefix="../",
-        ) + f'<p class="note"><a href="{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>'
-    return head_block
+        ) + pointing_figure(media, d, prefix="../") + (
+            f'<p class="note"><a href="{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>'
+        )
+    return head_block + pointing_figure(media, d, prefix="../")
 
 
 def day_page(d: dict, prev: dict | None, nxt: dict | None, media: dict[str, str]) -> str:
@@ -560,7 +559,6 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
 <h1>{e(FIG4_HEADING)}</h1>
 {facts(FIG4_EVENT, EXTRAS[FIG4_OBSID])}
 """,
-        pointing_figure(media, FIG4_EVENT, prefix=p),
         figure(
             media, "fig4_vs_paircars.png",
             "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only",
@@ -651,6 +649,7 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
             "Rohit CORRECTED_DATA 36 Jy/beam; CASA applycal of his Cen A table 12 Jy/beam.",
             prefix=p,
         ),
+        pointing_figure(media, FIG4_EVENT, prefix=p),
         f'<div class="pager"><a href="{back}">{e(noon["heading"]) if noon else "Catalogue"}</a>'
         f'<a href="../images.html">All images</a></div>',
     ]
@@ -670,7 +669,6 @@ def images_page(media: dict[str, str], days: list[dict]) -> str:
 <h1>Images</h1>
 <h2 class="section">{e(FIG4_HEADING)}</h2>
 """,
-        pointing_figure(media, FIG4_EVENT),
         figure(
             media, "fig4_vs_paircars.png",
             "Four pipelines, four frequencies",
@@ -752,10 +750,10 @@ def images_page(media: dict[str, str], days: list[dict]) -> str:
             "DATA versus CORRECTED_DATA snapshot",
             "One snapshot, DATA against CORRECTED_DATA.",
         ),
+        pointing_figure(media, FIG4_EVENT),
         f'<p class="note"><a href="o/{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>',
         f"""<h2 class="section">{e(fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296))}</h2>
 """,
-        pointing_figure(media, noon) if noon else "",
         figure(
             media, "dec3_noon_rohit_mean.png",
             "3 December 2015 03:49 UT, four frequencies",
@@ -766,10 +764,10 @@ def images_page(media: dict[str, str], days: list[dict]) -> str:
             "F(ν) = 41 / 302 / 49 / 103. The 162 MHz conversion is large; "
             "the mean is still a disk.",
         ),
+        pointing_figure(media, noon) if noon else "",
         f'<p class="note"><a href="o/{FIG4_NOON}.html#noon">{e(fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296))}</a></p>',
         f"""<h2 class="section">{e(fmt_heading("2015-12-04", "2015-12-04T03:49:59", 296))}</h2>
 """,
-        pointing_figure(media, dec4) if dec4 else "",
         figure(
             media, "dec4_ours_mean.png",
             "4 December 2015, four frequencies",
@@ -784,6 +782,7 @@ def images_page(media: dict[str, str], days: list[dict]) -> str:
             "Each panel scaled to its own peak. Solar north up. "
             "Top: Figure 4 remake. Bottom: 4 December noon scan.",
         ),
+        pointing_figure(media, dec4) if dec4 else "",
         f'<p class="note"><a href="o/1133236216.html">{e(fmt_heading("2015-12-04", "2015-12-04T03:49:59", 296))}</a></p>',
     ]
     return (
