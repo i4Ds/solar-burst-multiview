@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import html
+import json
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -19,6 +20,8 @@ CSV_PATH = ROOT / "configs/quiet/quiet_noon_2013_2015.csv"
 SITE = ROOT / "site/quiet-sun"
 MEDIA = SITE / "media"
 FIG = ROOT / "figures"
+POINTING_DIR = FIG / "quiet2015" / "pointing"
+POINTING_JSON = POINTING_DIR / "pointing.json"
 
 # Sharma & Oberoi 2020 Fig. 4: not the noon pick that day.
 FIG4_OBSID = "1133149192"
@@ -215,6 +218,23 @@ MEDIA_FILES = {
 }
 
 
+def load_pointing() -> dict[str, dict]:
+    if not POINTING_JSON.is_file():
+        return {}
+    return json.loads(POINTING_JSON.read_text())
+
+
+def apply_pointing(d: dict, recs: dict[str, dict]) -> None:
+    rec = recs.get(d["obsid"])
+    if not rec:
+        return
+    d["az"] = rec.get("az_deg")
+    d["za"] = rec.get("za_deg")
+    d["pointing_mid"] = rec.get("mid")
+    if d.get("alt") is None and rec.get("alt_deg") is not None:
+        d["alt"] = rec["alt_deg"]
+
+
 def copy_media() -> dict[str, str]:
     MEDIA.mkdir(parents=True, exist_ok=True)
     out = {}
@@ -223,6 +243,13 @@ def copy_media() -> dict[str, str]:
         if src.is_file():
             shutil.copy2(src, MEDIA / name)
             out[name] = f"media/{name}"
+    dest = MEDIA / "pointing"
+    dest.mkdir(parents=True, exist_ok=True)
+    if POINTING_DIR.is_dir():
+        for png in sorted(POINTING_DIR.glob("*.png")):
+            shutil.copy2(png, dest / png.name)
+            key = f"pointing/{png.name}"
+            out[key] = f"media/{key}"
     return out
 
 
@@ -233,6 +260,25 @@ def figure(media: dict[str, str], name: str, alt: str, caption: str, *, prefix: 
     return (
         f'<div class="figure"><img src="{prefix}{src}" alt="{e(alt)}"></div>\n'
         f'<p class="caption">{caption}</p>\n'
+    )
+
+
+def pointing_figure(media: dict[str, str], d: dict, *, prefix: str = "") -> str:
+    mid = d.get("pointing_mid")
+    if mid:
+        t = datetime.strptime(mid, "%Y-%m-%dT%H:%M:%S")
+        when = f"{t:%-d %B %Y} {t:%H:%M} UT"
+    else:
+        when = d.get("heading") or "this pointing"
+    return figure(
+        media,
+        f"pointing/{d['obsid']}.png",
+        "Haslam 1982 at this pointing",
+        (
+            f"Haslam et al. 1982 at this pointing, {when}. "
+            "Tile beam 90 / 9 / 0.9 % on the right. Sun in yellow."
+        ),
+        prefix=prefix,
     )
 
 
@@ -260,6 +306,14 @@ def facts(d: dict, extra: list[tuple[str, str]] | None = None) -> str:
         (
             "Hour angle",
             f'{d["ha"]:+.2f} h' if d.get("ha") is not None else "—",
+        ),
+        (
+            "Azimuth",
+            f'{d["az"]:.1f}°' if d.get("az") is not None else "—",
+        ),
+        (
+            "Zenith",
+            f'{d["za"]:.1f}°' if d.get("za") is not None else "—",
         ),
         ("Calibrator", calibrator_text(d)),
     ]
@@ -426,6 +480,7 @@ def day_body(d: dict, media: dict[str, str]) -> str:
 <h2 class="section">{e(FIG4_INTERVAL)}</h2>
 {facts(FIG4_EVENT, EXTRAS[FIG4_OBSID])}
 """
+            + pointing_figure(media, FIG4_EVENT, prefix="../")
             + figure(
                 media, "fig4_vs_paircars.png",
                 "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only",
@@ -445,6 +500,7 @@ def day_body(d: dict, media: dict[str, str]) -> str:
 <h2 class="section" id="noon">{e(d["interval"])}</h2>
 {facts(d, EXTRAS[FIG4_NOON])}
 """
+            + pointing_figure(media, d, prefix="../")
             + figure(
                 media, "dec3_noon_rohit_mean.png",
                 f"{d['heading']}, 108 / 162 / 217 / 240 MHz",
@@ -459,10 +515,13 @@ def day_body(d: dict, media: dict[str, str]) -> str:
             )
         )
     extras = EXTRAS.get(d["obsid"])
-    head_block = f"""
+    head_block = (
+        f"""
 {day_intro()}<h1>{e(d["heading"])}</h1>
 {facts(d, extras)}
 """
+        + pointing_figure(media, d, prefix="../")
+    )
     if d["obsid"] == "1133236216":
         return head_block + figure(
             media, "dec4_ours_mean.png",
@@ -501,6 +560,7 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
 <h1>{e(FIG4_HEADING)}</h1>
 {facts(FIG4_EVENT, EXTRAS[FIG4_OBSID])}
 """,
+        pointing_figure(media, FIG4_EVENT, prefix=p),
         figure(
             media, "fig4_vs_paircars.png",
             "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only",
@@ -566,13 +626,6 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
             prefix=p,
         ),
         figure(
-            media, "haslam_sky.png",
-            "Haslam 1982 sky at the 3 December 2015 pointing",
-            "Haslam et al. 1982 at this pointing, 3 December 2015 03:42 UT. Galactic plane is close; "
-            "Sun marked on the right.",
-            prefix=p,
-        ),
-        figure(
             media, "compare_flux.png",
             "Whole-Sun flux at four frequencies",
             "Whole-Sun flux at this pointing: 2.9 / 6.5 / 11.7 / 8.2 solar flux units "
@@ -609,12 +662,15 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
     )
 
 
-def images_page(media: dict[str, str]) -> str:
+def images_page(media: dict[str, str], days: list[dict]) -> str:
+    noon = next((d for d in days if d["obsid"] == FIG4_NOON), None)
+    dec4 = next((d for d in days if d["obsid"] == "1133236216"), None)
     blocks = [
         f"""<p class="kicker">Quiet Sun</p>
 <h1>Images</h1>
 <h2 class="section">{e(FIG4_HEADING)}</h2>
 """,
+        pointing_figure(media, FIG4_EVENT),
         figure(
             media, "fig4_vs_paircars.png",
             "Four pipelines, four frequencies",
@@ -667,11 +723,6 @@ def images_page(media: dict[str, str]) -> str:
             "240 MHz, sample of 570 × 0.5 s.",
         ),
         figure(
-            media, "haslam_sky.png",
-            "Haslam 1982 at this pointing",
-            "Haslam et al. 1982, 3 December 2015 03:42 UT.",
-        ),
-        figure(
             media, "compare_flux.png",
             "Whole-Sun flux",
             "2.9 / 6.5 / 11.7 / 8.2 solar flux units at 108 / 162 / 217 / 240 MHz.",
@@ -704,6 +755,7 @@ def images_page(media: dict[str, str]) -> str:
         f'<p class="note"><a href="o/{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>',
         f"""<h2 class="section">{e(fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296))}</h2>
 """,
+        pointing_figure(media, noon) if noon else "",
         figure(
             media, "dec3_noon_rohit_mean.png",
             "3 December 2015 03:49 UT, four frequencies",
@@ -717,6 +769,7 @@ def images_page(media: dict[str, str]) -> str:
         f'<p class="note"><a href="o/{FIG4_NOON}.html#noon">{e(fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296))}</a></p>',
         f"""<h2 class="section">{e(fmt_heading("2015-12-04", "2015-12-04T03:49:59", 296))}</h2>
 """,
+        pointing_figure(media, dec4) if dec4 else "",
         figure(
             media, "dec4_ours_mean.png",
             "4 December 2015, four frequencies",
@@ -852,6 +905,10 @@ def catalogue_js() -> str:
 
 def main() -> None:
     days = load_days()
+    recs = load_pointing()
+    apply_pointing(FIG4_EVENT, recs)
+    for d in days:
+        apply_pointing(d, recs)
     SITE.mkdir(parents=True, exist_ok=True)
     media = copy_media()
     write(SITE / ".nojekyll", "")
@@ -860,7 +917,7 @@ def main() -> None:
         about.unlink()
     write(SITE / "js/catalogue.js", catalogue_js())
     write(SITE / "index.html", index_page(days, media))
-    write(SITE / "images.html", images_page(media))
+    write(SITE / "images.html", images_page(media, days))
     write(SITE / "runs.html", runs_page())
     write(
         SITE / "compare.html",

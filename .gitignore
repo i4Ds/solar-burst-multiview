@@ -30,3 +30,7 @@ env/
 # local mirror of the umbrella repo; the git clone is ~/Projects/solar-radio-imaging-spectroscopy
 .umbrella-staging/
 Untitled
+
+# Haslam pointing rasters: regenerate with scripts/quiet_pointing_figures.py
+figures/quiet2015/pointing/*.png
+site/quiet-sun/media/pointing/
