@@ -25,9 +25,9 @@ FIG4_OBSID = "1133149192"
 FIG4_NOON = "1133149792"
 FIG4_START = "2015-12-03T03:39:44"
 
-# Noon-list status. Figure 4 is 1133149192 (03:39 UT), not the noon pick
-# 1133149792. The 3 December catalogue row is that noon pick; the day
-# still has maps. 4 December 1133236216 has a CASA mean map.
+# Noon-list status. Figure 4 is 1133149192 (03:39 UT). The catalogue row
+# 1133149792 is the 03:49 noon pick; maps there are Rohit's FITS, not a
+# CASA remake. 4 December 1133236216 has a CASA mean map.
 WORK = {
     "1133149792": "mapped",
     "1133236216": "mapped",
@@ -154,6 +154,7 @@ MEDIA_FILES = {
     "snap_data_vs_corrected.png": "sharma2020/snap_data_vs_corrected.png",
     "dec4_ours_mean.png": "quiet2015/dec4_ours_mean.png",
     "fig4_vs_dec4.png": "quiet2015/fig4_vs_dec4.png",
+    "dec3_noon_rohit_mean.png": "quiet2015/dec3_noon_rohit_mean.png",
 }
 
 
@@ -205,6 +206,7 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
     n_wait = sum(1 for d in days if d["status"] == "waiting")
     years = sorted({d["year"] for d in days})
     thumb = media.get("fig4_vs_paircars.png", "")
+    thumb_noon = media.get("dec3_noon_rohit_mean.png", "")
     thumb4 = media.get("dec4_ours_mean.png", "")
 
     chips = ['<button type="button" class="chip" data-year="all" aria-pressed="true">All years</button>']
@@ -284,6 +286,12 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
       <p>Rohit, our remake, P-AIRCARS. 108 / 162 / 217 / 240 MHz. Solar north up.</p>
       <img src="{thumb}" alt="3 December 2015, four pipelines, four frequencies">
     </a>
+    <a href="o/{FIG4_NOON}.html#noon">
+      <p class="kicker">3 December 2015 · 03:49 UT</p>
+      <h2>1133149792</h2>
+      <p>Rohit's images, Mohan mean. Peaks 1.15 / 1.43 / 1.39 / 0.78 MK. Haslam at this pointing.</p>
+      <img src="{thumb_noon}" alt="3 December 2015 03:49 UT, four frequencies">
+    </a>
     <a href="o/1133236216.html">
       <p class="kicker">4 December 2015 · 03:50 UT</p>
       <h2>1133236216</h2>
@@ -338,7 +346,7 @@ def day_body(d: dict, media: dict[str, str]) -> str:
             f"""
 <p class="kicker">Quiet Sun</p>
 <h1>{e(fmt_date(d["date"]))}</h1>
-<p class="lede">Two Sun scans. Maps are on the earlier one.</p>
+<p class="lede">Two Sun scans. Maps on both.</p>
 <h2 class="section">1133149192 · 03:39–03:44 UT</h2>
 {fig4_facts}
 """
@@ -358,11 +366,27 @@ def day_body(d: dict, media: dict[str, str]) -> str:
             )
             + f'<p class="note"><a href="{FIG4_OBSID}.html">All Figure 4 comparison figures</a></p>\n'
             + f"""
-<h2 class="section">{e(d["obsid"])} · 03:49–03:54 UT</h2>
+<h2 class="section" id="noon">{e(d["obsid"])} · 03:49–03:54 UT</h2>
 <p class="kicker">Local noon catalogue pick</p>
 {facts(d)}
-<p class="note">No map yet.</p>
+<dl class="facts">
+  <div><dt>P-angle</dt><dd>+15.4°</dd></div>
+  <div><dt>Images</dt><dd>Rohit's SuperUniform FITS, 570 × 0.5 s</dd></div>
+  <div><dt>Flux</dt><dd>Haslam 1982 at this pointing</dd></div>
+</dl>
 """
+            + figure(
+                media, "dec3_noon_rohit_mean.png",
+                "3 December 2015 03:49 UT, 108 / 162 / 217 / 240 MHz",
+                "Rohit's images, mean of 570 × 0.5 s after Mohan 5σ. "
+                "Haslam 1982 at this pointing, not Oberoi 2017 Table 1. "
+                "Solar north up. Each panel scaled to its own peak. "
+                "Peaks 1.15 / 1.43 / 1.39 / 0.78 MK. "
+                "Whole-Sun flux 3.52 / 8.15 / 14.61 / 9.67 solar flux units. "
+                "Mohan F(ν) = 41 / 302 / 49 / 103. The 162 MHz conversion is large; "
+                "the mean is still a disk.",
+                prefix="../",
+            )
         )
     if d["obsid"] == "1133236216":
         return f"""
@@ -628,6 +652,20 @@ def images_page(media: dict[str, str]) -> str:
             "One snapshot, DATA against CORRECTED_DATA.",
         ),
         f'<p class="note"><a href="o/{FIG4_OBSID}.html">{FIG4_OBSID}</a></p>',
+        """<p class="kicker">3 December 2015 · 03:49 UT · 1133149792</p>
+<h2 class="section">Noon pick, same day</h2>
+""",
+        figure(
+            media, "dec3_noon_rohit_mean.png",
+            "3 December 2015 03:49 UT, four frequencies",
+            "Rohit's SuperUniform images, mean of 570 × 0.5 s after Mohan 5σ. "
+            "Haslam 1982 at this pointing. Solar north up. "
+            "Peaks 1.15 / 1.43 / 1.39 / 0.78 MK. "
+            "Flux 3.52 / 8.15 / 14.61 / 9.67 solar flux units. "
+            "F(ν) = 41 / 302 / 49 / 103. The 162 MHz conversion is large; "
+            "the mean is still a disk.",
+        ),
+        f'<p class="note"><a href="o/{FIG4_NOON}.html#noon">{FIG4_NOON}</a></p>',
         """<p class="kicker">4 December 2015 · 03:50 UT · 1133236216</p>
 <h2 class="section">One day later</h2>
 """,
@@ -688,6 +726,12 @@ def runs_page() -> str:
   <td class="mono">1133149192</td>
   <td>Haslam 1982 sky at this pointing, 4×4 array factor</td>
   <td>2.9 / 6.5 / 11.7 / 8.2 solar flux units</td>
+</tr>
+<tr>
+  <td>3 Dec 2015 03:49</td>
+  <td class="mono">1133149792</td>
+  <td>Rohit's SuperUniform FITS, 570 × 0.5 s, Mohan 5σ, Haslam 1982 at this pointing</td>
+  <td>1.15 / 1.43 / 1.39 / 0.78 MK. F(ν) = 41 / 302 / 49 / 103.</td>
 </tr>
 <tr>
   <td>4 Dec 2015 03:50</td>
