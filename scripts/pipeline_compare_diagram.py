@@ -53,6 +53,13 @@ PIPELINES = [
                 "temperature, million K"
             ),
         },
+        "compare": (
+            "Whole-Sun flux from the shortest baselines\n"
+            "+ Haslam 1982 sky at this pointing\n"
+            "(Oberoi, Sharma & Rogers 2017).\n"
+            "Each map × Mohan F(ν) at 5σ,\n"
+            "then the time mean."
+        ),
     },
     {
         "name": "P-AIRCARS",
@@ -81,6 +88,13 @@ PIPELINES = [
                 "resolution"
             ),
         },
+        "compare": (
+            "Primary-beam-corrected Jy/beam\n"
+            "from the calibrator sky model.\n"
+            "Each map × Mohan F(ν) at 5σ\n"
+            "→ million K.\n"
+            "This conversion is not a P-AIRCARS step."
+        ),
     },
 ]
 
@@ -139,15 +153,18 @@ def main() -> int:
         missing = [s for s in STAGES if s not in p["stages"]]
         if missing:
             raise SystemExit(f"{p['name']} missing stages: {missing}")
+        if "compare" not in p:
+            raise SystemExit(f"{p['name']} missing compare text")
 
     left = 1.15
     right = 0.35
     gap = 0.38
-    fig_h = 12.2
+    fig_h = 13.8
     col_w = 5.15
     fig_w = left + right + n * col_w + (n - 1) * gap
     xs = [left + col_w / 2 + i * (col_w + gap) for i in range(n)]
     box_w = col_w - 0.22
+    span_w = min(fig_w - left - right, n * col_w + (n - 1) * gap)
 
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
     ax.set_xlim(0, fig_w)
@@ -159,8 +176,8 @@ def main() -> int:
     src = box(
         ax,
         mid,
-        10.85,
-        min(fig_w - left - right, n * col_w + (n - 1) * gap),
+        12.55,
+        span_w,
         0.95,
         "Uncalibrated MWA visibilities  ·  Sun scan and a compact calibrator",
         C_INPUT,
@@ -168,13 +185,13 @@ def main() -> int:
         weight="bold",
     )
 
-    y_head = 9.85
+    y_head = 11.55
     for x, p in zip(xs, PIPELINES):
         ax.text(x, y_head, p["name"], fontsize=11, fontweight="bold", ha="center", va="center")
         ax.text(x, y_head - 0.32, p["cite"], fontsize=8.5, color="#555555", ha="center", va="center")
 
     # Row centres: calibration, imaging, flux, product.
-    ys = (8.35, 6.35, 4.40, 2.55)
+    ys = (10.05, 8.05, 6.10, 4.25)
     heights = (1.55, 1.55, 1.40, 1.25)
     cells: list[list[tuple]] = []
     for x, p in zip(xs, PIPELINES):
@@ -206,21 +223,42 @@ def main() -> int:
     note = box(
         ax,
         mid,
-        1.12,
-        min(fig_w - left - right, n * col_w + (n - 1) * gap),
-        0.85,
-        "Map comparison only: convert P-AIRCARS Jy/beam with the same Mohan stretch.\n"
-        "That conversion is not a P-AIRCARS step.",
+        1.85,
+        span_w,
+        2.15,
+        "",
         C_COMPARE,
-        size=8.5,
         linestyle="dashed",
     )
+    ax.text(
+        mid,
+        2.68,
+        "Comparison  ·  brightness temperature, million K",
+        ha="center",
+        va="center",
+        fontsize=9,
+        fontweight="bold",
+        color="#1a1a1a",
+    )
+    for x, p in zip(xs, PIPELINES):
+        text = p["compare"]
+        ax.text(
+            x,
+            1.55,
+            text,
+            ha="center",
+            va="center",
+            fontsize=8.2,
+            color="#1a1a1a",
+            linespacing=1.25,
+        )
+    ax.text(0.28, 1.85, "Comparison", fontsize=8, color="#555555", rotation=90, va="center")
     for col in cells:
         arrow(ax, *down(col[-1], note), linestyle="dashed")
 
     ax.text(
         mid,
-        0.32,
+        0.38,
         "P-AIRCARS polarisation calibration is off by default. "
         "The Sharma & Oberoi 2020 column is the published method, not a remake.",
         fontsize=8,
