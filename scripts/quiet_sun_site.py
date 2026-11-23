@@ -25,9 +25,11 @@ FIG4_OBSID = "1133149192"
 FIG4_NOON = "1133149792"
 FIG4_START = "2015-12-03T03:39:44"
 
-# Noon-list status. Figure 4 is 1133149192 (03:39 UT), which is not
-# a noon pick. 4 December 1133236216 has a CASA mean map.
+# Noon-list status. Figure 4 is 1133149192 (03:39 UT), not the noon pick
+# 1133149792. The 3 December catalogue row is that noon pick; the day
+# still has maps. 4 December 1133236216 has a CASA mean map.
 WORK = {
+    "1133149792": "mapped",
     "1133236216": "mapped",
 }
 
@@ -231,12 +233,17 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
                 "none": ("none", "Not yet"),
             }[d["status"]]
             href = f'o/{d["obsid"]}.html'
+            obs_cell = e(d["obsid"])
+            search = d["date"] + " " + d["obsid"] + " " + (d["cal_name"] or "")
+            if d["obsid"] == FIG4_NOON:
+                obs_cell = f'{FIG4_OBSID}<br>{e(d["obsid"])}'
+                search += " " + FIG4_OBSID
             rows.append(
                 f'<tr data-year="{d["year"]}" data-cal="{1 if d["cal_within_24h"] else 0}" '
                 f'data-work="{1 if d["status"] != "none" else 0}" '
-                f'data-text="{e((d["date"] + " " + d["obsid"] + " " + (d["cal_name"] or "")).lower())}">'
+                f'data-text="{e(search.lower())}">'
                 f'<td><a class="date" href="{href}">{e(d["date"])}</a></td>'
-                f'<td class="hide-sm mono">{e(d["obsid"])}</td>'
+                f'<td class="hide-sm mono">{obs_cell}</td>'
                 f'<td><span class="altbar" title="{d["alt"]:.1f}°">'
                 f'<i style="width:{alt_w}%"></i></span>{d["alt"]:.0f}°</td>'
                 f'<td>{e(cal)}</td>'
@@ -318,15 +325,45 @@ def pager_html(prev: dict | None, nxt: dict | None) -> str:
 
 def day_body(d: dict, media: dict[str, str]) -> str:
     if d["obsid"] == FIG4_NOON:
-        return f"""
-<p class="kicker">{e(fmt_date(d["date"]))} · local noon</p>
-<h1>{e(d["obsid"])}</h1>
-{facts(d)}
-<p class="note">
-  Figure 4 is <a href="{FIG4_OBSID}.html">{FIG4_OBSID}</a>, 03:39–03:44 UT,
-  ten minutes earlier.
-</p>
+        fig4_facts = """<dl class="facts">
+  <div><dt>Observation</dt><dd>1133149192</dd></div>
+  <div><dt>Start</dt><dd>2015-12-03 03:39:44 UT</dd></div>
+  <div><dt>Length</dt><dd>296 s</dd></div>
+  <div><dt>CASA</dt><dd>SuperUniform, 570 × 0.5 s</dd></div>
+  <div><dt>P-AIRCARS cal</dt><dd>3C444 · 1133161488</dd></div>
+  <div><dt>Cen A</dt><dd>1133139776</dd></div>
+</dl>
 """
+        return (
+            f"""
+<p class="kicker">Quiet Sun</p>
+<h1>{e(fmt_date(d["date"]))}</h1>
+<p class="lede">Two Sun scans. Maps are on the earlier one.</p>
+<h2 class="section">1133149192 · 03:39–03:44 UT</h2>
+{fig4_facts}
+"""
+            + figure(
+                media, "fig4_vs_paircars.png",
+                "Rohit, remake, P-AIRCARS self-cal, P-AIRCARS calibrator-only",
+                "Solar north up. Peaks at 108 MHz: 0.89 / 0.89 / 0.82 / 0.83 million K. "
+                "At 162 MHz: 0.99 / 1.01 / 0.88 / 0.90. At 217 and 240 MHz P-AIRCARS is noise.",
+                prefix="../",
+            )
+            + figure(
+                media, "fig4_ours_mean.png",
+                "Our remake, mean of 570 frames",
+                "Our remake, mean of 570 SuperUniform frames. Peaks 0.89 / 1.01 / 1.10 / 0.63 million K. "
+                "Each panel scaled to its own peak.",
+                prefix="../",
+            )
+            + f'<p class="note"><a href="{FIG4_OBSID}.html">All Figure 4 comparison figures</a></p>\n'
+            + f"""
+<h2 class="section">{e(d["obsid"])} · 03:49–03:54 UT</h2>
+<p class="kicker">Local noon catalogue pick</p>
+{facts(d)}
+<p class="note">No map yet.</p>
+"""
+        )
     if d["obsid"] == "1133236216":
         return f"""
 <p class="kicker">{e(fmt_date(d["date"]))} · 24.2 h after Figure 4</p>
