@@ -11,7 +11,7 @@ from __future__ import annotations
 import csv
 import html
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +24,8 @@ FIG = ROOT / "figures"
 FIG4_OBSID = "1133149192"
 FIG4_NOON = "1133149792"
 FIG4_START = "2015-12-03T03:39:44"
+FIG4_DURATION_S = 296
+FIG4_DATE = "2015-12-03"
 
 # Noon-list status. Figure 4 is 1133149192 (03:39 UT). The catalogue row
 # 1133149792 is the 03:49 noon pick; maps there are Rohit's FITS, not a
@@ -69,6 +71,10 @@ def load_days() -> list[dict]:
                     "cal_within_24h": bool(
                         r["cal_dt_h"] and abs(float(r["cal_dt_h"])) <= 24.0
                     ),
+                    "interval": fmt_interval(start, int(float(r["duration"]))),
+                    "heading": fmt_heading(
+                        date, start, int(float(r["duration"]))
+                    ),
                 }
             )
     return rows
@@ -82,8 +88,59 @@ def fmt_date(iso: str) -> str:
     return datetime.strptime(iso, "%Y-%m-%d").strftime("%-d %B %Y")
 
 
-def fmt_time(iso: str) -> str:
-    return iso.replace("T", " ") + " UT"
+def fmt_date_short(iso: str) -> str:
+    return datetime.strptime(iso, "%Y-%m-%d").strftime("%-d %b %Y")
+
+
+def parse_start(iso: str) -> datetime:
+    return datetime.strptime(iso, "%Y-%m-%dT%H:%M:%S")
+
+
+def fmt_interval(start_iso: str, duration_s: int) -> str:
+    t0 = parse_start(start_iso)
+    t1 = t0 + timedelta(seconds=int(duration_s))
+    return f"{t0:%H:%M}–{t1:%H:%M} UT"
+
+
+def fmt_heading(date_iso: str, start_iso: str, duration_s: int) -> str:
+    return f"{fmt_date(date_iso)}, {fmt_interval(start_iso, duration_s)}"
+
+
+FIG4_INTERVAL = fmt_interval(FIG4_START, FIG4_DURATION_S)
+FIG4_HEADING = fmt_heading(FIG4_DATE, FIG4_START, FIG4_DURATION_S)
+FIG4_EVENT = {
+    "obsid": FIG4_OBSID,
+    "date": FIG4_DATE,
+    "start": FIG4_START,
+    "duration_s": FIG4_DURATION_S,
+    "interval": FIG4_INTERVAL,
+    "heading": FIG4_HEADING,
+    "alt": None,
+    "ha": None,
+    "cal_obsid": "1133139776",
+    "cal_name": "CenA",
+    "dt_cal": None,
+    "cal_within_24h": True,
+}
+
+# Extra facts after the common block, same labels and order when present.
+EXTRAS = {
+    FIG4_OBSID: [
+        ("P-angle", "+15.4°"),
+        ("Images", "CASA SuperUniform, 570 × 0.5 s"),
+        ("Flux", "Haslam 1982 at this pointing"),
+    ],
+    FIG4_NOON: [
+        ("P-angle", "+15.4°"),
+        ("Images", "Rohit's SuperUniform FITS, 570 × 0.5 s"),
+        ("Flux", "Haslam 1982 at this pointing"),
+    ],
+    "1133236216": [
+        ("P-angle", "+15.0°"),
+        ("Images", "CASA SuperUniform, 579 × 0.5 s"),
+        ("Flux", "Oberoi 2017 Table 1 (2013 pointing)"),
+    ],
+}
 
 
 def head(title: str, *, root: str = ".") -> str:
@@ -179,24 +236,40 @@ def figure(media: dict[str, str], name: str, alt: str, caption: str, *, prefix: 
     )
 
 
-def facts(d: dict) -> str:
-    if d["cal_obsid"] and d["dt_cal"] is not None:
-        window = "within 24 h" if d["cal_within_24h"] else "outside 24 h"
-        cal = (
+def calibrator_text(d: dict) -> str:
+    if d.get("cal_obsid") and d.get("dt_cal") is not None:
+        window = "within 24 h" if d.get("cal_within_24h") else "outside 24 h"
+        return (
             f'{e(d["cal_name"])} · {e(d["cal_obsid"])} · '
             f'{d["dt_cal"]:+.2f} h ({window})'
         )
-    else:
-        cal = "none listed"
-    return f"""<dl class="facts">
-  <div><dt>Observation</dt><dd>{e(d["obsid"])}</dd></div>
-  <div><dt>Start</dt><dd>{e(fmt_time(d["start"]))}</dd></div>
-  <div><dt>Length</dt><dd>{d["duration_s"]} s</dd></div>
-  <div><dt>Elevation</dt><dd>{d["alt"]:.1f}°</dd></div>
-  <div><dt>Hour angle</dt><dd>{d["ha"]:+.2f} h</dd></div>
-  <div><dt>Calibrator</dt><dd>{cal}</dd></div>
-</dl>
-"""
+    if d.get("cal_obsid"):
+        name = e(d["cal_name"]) + " · " if d.get("cal_name") else ""
+        return f'{name}{e(d["cal_obsid"])}'
+    return "none listed"
+
+
+def facts(d: dict, extra: list[tuple[str, str]] | None = None) -> str:
+    items: list[tuple[str, str]] = [
+        ("Time", d["interval"]),
+        ("Observation", d["obsid"]),
+        (
+            "Elevation",
+            f'{d["alt"]:.1f}°' if d.get("alt") is not None else "—",
+        ),
+        (
+            "Hour angle",
+            f'{d["ha"]:+.2f} h' if d.get("ha") is not None else "—",
+        ),
+        ("Calibrator", calibrator_text(d)),
+    ]
+    if extra:
+        items.extend(extra)
+    rows = "".join(
+        f"<div><dt>{e(k)}</dt><dd>{v if k == 'Calibrator' else e(v)}</dd></div>"
+        for k, v in items
+    )
+    return f'<dl class="facts">{rows}</dl>\n'
 
 
 def index_page(days: list[dict], media: dict[str, str]) -> str:
@@ -208,6 +281,12 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
     thumb = media.get("fig4_vs_paircars.png", "")
     thumb_noon = media.get("dec3_noon_rohit_mean.png", "")
     thumb4 = media.get("dec4_ours_mean.png", "")
+    noon = next((d for d in days if d["obsid"] == FIG4_NOON), None)
+    dec4 = next((d for d in days if d["obsid"] == "1133236216"), None)
+    noon_interval = noon["interval"] if noon else fmt_interval("2015-12-03T03:49:35", 296)
+    dec4_interval = dec4["interval"] if dec4 else fmt_interval("2015-12-04T03:49:59", 296)
+    noon_heading = noon["heading"] if noon else fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296)
+    dec4_heading = dec4["heading"] if dec4 else fmt_heading("2015-12-04", "2015-12-04T03:49:59", 296)
 
     chips = ['<button type="button" class="chip" data-year="all" aria-pressed="true">All years</button>']
     for y in years:
@@ -235,17 +314,19 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
                 "none": ("none", "Not yet"),
             }[d["status"]]
             href = f'o/{d["obsid"]}.html'
-            obs_cell = e(d["obsid"])
-            search = d["date"] + " " + d["obsid"] + " " + (d["cal_name"] or "")
+            search = (
+                d["date"] + " " + d["heading"] + " " + d["obsid"] + " "
+                + (d["cal_name"] or "")
+            )
             if d["obsid"] == FIG4_NOON:
-                obs_cell = f'{FIG4_OBSID}<br>{e(d["obsid"])}'
-                search += " " + FIG4_OBSID
+                search += " " + FIG4_OBSID + " " + FIG4_HEADING
             rows.append(
                 f'<tr data-year="{d["year"]}" data-cal="{1 if d["cal_within_24h"] else 0}" '
                 f'data-work="{1 if d["status"] != "none" else 0}" '
                 f'data-text="{e(search.lower())}">'
-                f'<td><a class="date" href="{href}">{e(d["date"])}</a></td>'
-                f'<td class="hide-sm mono">{obs_cell}</td>'
+                f'<td><a class="date" href="{href}">{e(fmt_date_short(d["date"]))}</a></td>'
+                f'<td>{e(d["interval"])}</td>'
+                f'<td class="hide-sm mono">{e(d["obsid"])}</td>'
                 f'<td><span class="altbar" title="{d["alt"]:.1f}°">'
                 f'<i style="width:{alt_w}%"></i></span>{d["alt"]:.0f}°</td>'
                 f'<td>{e(cal)}</td>'
@@ -257,7 +338,8 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
             f'<h2 class="year-head" data-year="{y}">{y}'
             f'<span class="year-n"> · {len(ydays)} days</span></h2>\n'
             f'<table class="days" data-year="{y}">'
-            f"<thead><tr><th>Date</th><th class='hide-sm'>Sun obsid</th>"
+            f"<thead><tr><th>Date</th><th>Time</th>"
+            f"<th class='hide-sm'>Observation</th>"
             f"<th>Elevation</th><th>Calibrator</th>"
             f"<th class='hide-sm'>From cal</th><th>Maps</th></tr></thead>"
             f"<tbody>{''.join(rows)}</tbody></table>"
@@ -281,27 +363,27 @@ def index_page(days: list[dict], media: dict[str, str]) -> str:
 
   <div class="featured">
     <a href="o/{FIG4_OBSID}.html">
-      <p class="kicker">3 December 2015 · 03:39 UT</p>
-      <h2>1133149192</h2>
-      <p>Rohit, our remake, P-AIRCARS. 108 / 162 / 217 / 240 MHz. Solar north up.</p>
-      <img src="{thumb}" alt="3 December 2015, four pipelines, four frequencies">
+      <p class="kicker">{e(fmt_date(FIG4_DATE))}</p>
+      <h2>{e(FIG4_INTERVAL)}</h2>
+      <p>108 / 162 / 217 / 240 MHz. Solar north up.</p>
+      <img src="{thumb}" alt="{e(FIG4_HEADING)}, four pipelines, four frequencies">
     </a>
     <a href="o/{FIG4_NOON}.html#noon">
-      <p class="kicker">3 December 2015 · 03:49 UT</p>
-      <h2>1133149792</h2>
-      <p>Rohit's images, Mohan mean. Peaks 1.15 / 1.43 / 1.39 / 0.78 MK. Haslam at this pointing.</p>
-      <img src="{thumb_noon}" alt="3 December 2015 03:49 UT, four frequencies">
+      <p class="kicker">{e(fmt_date(FIG4_DATE))}</p>
+      <h2>{e(noon_interval)}</h2>
+      <p>108 / 162 / 217 / 240 MHz. Solar north up.</p>
+      <img src="{thumb_noon}" alt="{e(noon_heading)}, four frequencies">
     </a>
     <a href="o/1133236216.html">
-      <p class="kicker">4 December 2015 · 03:50 UT</p>
-      <h2>1133236216</h2>
-      <p>CASA SuperUniform, 579 × 0.5 s. Peaks 0.29 / 0.33 / 0.51 / 0.70 million K.</p>
-      <img src="{thumb4}" alt="4 December 2015, four frequencies">
+      <p class="kicker">4 December 2015</p>
+      <h2>{e(dec4_interval)}</h2>
+      <p>108 / 162 / 217 / 240 MHz. Solar north up.</p>
+      <img src="{thumb4}" alt="{e(dec4_heading)}, four frequencies">
     </a>
   </div>
 
   <div class="toolbar">
-    <input type="search" id="q" placeholder="Search date, obsid, calibrator" autocomplete="off">
+    <input type="search" id="q" placeholder="Search date, time, calibrator" autocomplete="off">
     {"".join(chips)}
   </div>
   {"".join(blocks)}
@@ -319,36 +401,30 @@ def neighbours(days: list[dict], idx: int) -> tuple[dict | None, dict | None]:
 
 def pager_html(prev: dict | None, nxt: dict | None) -> str:
     left = (
-        f'<a href="{prev["obsid"]}.html">← {e(fmt_date(prev["date"]))}</a>'
+        f'<a href="{prev["obsid"]}.html">← {e(prev["heading"])}</a>'
         if prev
         else "<span></span>"
     )
     right = (
-        f'<a href="{nxt["obsid"]}.html">{e(fmt_date(nxt["date"]))} →</a>'
+        f'<a href="{nxt["obsid"]}.html">{e(nxt["heading"])} →</a>'
         if nxt
         else "<span></span>"
     )
     return f'<div class="pager">{left}{right}</div>'
 
 
+def day_intro() -> str:
+    return '<p class="kicker">Quiet Sun</p>\n'
+
+
 def day_body(d: dict, media: dict[str, str]) -> str:
     if d["obsid"] == FIG4_NOON:
-        fig4_facts = """<dl class="facts">
-  <div><dt>Observation</dt><dd>1133149192</dd></div>
-  <div><dt>Start</dt><dd>2015-12-03 03:39:44 UT</dd></div>
-  <div><dt>Length</dt><dd>296 s</dd></div>
-  <div><dt>CASA</dt><dd>SuperUniform, 570 × 0.5 s</dd></div>
-  <div><dt>P-AIRCARS cal</dt><dd>3C444 · 1133161488</dd></div>
-  <div><dt>Cen A</dt><dd>1133139776</dd></div>
-</dl>
-"""
         return (
             f"""
-<p class="kicker">Quiet Sun</p>
-<h1>{e(fmt_date(d["date"]))}</h1>
+{day_intro()}<h1>{e(fmt_date(d["date"]))}</h1>
 <p class="lede">Two Sun scans. Maps on both.</p>
-<h2 class="section">1133149192 · 03:39–03:44 UT</h2>
-{fig4_facts}
+<h2 class="section">{e(FIG4_INTERVAL)}</h2>
+{facts(FIG4_EVENT, EXTRAS[FIG4_OBSID])}
 """
             + figure(
                 media, "fig4_vs_paircars.png",
@@ -364,20 +440,14 @@ def day_body(d: dict, media: dict[str, str]) -> str:
                 "Each panel scaled to its own peak.",
                 prefix="../",
             )
-            + f'<p class="note"><a href="{FIG4_OBSID}.html">All Figure 4 comparison figures</a></p>\n'
+            + f'<p class="note"><a href="{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>\n'
             + f"""
-<h2 class="section" id="noon">{e(d["obsid"])} · 03:49–03:54 UT</h2>
-<p class="kicker">Local noon catalogue pick</p>
-{facts(d)}
-<dl class="facts">
-  <div><dt>P-angle</dt><dd>+15.4°</dd></div>
-  <div><dt>Images</dt><dd>Rohit's SuperUniform FITS, 570 × 0.5 s</dd></div>
-  <div><dt>Flux</dt><dd>Haslam 1982 at this pointing</dd></div>
-</dl>
+<h2 class="section" id="noon">{e(d["interval"])}</h2>
+{facts(d, EXTRAS[FIG4_NOON])}
 """
             + figure(
                 media, "dec3_noon_rohit_mean.png",
-                "3 December 2015 03:49 UT, 108 / 162 / 217 / 240 MHz",
+                f"{d['heading']}, 108 / 162 / 217 / 240 MHz",
                 "Rohit's images, mean of 570 × 0.5 s after Mohan 5σ. "
                 "Haslam 1982 at this pointing, not Oberoi 2017 Table 1. "
                 "Solar north up. Each panel scaled to its own peak. "
@@ -388,19 +458,15 @@ def day_body(d: dict, media: dict[str, str]) -> str:
                 prefix="../",
             )
         )
+    extras = EXTRAS.get(d["obsid"])
+    head_block = f"""
+{day_intro()}<h1>{e(d["heading"])}</h1>
+{facts(d, extras)}
+"""
     if d["obsid"] == "1133236216":
-        return f"""
-<p class="kicker">{e(fmt_date(d["date"]))} · 24.2 h after Figure 4</p>
-<h1>{e(d["obsid"])}</h1>
-{facts(d)}
-<dl class="facts">
-  <div><dt>P-angle</dt><dd>+15.0°</dd></div>
-  <div><dt>CASA</dt><dd>SuperUniform, 579 × 0.5 s</dd></div>
-  <div><dt>Calibrator</dt><dd>Cen A · 1133236576 · +1 min</dd></div>
-</dl>
-""" + figure(
+        return head_block + figure(
             media, "dec4_ours_mean.png",
-            "4 December 2015, 108 / 162 / 217 / 240 MHz",
+            f"{d['heading']}, 108 / 162 / 217 / 240 MHz",
             "CASA SuperUniform, mean of 579 × 0.5 s. Solar north up. "
             "Peaks 0.29 / 0.33 / 0.51 / 0.70 million K. "
             "Whole-Sun flux 0.86 / 2.22 / 5.99 / 5.35 solar flux units from "
@@ -411,26 +477,16 @@ def day_body(d: dict, media: dict[str, str]) -> str:
             media, "fig4_vs_dec4.png",
             "3 December remake above, 4 December below",
             "Each panel scaled to its own peak. Solar north up. "
-            "Top: Figure 4 remake, 3 December 03:39 UT. Bottom: 4 December 03:50 UT.",
+            f"Top: {FIG4_HEADING}. Bottom: {d['heading']}.",
             prefix="../",
-        ) + f'<p class="note"><a href="{FIG4_OBSID}.html">Figure 4 is 3 December 03:39 UT</a></p>'
-    if d["obsid"] == "1111376776":
-        return f"""
-<p class="kicker">{e(fmt_date(d["date"]))}</p>
-<h1>{e(d["obsid"])}</h1>
-{facts(d)}
-<p class="note">No map yet.</p>
-"""
-    return f"""
-<p class="kicker">{e(fmt_date(d["date"]))}</p>
-<h1>{e(d["obsid"])}</h1>
-{facts(d)}
-"""
+        ) + f'<p class="note"><a href="{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>'
+    return head_block
 
 
 def day_page(d: dict, prev: dict | None, nxt: dict | None, media: dict[str, str]) -> str:
+    title = fmt_date(d["date"]) if d["obsid"] == FIG4_NOON else d["heading"]
     return (
-        head(f"{fmt_date(d['date'])} · Quiet Sun", root="..")
+        head(f"{title} · Quiet Sun", root="..")
         + nav(root="..")
         + f'<main class="wrap">{day_body(d, media)}{pager_html(prev, nxt)}</main>'
         + foot()
@@ -441,16 +497,9 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
     p = "../"
     back = f'{noon["obsid"]}.html' if noon else "../index.html"
     body = [
-        f"""<p class="kicker">3 December 2015 · 03:39–03:44 UT</p>
-<h1>{FIG4_OBSID}</h1>
-<dl class="facts">
-  <div><dt>Start</dt><dd>{e(fmt_time(FIG4_START))}</dd></div>
-  <div><dt>Length</dt><dd>296 s</dd></div>
-  <div><dt>Noon pick</dt><dd><a href="{FIG4_NOON}.html">{FIG4_NOON}</a></dd></div>
-  <div><dt>P-angle</dt><dd>+15.4°</dd></div>
-  <div><dt>CASA</dt><dd>SuperUniform, 570 × 0.5 s</dd></div>
-  <div><dt>P-AIRCARS cal</dt><dd>3C444 · 1133161488</dd></div>
-</dl>
+        f"""<p class="kicker">Quiet Sun</p>
+<h1>{e(FIG4_HEADING)}</h1>
+{facts(FIG4_EVENT, EXTRAS[FIG4_OBSID])}
 """,
         figure(
             media, "fig4_vs_paircars.png",
@@ -549,11 +598,11 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
             "Rohit CORRECTED_DATA 36 Jy/beam; CASA applycal of his Cen A table 12 Jy/beam.",
             prefix=p,
         ),
-        f'<div class="pager"><a href="{back}">Noon pick {FIG4_NOON}</a>'
+        f'<div class="pager"><a href="{back}">{e(noon["heading"]) if noon else "Catalogue"}</a>'
         f'<a href="../images.html">All images</a></div>',
     ]
     return (
-        head("3 December 2015 · 1133149192", root="..")
+        head(f"{FIG4_HEADING} · Quiet Sun", root="..")
         + nav(root="..")
         + f'<main class="wrap">{"".join(body)}</main>'
         + foot()
@@ -562,8 +611,9 @@ def fig4_page(media: dict[str, str], noon: dict | None) -> str:
 
 def images_page(media: dict[str, str]) -> str:
     blocks = [
-        """<p class="kicker">3 December 2015 · 03:39 UT · 1133149192</p>
+        f"""<p class="kicker">Quiet Sun</p>
 <h1>Images</h1>
+<h2 class="section">{e(FIG4_HEADING)}</h2>
 """,
         figure(
             media, "fig4_vs_paircars.png",
@@ -651,9 +701,8 @@ def images_page(media: dict[str, str]) -> str:
             "DATA versus CORRECTED_DATA snapshot",
             "One snapshot, DATA against CORRECTED_DATA.",
         ),
-        f'<p class="note"><a href="o/{FIG4_OBSID}.html">{FIG4_OBSID}</a></p>',
-        """<p class="kicker">3 December 2015 · 03:49 UT · 1133149792</p>
-<h2 class="section">Noon pick, same day</h2>
+        f'<p class="note"><a href="o/{FIG4_OBSID}.html">{e(FIG4_HEADING)}</a></p>',
+        f"""<h2 class="section">{e(fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296))}</h2>
 """,
         figure(
             media, "dec3_noon_rohit_mean.png",
@@ -665,9 +714,8 @@ def images_page(media: dict[str, str]) -> str:
             "F(ν) = 41 / 302 / 49 / 103. The 162 MHz conversion is large; "
             "the mean is still a disk.",
         ),
-        f'<p class="note"><a href="o/{FIG4_NOON}.html#noon">{FIG4_NOON}</a></p>',
-        """<p class="kicker">4 December 2015 · 03:50 UT · 1133236216</p>
-<h2 class="section">One day later</h2>
+        f'<p class="note"><a href="o/{FIG4_NOON}.html#noon">{e(fmt_heading(FIG4_DATE, "2015-12-03T03:49:35", 296))}</a></p>',
+        f"""<h2 class="section">{e(fmt_heading("2015-12-04", "2015-12-04T03:49:59", 296))}</h2>
 """,
         figure(
             media, "dec4_ours_mean.png",
@@ -683,7 +731,7 @@ def images_page(media: dict[str, str]) -> str:
             "Each panel scaled to its own peak. Solar north up. "
             "Top: Figure 4 remake. Bottom: 4 December noon scan.",
         ),
-        '<p class="note"><a href="o/1133236216.html">1133236216</a></p>',
+        f'<p class="note"><a href="o/1133236216.html">{e(fmt_heading("2015-12-04", "2015-12-04T03:49:59", 296))}</a></p>',
     ]
     return (
         head("Images · Quiet Sun")
@@ -701,40 +749,40 @@ def runs_page() -> str:
 <p class="kicker">MWA</p>
 <h1>Runs</h1>
 <table class="days">
-<thead><tr><th>Day</th><th>Observation</th><th>What</th><th>Result</th></tr></thead>
+<thead><tr><th>Time</th><th>Observation</th><th>What</th><th>Result</th></tr></thead>
 <tbody>
 <tr>
-  <td>3 Dec 2015 03:39</td>
+  <td>3 December 2015, 03:39–03:44 UT</td>
   <td class="mono">1133149192</td>
   <td>CASA SuperUniform, Hogbom niter 8000, 570 × 0.5 s, Mohan 5σ, scan mean</td>
   <td>0.89 / 1.01 / 1.10 / 0.63 million K</td>
 </tr>
 <tr>
-  <td>3 Dec 2015 03:39</td>
+  <td>3 December 2015, 03:39–03:44 UT</td>
   <td class="mono">1133149192</td>
   <td>P-AIRCARS, 4 s, 3C444 1133161488, pairs 84–85, 125–126, 169–170, 187–188</td>
   <td>Disk at 108 and 162 MHz. Noise at 217 and 240 MHz.</td>
 </tr>
 <tr>
-  <td>3 Dec 2015 03:39</td>
+  <td>3 December 2015, 03:39–03:44 UT</td>
   <td class="mono">1133149192</td>
   <td>P-AIRCARS pair 113–114, 145.9 MHz, same 4 s recipe</td>
   <td>Disk. Peak 1.04 million K (self-cal), 0.82 (calibrator only).</td>
 </tr>
 <tr>
-  <td>3 Dec 2015 03:42</td>
+  <td>3 December 2015, 03:39–03:44 UT</td>
   <td class="mono">1133149192</td>
   <td>Haslam 1982 sky at this pointing, 4×4 array factor</td>
   <td>2.9 / 6.5 / 11.7 / 8.2 solar flux units</td>
 </tr>
 <tr>
-  <td>3 Dec 2015 03:49</td>
+  <td>3 December 2015, 03:49–03:54 UT</td>
   <td class="mono">1133149792</td>
   <td>Rohit's SuperUniform FITS, 570 × 0.5 s, Mohan 5σ, Haslam 1982 at this pointing</td>
   <td>1.15 / 1.43 / 1.39 / 0.78 MK. F(ν) = 41 / 302 / 49 / 103.</td>
 </tr>
 <tr>
-  <td>4 Dec 2015 03:50</td>
+  <td>4 December 2015, 03:49–03:54 UT</td>
   <td class="mono">1133236216</td>
   <td>CASA SuperUniform, Hogbom niter 8000, 579 × 0.5 s, Mohan 5σ, Oberoi 2017 Table 1 flux</td>
   <td>0.29 / 0.33 / 0.51 / 0.70 million K. 240 MHz F(ν) = 532.</td>
