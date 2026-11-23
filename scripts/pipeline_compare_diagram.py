@@ -50,7 +50,7 @@ PIPELINES = [
             "Product": (
                 "Each map × Mohan F(ν) at 5σ\n"
                 "then the time mean  →  brightness\n"
-                "temperature, million K"
+                "temperature, MK"
             ),
         },
         "compare": (
@@ -92,7 +92,7 @@ PIPELINES = [
             "Primary-beam-corrected Jy/beam\n"
             "from the calibrator sky model.\n"
             "Each map × Mohan F(ν) at 5σ\n"
-            "→ million K.\n"
+            "→ MK.\n"
             "This conversion is not a P-AIRCARS step."
         ),
     },
@@ -233,7 +233,7 @@ def main() -> int:
     ax.text(
         mid,
         2.68,
-        "Comparison  ·  brightness temperature, million K",
+        "Comparison  ·  brightness temperature, MK",
         ha="center",
         va="center",
         fontsize=9,
