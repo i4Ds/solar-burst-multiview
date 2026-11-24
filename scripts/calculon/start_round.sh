@@ -6,7 +6,8 @@
 #    and Cal_3C444_Ch169 (1449573440) for the 1449551392 drift images. Parameters go in
 #    through the environment: sbatch --export splits at commas (21 Oct).
 # 2. asvo-watch.sbatch (downloads every Ready job not yet on the NAS).
-# 3. composite product 1449551392_ch161-158_drift_h (ch 161 then ch 158 along the harmonic lane).
+# 3. composite product 1449551392_ch161-158_drift_h (ch 161 then ch 158 along the upper drift lane;
+#    harmonic/fundamental not confirmed).
 # 4. run_products.sh for products/drift_1449551392.txt (PAR=2) and products/batch2.txt (PAR=2).
 set -uo pipefail
 E=$HOME/mwa/events
@@ -26,7 +27,7 @@ SUBMIT=conv PARAMS=$PARAMS_CAL OBSIDS="1406154616 1407276200 1416862472 14194550
 # 2. download watcher (after the submissions have had time to register)
 sbatch -M calc-cpu --begin=now+10minutes "$HOME/mwa/asvo-watch.sbatch"
 
-# 3. composite drift product (frames of the two harmonic-lane runs in time order)
+# 3. composite drift product (frames of the two upper-lane runs in time order)
 mkdir -p "$HOME/mwa/products"
 python3 - <<'EOF'
 import json, os
@@ -35,7 +36,7 @@ json.dump(dict(product="1449551392_ch161-158_drift_h", sun="1449551392", ch="161
                cal_job="", datedir="20251212", label="drift_h", tres="2",
                trange="2025/12/12/05:09:34~2025/12/12/05:11:34",
                parts=["1449551392_ch161_drift_h_ch161", "1449551392_ch158_drift_h_ch158"],
-               note="2 s images along the harmonic lane (e-Callisto drift -0.039 MHz/s): ch 161 to 05:10:16, then ch 158",
+               note="2 s images along the upper drift lane (e-Callisto drift -0.039 MHz/s): ch 161 to 05:10:16, then ch 158",
                attempts=[]), open(f, "w"), indent=1)
 print("composite product registered")
 EOF

@@ -34,7 +34,7 @@ json.dump(dict(product="1449551392_ch161-158_drift_h", sun="1449551392", ch="161
                trange="2025/12/12/05:09:34~2025/12/12/05:11:34",
                parts=[dict(product="1449551392_ch161_s2_full", to="2025-12-12T05:10:16"),
                       dict(product="1449551392_ch158_s2_full", **{"from": "2025-12-12T05:10:16"})],
-               note="2 s images along the harmonic lane (e-Callisto drift -0.039 MHz/s): ch 161 to 05:10:16, then ch 158",
+               note="2 s images along the upper drift lane (e-Callisto drift -0.039 MHz/s): ch 161 to 05:10:16, then ch 158",
                attempts=[]), open(f, "w"), indent=1)
 print("composite product re-registered")
 PY
